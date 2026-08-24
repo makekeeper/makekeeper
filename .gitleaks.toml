@@ -1,0 +1,39 @@
+# Secret-scanning configuration for the CI gate (#298).
+#
+# The CI gate scans only the commits a push introduces, so a finding is always
+# something the push itself added. The audit in #296 established that `main`
+# carries no real credentials — the matches below are test fixtures and are the
+# entire known false-positive baseline.
+title = "MakeKeeper"
+
+[extend]
+# The upstream rule set, unmodified. Fixtures are excused one by one below;
+# no rule is ever switched off, because the next fake key would then travel
+# under the same exemption.
+useDefault = true
+
+# `condition = "AND"` is what keeps these narrow: the path AND the exact fixture
+# value must both match. A path-only allowlist would blind the scanner to a real
+# credential later added to the same spec file.
+#
+# Fingerprints were the obvious choice and do not work here: a gitleaks
+# fingerprint is `<commit>:<file>:<rule>:<line>`, so it is bound to the commit
+# that introduced the line. Editing a fixture — or moving the line — mints a new
+# fingerprint and the gate would fail on a change that added nothing, which is
+# exactly what the ticket's second acceptance criterion forbids.
+
+[[allowlists]]
+description = "Fake bridge token in the CopyField spec"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^libs/frontend-core/src/lib/components/CopyField\.spec\.ts$''']
+regexes = ['''mkt_0123456789abcdef0123456789abcdef''']
+regexTarget = "line"
+
+[[allowlists]]
+description = "Fake passphrase in the crypto-box spec"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^libs/backend-core/src/lib/crypto-box\.spec\.ts$''']
+regexes = ['''passphrase-passphrase-1234567890''']
+regexTarget = "line"

@@ -1,12 +1,20 @@
-# GitHub-flavoured port of `.forgejo/workflows/ci.yml`, published into the
-# GitHub copy as `.github/workflows/ci.yml` by `publish-github.yml`.
+# CI for the public GitHub copy of MakeKeeper.
 #
-# It lives here rather than under `.github/workflows/` because Forgejo Actions
-# also picks workflows up from `.github/workflows` — a file at the final path
-# would run this job a second time on every push to this repository.
+# This file is generated: development happens on a private Forgejo instance,
+# which publishes each release here as a snapshot and plants this workflow at
+# `.github/workflows/ci.yml`. Editing it in the published repository has no
+# effect past the next release — see CONTRIBUTING.md for how a change travels.
+# (In the development repository it is `.forgejo/publish/github/ci.yml`, kept
+# out of `.github/workflows/` so Forgejo Actions does not run it a second time
+# there.)
 #
-# Keep the Prettier version in step with the Forgejo workflow and with the
-# repo's devDependency: three copies of the number, one meaning.
+# It is not a copy of the Forgejo-side pipeline, and the two are allowed to
+# diverge: that one gates pushes to the private instance, this one answers the
+# only question a reader or forker has — does this tree lint, build and test on
+# a stock runner? The release workflows are deliberately absent: they publish
+# images under this project's credentials, so a fork could only fail on them.
+#
+# Keep the Prettier version in step with the repo's devDependency.
 name: ci
 
 on:
@@ -20,6 +28,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Kept separate from `verify` and installing nothing: formatting is the one
+  # failure worth reporting in seconds rather than after a full monorepo build.
   format-check:
     runs-on: ubuntu-latest
     steps:
@@ -33,3 +43,42 @@ jobs:
 
       - name: Prettier check
         run: npx --yes prettier@3.6.2 --check "apps/**/*.{ts,vue,json}" "libs/**/*.{ts,vue,json}" "plugins/**/*.{ts,json}"
+
+  verify:
+    runs-on: ubuntu-latest
+    # The whole monorepo — two apps, the shared libs, every first-party plugin
+    # and every example — takes ~3 min from a cold cache on four cores, so this
+    # is many times the real cost: generous enough never to cut a slow runner
+    # short, low enough that a hung task dies here instead of burning the job's
+    # default six hours.
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Node
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '22'
+          # Caches ~/.npm, not node_modules: `npm ci` still runs in full, so the
+          # lockfile is honoured exactly and the tree is never a stale restore.
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate the Prisma client
+        # Before the build, not after: the backend imports `@prisma/client`
+        # types, which do not exist until the client is generated. Generation
+        # reads the schema only — no database is involved.
+        run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
+
+      - name: Lint, build and test
+        # One NX invocation rather than three jobs: the targets share a task
+        # graph (a build depends on its libs' builds), and splitting them would
+        # re-install and re-build the same libraries three times over.
+        #
+        # No database service: the backend suites are unit tests over mocked
+        # Prisma clients. The day one of them wants a real server, add a
+        # `services: postgres:` block here — not a `continue-on-error`.
+        run: npx nx run-many -t lint build test --parallel=3

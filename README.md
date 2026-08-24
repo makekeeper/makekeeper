@@ -24,6 +24,7 @@
 - [Testing](#testing)
 - [Configuration](#configuration)
 - [Developer documentation](#developer-documentation)
+- [Where development happens](#where-development-happens)
 - [License](#license)
 
 ---
@@ -354,6 +355,22 @@ self-hosting is in **[INSTALL.md](INSTALL.md)**.
 | [`docs/mcp.md`](docs/mcp.md) | MCP server: connect Claude Desktop/Code to your instance |
 | [`docs/tls-public-access.md`](docs/tls-public-access.md) | Public TLS access / tunnels |
 | [`INSTALL.md`](INSTALL.md) | Self-host installation and maintenance |
+
+---
+
+## Where development happens
+
+This GitHub repository is a **published mirror**. Development happens in a private repository, and
+each release is published here as a single snapshot commit that replaces the tree wholesale.
+
+The practical consequence: a pull request merged here would survive as a commit whose content
+disappears at the next release. So pull requests are **ported by hand upstream, not merged** — and
+the commit that eventually carries your change is authored by the release identity, with credit in
+its message rather than in its author field.
+
+That does not make contributions unwelcome — it makes the route explicit. Open an issue to discuss a
+change, or open a pull request as the concrete form of the proposal; both are read. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for the sign-off every contribution needs.
 
 ---
 

@@ -71,6 +71,18 @@ By making a contribution to this project, I certify that:
 
 Pull requests whose commits are not signed off cannot be merged.
 
+## Where your pull request goes
+
+The GitHub repository is a published mirror. Development happens upstream, and each release is
+published here as a single snapshot commit that replaces the tree wholesale — so a pull request
+merged here would survive as a commit whose content disappears at the next release.
+
+Pull requests are therefore **ported upstream by hand, not merged**, and closed once the change has
+landed. The commit that carries it is authored by the release identity; you are credited in its
+message. Your sign-off below still governs the licensing of the contribution.
+
+This is worth knowing before you spend an evening on a branch — the route is different, not closed.
+
 ## Before you open a pull request
 
 - Follow the conventions in [`CLAUDE.md`](CLAUDE.md) / [`.agents/AGENTS.md`](.agents/AGENTS.md) —

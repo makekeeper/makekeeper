@@ -9,19 +9,19 @@
 - **Pre-approved Docker Commands**: Commands executed inside the running devcontainer utilizing the pattern `docker exec --user node -w /workspaces/makekeeper<any_subdirectory> makekeeper` are pre-approved and do not require additional confirmation.
 
 ## Agent Capabilities & Plugin Development
-- **Self-contained plugin libraries**: Every plugin is its own NX library at `libs/plugin-<id>/`, exposed as `@makekeeper/plugin-<id>/{backend,frontend}`. A plugin declares its identity (`manifest.ts`), its own i18n (`src/i18n/{en,ru}.json`), its AI-agent tools, its optional settings, its sidebar entry and its routes — all in one place. The app shells consume the registry (data-driven sidebar/routes/i18n); nothing about a plugin is hardcoded in `apps/*`. Full recipe: [plugins.md](file:///workspaces/makekeeper/docs/plugins.md).
+- **Self-contained plugin libraries**: Every plugin is its own NX library at `libs/plugin-<id>/`, exposed as `@makekeeper/plugin-<id>/{backend,frontend}`. A plugin declares its identity (`manifest.ts`), its own i18n (`src/i18n/{en,ru}.json`), its AI-agent tools, its optional settings, its sidebar entry and its routes — all in one place. The app shells consume the registry (data-driven sidebar/routes/i18n); nothing about a plugin is hardcoded in `apps/*`. Full recipe: [plugins.md](../docs/plugins.md).
 - **Capabilities Layer**: Every existing and new backend plugin must implement a "capabilities layer" (atomic tools) to expose its methods to AI agents.
 - **Tool text is i18n, never literal**: Each tool and each of its parameters carries a `descriptionKey` (an i18n key), never a `description` string literal. The text lives in the plugin's `i18n/{en,ru}.json`; the LLM receives it resolved to the user's locale via `PluginI18nService.resolveTool`, and the settings UI resolves it with `$t()`. See the i18n section below.
 - **Permission Enforcement**: All tools exposed to the agent must be classified into three permission levels:
   - `READ` (safe queries/reads, no confirmation needed).
   - `WRITE` (adding/updating data). **Defaults to a confirmation gate** (like `DESTRUCTIVE`) so the end user approves the change before it runs; an admin can relax a specific tool to auto-run (with notification or non-blocking audit logging) from the settings UI. The default is seeded on a tool's first registration only (`defaultConfirmationPolicy`); existing per-tool config is never rewritten.
   - `DESTRUCTIVE` (deletion/wiping data, **MUST** block and require explicit human-in-the-loop confirmation before executing).
-- **Documentation Reference**: Refer to [agent-capabilities.md](file:///workspaces/makekeeper/docs/agent-capabilities.md) for architecture details and code templates.
+- **Documentation Reference**: Refer to [agent-capabilities.md](../docs/agent-capabilities.md) for architecture details and code templates.
 
 ## Cross-plugin integration — contributions, capabilities, events (#58)
 > Canonical here (mirrored in CLAUDE.md §5.10) — keep both in sync when this changes.
 
-A plugin never imports another plugin's code — only `plugin-contract`, `backend-core`, `frontend-core`. Disabling a plugin must remove exactly its functionality everywhere. Full guide: [plugins.md §8](file:///workspaces/makekeeper/docs/plugins.md).
+A plugin never imports another plugin's code — only `plugin-contract`, `backend-core`, `frontend-core`. Disabling a plugin must remove exactly its functionality everywhere. Full guide: [plugins.md §8](../docs/plugins.md).
 
 - **UI implementing another plugin's functionality** → a contribution into a named slot of the host: `registerPlugin({ contributions: [{ slot, component, order?, meta? }] })`; hosts render `<PluginSlot name :ctx>` / `useSlotContributions(slot)` — only enabled plugins' contributions render.
 - **UI merely navigating to another plugin** → gate on `usePluginsStore().isEnabled('<id>')` and skip its API fetches while disabled; hidden inputs keep loaded values.
@@ -63,7 +63,7 @@ import only `plugin-sdk`/`plugin-contract`).
 ## Multi-user overlay — declaring rights & permissions in plugins
 > Canonical here (mirrored in CLAUDE.md §5.8) — keep both in sync when this changes.
 
-The optional `multiuser` plugin turns the app multi-tenant: JWT auth, per-user data scopes, scope sharing, per-user plugin sets. Every plugin must stay correct with the overlay **on and off**; the overlay consumes only declarations. Full author's guide: [multiuser.md](file:///workspaces/makekeeper/docs/multiuser.md).
+The optional `multiuser` plugin turns the app multi-tenant: JWT auth, per-user data scopes, scope sharing, per-user plugin sets. Every plugin must stay correct with the overlay **on and off**; the overlay consumes only declarations. Full author's guide: [multiuser.md](../docs/multiuser.md).
 
 - **Manifest flags** (`libs/plugin-<id>/src/manifest.ts`):
   - `settingsAdminOnly: true` — the plugin's settings surface is instance administration (OS interaction, shared credentials, instance-wide policy): the Settings host hides the panel from regular users; pair it with `@AdminOnly()` on the settings routes.
@@ -80,7 +80,7 @@ The optional `multiuser` plugin turns the app multi-tenant: JWT auth, per-user d
 ## Object references (ORef) — one canonical object identity
 > Canonical here (mirrored in CLAUDE.md §5.9) — keep both in sync when this changes.
 
-Every object is named by ONE canonical reference: `mk://<pluginId>/<entityType>/<entityId>[#<fragment>]`. `format`/`parse`/guards + `resolveEntityId` live **only** in `libs/plugin-contract/src/lib/object-ref.ts` — never hand-roll an ORef regex. Full guide: [object-refs.md](file:///workspaces/makekeeper/docs/object-refs.md).
+Every object is named by ONE canonical reference: `mk://<pluginId>/<entityType>/<entityId>[#<fragment>]`. `format`/`parse`/guards + `resolveEntityId` live **only** in `libs/plugin-contract/src/lib/object-ref.ts` — never hand-roll an ORef regex. Full guide: [object-refs.md](../docs/object-refs.md).
 
 - **Contract**: `entityId` is the Prisma `@id` **verbatim** (never a name, never composite); a fragment's grammar is owned by its entity type (the storage cell reuses `grid-address.ts`); `parse(format(x))` round-trips, invalid ⇒ `null`.
 - **A plugin that owns referenceable entities declares its types**: backend `agentRegistry.registerObjectRefResolver(pluginId, entityType, resolver)` in `onModuleInit` (resolves to name + breadcrumb via its own service); frontend `refToRoute` on `registerPlugin` (ORef → route); detail/form views publish the current selection via `setPageContextRefs` (→ `PageContext.refs`).
