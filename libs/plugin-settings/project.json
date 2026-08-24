@@ -1,0 +1,8 @@
+{
+  "name": "plugin-settings",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-settings/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:settings"],
+  "targets": {}
+}

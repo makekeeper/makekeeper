@@ -1,0 +1,86 @@
+{
+  "plugins": {
+    "phone-bridge": {
+      "name": "Phone link",
+      "description": "Pair a phone by QR code to relay straight into the app (photos, scans, and more), over an optional Cloudflare tunnel."
+    }
+  },
+  "phoneBridge": {
+    "title": "Phone link",
+    "attachingTo": "Attaching to: {target}",
+    "checking": "Checking the link…",
+    "invalid": "This link is no longer valid. Generate a new QR code on the desktop.",
+    "desktop": {
+      "title": "Scan with your phone",
+      "creating": "Preparing a link…",
+      "warmup": "Almost ready — {seconds}s…",
+      "warmupNote": "Waiting for the tunnel address to propagate so your phone can open it.",
+      "createFailed": "Could not start a session.",
+      "scanHint": "Scan the code with the phone camera. It opens a MakeKeeper page tied to this window — whatever you scan or photograph on the phone arrives here.",
+      "linkHint": "Can't scan it? Open this link on the phone.",
+      "cannotScanTitle": "Can't start scanning",
+      "openSettings": "Open settings",
+      "localWarning": "This is a local address — it won't open on your phone. Enable the tunnel in the plugin settings, or set PUBLIC_BASE_URL.",
+      "insecureWarning": "This is an http:// address — the phone needs HTTPS. Enable the Cloudflare tunnel, or expose the app over HTTPS. If it is already served over HTTPS behind a reverse proxy, set PUBLIC_BASE_URL to the public https:// address (a proxy hop may have reset the forwarded scheme)."
+    },
+    "settings": {
+      "intro": "Expose the app over HTTPS so a phone can pair with it. Uses an on-demand <a href=\"https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/do-more-with-tunnels/trycloudflare/\" target=\"_blank\" class=\"text-brand-600 dark:text-brand-400 hover:underline\">Cloudflare Quick Tunnel</a> — no account or domain required.<br>Already served over HTTPS behind a reverse proxy? Set PUBLIC_BASE_URL to the public https:// address instead.",
+      "modeLabel": "Tunnel mode",
+      "modes": {
+        "off": "Off",
+        "auto": "Auto",
+        "on": "On"
+      },
+      "modeHints": {
+        "off": "No tunnel. Phone pairing works only if the app is already reachable over HTTPS.",
+        "auto": "A tunnel is started automatically when a session needs it, and stopped when idle.",
+        "on": "Keep a tunnel running continuously."
+      },
+      "statusLabel": "Status",
+      "states": {
+        "disabled": "Disabled",
+        "stopped": "Stopped",
+        "starting": "Starting…",
+        "running": "Running",
+        "error": "Error"
+      },
+      "start": "Start",
+      "stop": "Stop",
+      "binaryPathLabel": "Custom path (optional)",
+      "binaryPathPlaceholder": "e.g. /usr/local/bin/cloudflared",
+      "download": "Install official Cloudflare client",
+      "idleTtlLabel": "Keep tunnel up after last use",
+      "idleTtlHint": "In Auto mode the tunnel stays up this long after the last session, then stops.",
+      "toast": {
+        "saved": "Saved",
+        "saveFailed": "Couldn't save the change.",
+        "downloadDone": "cloudflared downloaded.",
+        "downloadFailed": "Couldn't download cloudflared.",
+        "controlFailed": "The tunnel action failed.",
+        "deleteDone": "cloudflared deleted.",
+        "deleteFailed": "Couldn't delete cloudflared."
+      },
+      "idleTtlUnit": "minutes",
+      "sectionConnection": "Connection",
+      "sectionBinary": "Cloudflared binary",
+      "binaryInstalled": "Installed",
+      "binaryNotFound": "Not found",
+      "downloadedOk": "Downloaded.",
+      "downloadedError": "Download failed.",
+      "delete": "Delete",
+      "deletedOk": "Deleted.",
+      "deletedError": "Delete failed.",
+      "binaryPathValue": "Binary path: {path}"
+    },
+    "agentTools": {
+      "get_phone_bridge_status": {
+        "description": "Returns the state of public access for phone pairing: the Cloudflare tunnel mode (off/on/auto), the current state, the public URL (if up), and whether the cloudflared binary was found. Use it to tell whether a phone can currently reach the app over HTTPS."
+      }
+    },
+    "exchange": {
+      "sections": {
+        "settings": "Phone-link tunnel settings"
+      }
+    }
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "plugins": {
+    "codes": {
+      "name": "Labels & Codes",
+      "description": "Generate and scan QR/barcode labels that resolve to any object."
+    }
+  },
+  "routeTitles": {
+    "codeRedirect": "Opening label"
+  },
+  "codes": {
+    "scan": {
+      "button": "Scan",
+      "contextButton": "Scan with phone",
+      "title": "Scan a code",
+      "hint": "Point the camera at a QR code or barcode.",
+      "unsupported": "This device can't scan codes in the browser.",
+      "cameraError": "Could not access the camera.",
+      "waiting": "Waiting for the phone…",
+      "resolving": "Resolving code…",
+      "notFound": "Nothing matches the scanned code «{code}».",
+      "lookupError": "Could not resolve the scanned code. Please try again.",
+      "seeing": "Detected code",
+      "checking": "Checking…",
+      "found": "Found",
+      "notInSystem": "Not found in the system — you can still open it on the computer.",
+      "checkFailed": "Couldn't check the code — you can still open it on the computer.",
+      "open": "Open on computer",
+      "again": "Scan again",
+      "relayed": "Sent to the computer",
+      "finish": "Done",
+      "runningHere": "Scanning",
+      "sessionEnded": "The session ended on the computer. Start a new scan there.",
+      "retargetSession": "A scan session is already running for «{context}». Switch it to this one? The phone stays connected.",
+      "retargetConfirm": "Switch it here",
+      "endConfirm": "End the scan session for «{context}»? The phone will be disconnected.",
+      "retargeted": "Now filing into: {context}",
+      "notApplicable": "This code can't be used here."
+    },
+    "print": {
+      "button": "Print label",
+      "title": "Print label",
+      "prepareError": "Could not prepare the label. Please try again.",
+      "action": "Print",
+      "format": {
+        "label": "Code format",
+        "qr": "QR code",
+        "barcode": "Barcode"
+      },
+      "layout": {
+        "label": "Layout",
+        "thermal": "Single (thermal)",
+        "a4": "A4 sheet"
+      }
+    },
+    "redirect": {
+      "resolving": "Opening the labelled object…",
+      "notFound": "Unknown label",
+      "notFoundHint": "This code «{code}» does not resolve to any object."
+    },
+    "agentTools": {
+      "resolve_code": {
+        "description": "Resolve a short label code or scanned value to the object it names (returns the canonical object reference and its display name).",
+        "params": {
+          "value": "A label short code (e.g. CMP-4Z9QX), a /c/<code> link, an object reference, or a raw barcode/SKU."
+        }
+      },
+      "create_label": {
+        "description": "Create (or return the existing) printable label for an object, given its canonical reference. Returns the short code and its deep-link.",
+        "params": {
+          "ref": "Canonical object reference (mk://…) to label."
+        }
+      },
+      "delete_label": {
+        "description": "Delete the printable label for an object. The object itself is not affected; only the code mapping is removed.",
+        "params": {
+          "code": "The label short code to delete, or the object's canonical reference."
+        }
+      }
+    },
+    "agentConfirm": {
+      "create_label": "Create a printable label for «{name}»?",
+      "delete_label": "Delete the label «{code}» for «{name}»?"
+    },
+    "errors": {
+      "invalidRef": "«{ref}» is not a valid object reference.",
+      "labelNotFound": "No label found for «{value}».",
+      "unresolvableRef": "«{ref}» does not name a known object.",
+      "sessionEnded": "This scan session has ended."
+    },
+    "bench": {
+      "scan": "Scan"
+    },
+    "ux": {
+      "labels": "Label printing",
+      "scan": "In-app scanning"
+    }
+  }
+}

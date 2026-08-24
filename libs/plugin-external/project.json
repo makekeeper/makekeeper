@@ -1,0 +1,8 @@
+{
+  "name": "plugin-external",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-external/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:external"],
+  "targets": {}
+}

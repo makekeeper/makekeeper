@@ -1,0 +1,8 @@
+# Mechanical, whitespace-only commits that git blame should skip.
+# Wire up once per clone: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style(repo): mechanical prettier reformat of apps/** and libs/** (#221)
+eee12d3434ccc83315e436e87ac328e1200b684b
+
+# style(chat): second prettier pass over ChatHistoryPanel.vue (#221)
+67879733cec91996d15e93e50223d0d5ed8abfa4

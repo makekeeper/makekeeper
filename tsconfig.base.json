@@ -1,0 +1,133 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": [
+      "es2020",
+      "dom"
+    ],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@makekeeper/plugin-contract": [
+        "libs/plugin-contract/src/index.ts"
+      ],
+      "@makekeeper/backend-core": [
+        "libs/backend-core/src/index.ts"
+      ],
+      "@makekeeper/frontend-core": [
+        "libs/frontend-core/src/index.ts"
+      ],
+      "@makekeeper/plugin-inventory/backend": [
+        "libs/plugin-inventory/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-inventory/frontend": [
+        "libs/plugin-inventory/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-logistics/backend": [
+        "libs/plugin-logistics/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-logistics/frontend": [
+        "libs/plugin-logistics/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-projects/backend": [
+        "libs/plugin-projects/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-projects/frontend": [
+        "libs/plugin-projects/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-storages/backend": [
+        "libs/plugin-storages/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-storages/frontend": [
+        "libs/plugin-storages/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-settings/backend": [
+        "libs/plugin-settings/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-settings/frontend": [
+        "libs/plugin-settings/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-chat/backend": [
+        "libs/plugin-chat/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-chat/frontend": [
+        "libs/plugin-chat/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-capture/backend": [
+        "libs/plugin-capture/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-capture/frontend": [
+        "libs/plugin-capture/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-phone-bridge/backend": [
+        "libs/plugin-phone-bridge/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-phone-bridge/frontend": [
+        "libs/plugin-phone-bridge/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-multiuser/backend": [
+        "libs/plugin-multiuser/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-multiuser/frontend": [
+        "libs/plugin-multiuser/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-uxmode/backend": [
+        "libs/plugin-uxmode/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-uxmode/frontend": [
+        "libs/plugin-uxmode/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-stats/backend": [
+        "libs/plugin-stats/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-stats/frontend": [
+        "libs/plugin-stats/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-tags/backend": [
+        "libs/plugin-tags/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-tags/frontend": [
+        "libs/plugin-tags/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-sdk": ["libs/plugin-sdk/src/index.ts"],
+      "@makekeeper/plugin-external/backend": [
+        "libs/plugin-external/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-external/frontend": [
+        "libs/plugin-external/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-exchange/backend": [
+        "libs/plugin-exchange/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-exchange/frontend": [
+        "libs/plugin-exchange/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-mobile/backend": [
+        "libs/plugin-mobile/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-mobile/frontend": [
+        "libs/plugin-mobile/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-codes/backend": [
+        "libs/plugin-codes/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-codes/frontend": [
+        "libs/plugin-codes/src/frontend/index.ts"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ]
+}

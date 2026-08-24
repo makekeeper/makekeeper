@@ -1,0 +1,464 @@
+{
+  "chat": {
+    "title": "AI Assistant",
+    "status": {
+      "connected": "Connected · {name}",
+      "error": "Connection error · {name}",
+      "errorNoProvider": "Connection error",
+      "checking": "Checking connection…",
+      "none": "No provider configured"
+    },
+    "online": "Online",
+    "placeholder": "Ask about parts, code, schematics...",
+    "contextHint": "Active project context is shared automatically",
+    "initialMessage": "Hello! I am your AI assistant MakeKeeper. Ready to help with pinouts, component selection, or code for your project. What's on your mind?",
+    "analyzing": "I am analyzing your request...",
+    "esp32Response": "To connect ESP32, remember: most GPIO pins operate at 3.3V logic level. Default I2C pins: SDA (GPIO 21), SCL (GPIO 22).",
+    "transistorResponse": "When choosing an n-channel field-effect transistor (MOSFET) for 3.3V/5V microcontroller control, look for \"Logic-Level\" models (e.g. IRLZ44N). Their gate threshold voltage Vgs(th) is significantly lower.",
+    "defaultResponse": "Great question! To give a precise answer, I might need the context of your active project. You can select it in the \"Projects\" tab.",
+    "newChat": "New chat",
+    "history": "Chat history",
+    "noSessions": "No chats yet",
+    "untitled": "New chat",
+    "deleteChat": "Delete chat",
+    "deleteChatConfirm": "Delete this chat? This cannot be undone.",
+    "toolUsed": "Used {name}",
+    "toolExecuting": "Running {name}…",
+    "toolCancelled": "Cancelled {name}",
+    "stages": {
+      "starting": "Starting (step {turn})…",
+      "thinking": "The model is thinking (step {turn})…",
+      "toolRunning": "Running {name}…",
+      "toolDone": "Finished {name}",
+      "toolFailed": "{name} failed",
+      "awaitingConfirmation": "Waiting for your confirmation…"
+    },
+    "resizeColumn": "Chat column width — drag or use the arrow keys; Enter or a double-click restores the default",
+    "attachImage": "Attach image",
+    "removeImage": "Remove image",
+    "addAttachment": "Add attachment",
+    "uploadFromComputer": "Upload from computer",
+    "fromProjectFiles": "From project files",
+    "dropToAttach": "Drop to attach",
+    "projectFilesTitle": "Attach from project files",
+    "projectFilesLoading": "Loading…",
+    "projectFilesEmpty": "No images in this project yet.",
+    "agentTools": {
+      "list_ai_providers": {
+        "description": "Returns the list of configured AI providers WITHOUT secret keys: name, provider type, model, and the default-provider flag. Use it to find out which models are available."
+      },
+      "resolve_object_ref": {
+        "description": "Resolves a canonical object reference (ORef, \"mk://<plugin>/<type>/<id>\") to the object's human name and breadcrumb path. Pass a reference you received from the page context or another tool's \"ref\" field to learn exactly what and where it is.",
+        "params": {
+          "ref": "The canonical ORef to resolve, e.g. \"mk://storages/storage/<id>#B1\"."
+        }
+      },
+      "read_attachment": {
+        "description": "Reads an attached file as text: a log, gcode, a config, a sketch, CSV or JSON. Pass the file reference you received in the message context or from list_project_files. A long file comes back in parts — repeat the call with \"offset\" set to the returned \"nextOffset\". A picture or a binary file returns no content, only its name, type and size.",
+        "params": {
+          "ref": "File reference (\"mk://projects/file/<id>\") or its raw id.",
+          "offset": "Byte offset to read from. Omit for the beginning of the file."
+        },
+        "notFound": "File not found.",
+        "notText": "The file is not text and cannot be read.",
+        "isImage": "This is a picture: it is already visible in the conversation and is not read as text."
+      }
+    },
+    "prompt": {
+      "systemIntro": "You are a professional AI copilot and electronics assistant for MakeKeeper.",
+      "projectScope": "You are working in the project “{title}” ({ref}). Fetch its tasks, parts and orders with the tools when the question needs them — they are not repeated here.",
+      "projectDescription": "Project description: {description}",
+      "projectStatus": "Current project status: {status}",
+      "closingInstructions": "Answer concisely and professionally. You have tools for working with the warehouse and the database. If you need data about the warehouse, box structure, or parts, call the appropriate tools.",
+      "photoRecognition": "### Component recognition from a photo\nIf the user has sent a photo of an electronic component and asks to identify it:\n- Read the markings literally, character by character; do not guess or \"correct\" poorly legible characters.\n- If the marking or part of it is illegible, write \"unreadable\" for that field directly instead of picking a plausible part number.\n- Clearly separate what is actually visible in the photo from what you infer by guesswork; for guesses, indicate low confidence.\n- Present the result by fields: Part number, Package, Manufacturer, Type/purpose, Confidence (high/medium/low). Mark fields that cannot be determined as \"not determined\".",
+      "pageContextSelection": "- Current user selection: {value}",
+      "pageContextRefs": "- Selected object references (pass these to tools verbatim): {refs}",
+      "objectRefs": "### Object references (ORef)\nObjects are identified by canonical references shaped like \"mk://<plugin>/<type>/<id>\" (with an optional \"#<fragment>\", e.g. a grid cell \"#B1\"). You receive them in the page context and in the \"ref\" field of tool results. Pass a reference back to a tool verbatim instead of a bare id; call resolve_object_ref to turn one into a human name and location.\nWhen you mention an object in a reply, make the object's own NAME the clickable link: write it as a Markdown link whose visible text is the name and whose target is the ORef — for example `[LED Strip](mk://inventory/component/comp_f412tyy)`, which renders as just \"LED Strip\". NEVER print the raw \"mk://…\" string on its own or in parentheses after the name — the reader should see a normal-looking name, not the reference.",
+      "pageContextRoute": "- Screen (route): {route}",
+      "pageContextPath": "- Path: {path}",
+      "pageContextPlugin": "- Active section: {plugin}",
+      "pageContextParams": "- Page identifiers: {params}",
+      "pageContextQuery": "- Screen parameters: {query}",
+      "pageContextHeader": "### Context of the user's current page:",
+      "pageContextIntro": "The user sent the message while on this screen. Take this into account when interpreting deictic expressions (\"this project\", \"this part\", \"here\", \"show its tasks\"). The context only clarifies intent and does NOT override the mandatory confirmation of dangerous (DESTRUCTIVE) actions.",
+      "geminiSystemWrapper": "SYSTEM INSTRUCTION (follow it unconditionally):\n{systemPrompt}\n\nLet's start the dialogue.",
+      "geminiPrimingReply": "Understood. I am ready to help you with your project according to the system instructions.",
+      "pendingToolNote": "[Tool call {name} has been proposed and is awaiting user confirmation — it has not been executed yet]",
+      "toolCancelledNote": "[Action {name} cancelled by the user]",
+      "functionCallNote": "[Function call: {name} with arguments {args}]",
+      "functionResultNote": "[Function result: {result}]",
+      "attachedFileNote": "The user attached a file: «{filename}» ({mimeType}, {size}), reference {ref}. Its content is NOT shown above — use the read_attachment tool with this reference to read it. When mentioning the file in your reply, link its name as [{filename}]({ref})."
+    },
+    "messages": {
+      "actionCancelledByUser": "Action \"{name}\" cancelled by the user.",
+      "iterationLimit": "Tool execution iteration limit reached (5 turns).",
+      "simulationMode": "[Simulation mode: API key not configured].\nYou asked: \"{question}\".\nTo make the AI respond for real, configure a provider.",
+      "toolNotRegistered": "Tool {name} is not registered.",
+      "emptyResponse": "Empty response from {provider}.",
+      "providerLocked": "The AI connection for this workspace is locked because its owner is signed out. Ask them to sign in, or select your own connection."
+    },
+    "secretAccess": {
+      "llmCall": "an AI chat request"
+    },
+    "errors": {
+      "sessionNotFound": "Session not found",
+      "toolNotFound": "Tool {name} not found",
+      "requestNotFound": "Request not found",
+      "providerNotSupported": "Provider {provider} is not supported for direct calls.",
+      "unknownProviderType": "Unknown provider type: {type}"
+    },
+    "dashboard": {
+      "activity": "My assistant activity",
+      "activityHint": "{messages} messages and {actions} agent actions in the last two weeks.",
+      "activityAria": "Area chart: messages and executed agent actions per day over the last two weeks — {messages} messages, {actions} actions.",
+      "seriesMessages": "Messages",
+      "seriesActions": "Agent actions",
+      "loadFailed": "Failed to load activity",
+      "proto": {
+        "rowsTitle": "AI providers",
+        "totals": "{tokens} tokens · {requests} requests · {errors} errors in 14 days",
+        "tooltipLine": "{requests} req · {tokens} tok · {errors} err",
+        "colTokens": "tokens",
+        "colRequests": "req",
+        "colErrors": "err",
+        "markRequests": "requests (solid)",
+        "markTokens": "tokens (dashed)",
+        "markErrors": "errors (bars)"
+      }
+    },
+    "stats": {
+      "messages": {
+        "label": "Assistant messages",
+        "unit": "messages",
+        "seriesLabel": "Messages"
+      },
+      "messagesActivity": {
+        "title": "Assistant messages"
+      },
+      "usage": {
+        "title": "AI providers",
+        "requests": "Requests",
+        "requestsUnit": "requests",
+        "tokens": "Tokens",
+        "tokensUnit": "tokens",
+        "errors": "Errors",
+        "errorsUnit": "errors",
+        "empty": "No provider usage yet"
+      }
+    },
+    "exchange": {
+      "sections": {
+        "sessions": "AI chat history and images",
+        "all": "All chats and usage telemetry (full backup)",
+        "providers": "LLM provider connections (secrets)"
+      }
+    },
+    "bench": {
+      "askAi": "Ask the assistant"
+    },
+    "attachments": {
+      "unnamedFile": "file",
+      "download": "Download the file",
+      "unavailable": "File is no longer available",
+      "downloadError": "Could not download the file.",
+      "rejected": {
+        "format": "«{filename}» ({mimeType}) is not among the allowed attachment formats.",
+        "size": "«{filename}» is {size}, above the {max} limit for non-image attachments.",
+        "hint": "The list of allowed formats lives in the AI Assistant settings."
+      }
+    },
+    "context": {
+      "project": "project “{project}”",
+      "noProject": "No project",
+      "projectPicker": "Project the assistant works in",
+      "pageWithin": "{object} ({within})",
+      "filingInto": "The file will be added to “{target}”",
+      "filingNowhere": "The file will stay in this chat"
+    },
+    "api": {
+      "filingContextRefs": "Comma-separated object references of the page the composer is on; they decide the object named and the project scope reported."
+    },
+    "attachmentSettings": {
+      "title": "Chat attachments",
+      "instanceSubtitle": "What may be attached to a chat message on this instance. Applies to everyone using an instance connection.",
+      "personalSubtitle": "What you may attach to a chat message. Applies whenever a turn runs on your own connection.",
+      "inheritedInstance": "Using the built-in defaults. Saving creates an instance ruleset.",
+      "inheritedPersonal": "Inherited from the connection you are using. Saving creates your own ruleset; resetting returns to the inherited one.",
+      "mimeTypes": "Allowed content types",
+      "mimeHint": "Exact types (application/json) or masks (text/*). Remove image/* to stop attaching pictures at all.",
+      "mimePlaceholder": "text/*",
+      "extensions": "Allowed file extensions",
+      "extensionHint": "Needed because a file uploaded through the project Files tab usually arrives without a content type.",
+      "extensionPlaceholder": "gcode",
+      "maxNonImage": "Attachment size limit, MB",
+      "maxNonImageHint": "Applies to non-image files. Pictures are exempt: the model receives a downscaled rendition, not the original.",
+      "maxRead": "Reading limit, KB",
+      "maxReadHint": "How much text the assistant receives in one read. Longer files are read in parts.",
+      "footnote": "A format on the list may still be unreadable: the assistant reads text, and a binary file is reported to it as such, along with its name and size.",
+      "add": "Add",
+      "remove": "Remove",
+      "saved": "Attachment rules saved",
+      "reset": "Reset",
+      "loadError": "Could not load the attachment rules",
+      "saveError": "Could not save the attachment rules",
+      "api": {
+        "mimeTypes": "Allowed mime types and masks",
+        "extensions": "Allowed file extensions, lowercase and without a dot",
+        "maxNonImageBytes": "Size limit for non-image attachments, bytes",
+        "maxReadBytes": "How much text one read_attachment call returns, bytes",
+        "effective": "Attachment rules in force for the caller",
+        "readPersonal": "The caller's own attachment rules, if stored",
+        "savePersonal": "Store the caller's own attachment rules",
+        "clearPersonal": "Drop the personal rules and inherit again",
+        "readInstance": "The instance attachment rules, if stored",
+        "saveInstance": "Store the instance attachment rules",
+        "clearInstance": "Drop the instance rules and use the defaults"
+      }
+    },
+    "vision": {
+      "frameCaption": "Photograph {index} of {total}.",
+      "frameCaptionLast": "Photograph {index} of {total}.\n\n{question}"
+    },
+    "ux": {
+      "projectTab": "AI history tab in projects"
+    }
+  },
+  "agent": {
+    "permissionRequest": "Agent requests permission",
+    "argsLabel": "Arguments:",
+    "qtyBadge": "×{qty}",
+    "recognizedHint": "Recognised from a photo — double-check the details before confirming.",
+    "allow": "Allow",
+    "reject": "Reject",
+    "thinking": "Thinking...",
+    "sessionError": "Failed to establish a session. Open any project and try again.",
+    "serverError": "Server communication error. Please try again.",
+    "executeError": "Error while executing the action.",
+    "cancelError": "Error while cancelling the action.",
+    "retry": "Retry",
+    "errorDetails": "Error details"
+  },
+  "plugins": {
+    "chat": {
+      "name": "AI Assistant",
+      "description": "Conversational AI assistant panel"
+    }
+  },
+  "providerSettings": {
+    "aiProviders": "AI Providers",
+    "active": "Active",
+    "model": "Model: {model}",
+    "emptyList": "No providers yet. Add one using the form.",
+    "deleteConfirm": "Are you sure you want to delete this provider?",
+    "deleteTitle": "Delete connection",
+    "setDefaultTitle": "Set as default",
+    "newConnection": "New connection",
+    "setupTitle": "Provider setup",
+    "editingBanner": "Editing “{name}”",
+    "creatingBanner": "New connection",
+    "cancel": "Cancel",
+    "keySaved": "Key saved",
+    "connectionName": "Connection Name",
+    "namePlaceholder": "E.g., My OpenAI",
+    "aiProvider": "AI Provider",
+    "endpoint": "Endpoint (Base URL)",
+    "modelName": "Model Name",
+    "organizationId": "Organization ID",
+    "apiVersion": "API Version",
+    "imageDetail": "Image Detail",
+    "imageDetailHint": "Use High so the model can read small component markings on photos.",
+    "imageDetailOptions": {
+      "auto": "Auto (provider default)",
+      "high": "High (best for recognition)"
+    },
+    "reasoningEffort": "Reasoning Effort",
+    "reasoningEffortHint": "For reasoning models (e.g. gpt-5, o4-mini). Higher is more accurate but slower and costlier.",
+    "reasoningEffortOptions": {
+      "default": "Default (model's own)",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "apiKey": "Personal API Key",
+    "keyPlaceholder": "Enter your personal key (stored securely on the server)",
+    "keyHint": "The key is encrypted at rest. For safety, create a dedicated key with a spend limit for this app (e.g. an OpenAI restricted key or an Anthropic workspace key) so it can be revoked on its own.",
+    "optional": "(optional)",
+    "saveConnection": "Save Connection",
+    "saveChanges": "Save Changes",
+    "saveError": "Could not save the connection. Please check the fields and try again.",
+    "testConnection": "Test connection",
+    "testing": "Testing…",
+    "testSuccess": "Connection successful — the credentials work.",
+    "testFailed": "Connection failed: {error}",
+    "testError": "Could not run the test. Please try again.",
+    "loadError": "Could not load providers. Please try again.",
+    "validation": {
+      "nameRequired": "Please enter a connection name.",
+      "modelRequired": "Please enter a model name.",
+      "baseUrlRequired": "Please enter the base URL for this provider.",
+      "apiKeyRequired": "Please enter an API key for this provider.",
+      "unknownConnection": "Unknown AI connection.",
+      "invalidSharing": "Invalid sharing level for this connection.",
+      "personalDisabled": "Personal AI connections require multi-user mode.",
+      "blockedHost": "This base URL points to a private or internal address, which is not allowed.",
+      "sessionLocked": "Your session is locked — sign in again to save an API key.",
+      "proxyHeaderNameInvalid": "A header name may only use letters, digits and the symbols ! # $ % & ' * + - . ^ _ ` | ~",
+      "proxyHeaderNameReserved": "This header is already used to authenticate the request and cannot be reused for the label."
+    },
+    "guides": {
+      "gemini": {
+        "title": "How to get a Google Gemini API key:",
+        "steps": [
+          "Open <a href=\"https://aistudio.google.com/apikey\" target=\"_blank\" class=\"text-brand-600 dark:text-brand-400 hover:underline\">Google AI Studio &rarr; API keys</a> (the direct API-keys page).",
+          "Sign in with your Google account — a personal Gmail account works.",
+          "Click \"Create API key\", then choose or create a Google Cloud project when asked.",
+          "Copy the key that appears and paste it into the \"Personal API Key\" field above.",
+          "Leave the base URL at its default unless you use a proxy. The free tier is enough to get started — no billing card required."
+        ]
+      },
+      "openai": {
+        "title": "How to get an OpenAI API key:",
+        "steps": [
+          "Open the <a href=\"https://platform.openai.com/api-keys\" target=\"_blank\" class=\"text-brand-600 dark:text-brand-400 hover:underline\">OpenAI Platform &rarr; API keys</a> page.",
+          "Sign up or log in, and verify your email and phone number if prompted.",
+          "Open Billing and add a payment method, then top up credits — OpenAI keys don't work until billing is enabled.",
+          "Click \"Create new secret key\", give it a name, and confirm.",
+          "Copy the key immediately — it is shown only once — and paste it above. The optional Organization ID (starts with \"org-\") is under Settings &rarr; Organization if you belong to several organizations."
+        ]
+      },
+      "anthropic": {
+        "title": "How to get an Anthropic (Claude) API key:",
+        "steps": [
+          "Open the <a href=\"https://console.anthropic.com/settings/keys\" target=\"_blank\" class=\"text-brand-600 dark:text-brand-400 hover:underline\">Anthropic Console &rarr; API keys</a> page.",
+          "Sign up or log in and verify your email address.",
+          "Open Plans & Billing and buy credits — a new key needs credits before it will work.",
+          "Click \"Create Key\", name it, and copy the value (it is shown only once).",
+          "Paste the key above. Leave \"API Version\" at 2023-06-01 unless Anthropic's documentation tells you to change it."
+        ]
+      },
+      "ollama": {
+        "title": "How to connect a local Ollama server:",
+        "steps": [
+          "Download and install Ollama for your operating system from <a href=\"https://ollama.com/download\" target=\"_blank\" class=\"text-brand-600 dark:text-brand-400 hover:underline\">ollama.com/download</a>.",
+          "Start the Ollama application (or run \"ollama serve\"). It listens on http://localhost:11434 by default.",
+          "In a terminal, download a model with \"ollama pull llama3.1\" (replace with any model you want to use).",
+          "Enter the server address in the base URL field and the model name (e.g. llama3.1) in the model field. No API key is required."
+        ]
+      },
+      "custom": {
+        "title": "How to connect a custom gateway or proxy:",
+        "steps": [
+          "Use this option for a self-hosted proxy or any OpenAI/Gemini/Anthropic-compatible gateway (for example LiteLLM or OpenRouter).",
+          "Enter your gateway's full base URL, including any \"/v1\" path, in the base URL field.",
+          "If your gateway requires an access token, paste it into the API key field; otherwise leave it empty.",
+          "Set the model field to a model id your gateway exposes. Check your gateway's documentation for the exact endpoint and model names."
+        ]
+      }
+    },
+    "ollamaLocal": "Ollama (Local)",
+    "customGatewayOption": "Custom gateway",
+    "personal": {
+      "subtitle": "Your own connections; the assistant prefers them over the shared one"
+    },
+    "sharing": {
+      "withEveryone": "Available to all users",
+      "withGuests": "Available to my workspace guests"
+    },
+    "editTitle": "Edit",
+    "editConnectionTitle": "Edit “{name}”",
+    "deleteConfirmNamed": "Delete connection “{name}”?",
+    "saved": "Connection saved.",
+    "deleted": "Connection deleted.",
+    "instanceSubtitle": "Shared connections of this instance; the assistant uses the active one",
+    "sharedFromAdmin": "Shared by the administrator",
+    "sharedFromOwner": "Shared by the workspace owner",
+    "mySection": "My connections",
+    "instanceSection": "Instance connections",
+    "proxyLabel": {
+      "label": "Proxy label",
+      "labelHint": "Sent as a request header so the operator of your LLM proxy can recognise these requests. Not sent to the model vendor directly.",
+      "segments": "What goes into the label",
+      "segment": {
+        "label": "Connection",
+        "user": "User",
+        "project": "Project"
+      },
+      "orderHint": "Row order is segment order — drag a row to move it.",
+      "preview": "Example",
+      "previewEmpty": "Nothing will be sent: no segment carries a value.",
+      "headerName": "Header name",
+      "headerNameHint": "x-litellm-tags is always sent. Add a name here if your proxy reads a different header — with Tailscale Aperture, the tailnet admin chooses it.",
+      "sampleUser": "user",
+      "sampleProject": "project",
+      "disabledHint": "Sent only through your own endpoint. Set a custom API address above to enable labelling."
+    }
+  },
+  "nav": {},
+  "routeTitles": {},
+  "projectDetail": {
+    "ai": {
+      "title": "Project AI history",
+      "subtitle": "Conversations, agent actions and assistant usage for this project.",
+      "history": {
+        "heading": "Conversations",
+        "searchPlaceholder": "Search in this project's chats…",
+        "loadError": "Failed to load conversation history.",
+        "prevPage": "Previous page",
+        "nextPage": "Next page",
+        "pageOf": "Page {page} of {total}"
+      },
+      "sessions": {
+        "untitled": "Untitled chat",
+        "empty": "No conversations yet.",
+        "updateError": "Failed to update the conversation.",
+        "deleteError": "Failed to delete the conversation.",
+        "deleted": "Conversation deleted.",
+        "deleteTitle": "Delete conversation",
+        "deleteMessage": "Delete \"{title}\" and all its messages? This cannot be undone.",
+        "renameLabel": "Rename conversation",
+        "pin": "Pin",
+        "unpin": "Unpin",
+        "messageCount": "{count} msg."
+      },
+      "search": {
+        "empty": "No messages match your search."
+      },
+      "journal": {
+        "heading": "AI action journal",
+        "empty": "The assistant hasn't performed any actions in this project yet.",
+        "error": "Failed to load the action journal.",
+        "showRead": "Show read-only actions",
+        "openSession": "Open conversation",
+        "affected": "{count} objects affected",
+        "permission": {
+          "READ": "Read",
+          "WRITE": "Write",
+          "DESTRUCTIVE": "Destructive",
+          "unknown": "Unknown"
+        },
+        "status": {
+          "executed": "executed",
+          "pending": "awaiting confirmation",
+          "cancelled": "cancelled"
+        }
+      },
+      "charts": {
+        "error": "Failed to load usage charts.",
+        "activityTitle": "Assistant messages",
+        "tokensTitle": "Tokens per day",
+        "messages": "Messages",
+        "toolActions": "Tool actions",
+        "tokens": "Tokens",
+        "noData": "No data for this period.",
+        "totalRequests": "{count} requests",
+        "totalTokens": "{count} tokens",
+        "totalErrors": "{count} errors",
+        "toolsByLevel": "Tool calls by level",
+        "toolCalls": "Tool calls"
+      }
+    },
+    "tabs": {
+      "ai": "AI History"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "mk-plugin-mcp",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "description": "MakeKeeper MCP server — exposes the instance's agent tools to MCP clients over streamable HTTP.",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0"
+  },
+  "scripts": {
+    "test": "esbuild src/*.test.ts --bundle --platform=node --format=esm --target=node22 --outdir=.test-build --external:node:* --external:@modelcontextprotocol/* --alias:@makekeeper/plugin-sdk=../../libs/plugin-sdk/src/index.ts --alias:@makekeeper/plugin-contract=../../libs/plugin-contract/src/index.ts && node --test \".test-build/**/*.test.js\""
+  }
+}

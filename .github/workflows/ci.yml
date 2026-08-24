@@ -1,0 +1,35 @@
+# GitHub-flavoured port of `.forgejo/workflows/ci.yml`, published into the
+# GitHub copy as `.github/workflows/ci.yml` by `publish-github.yml`.
+#
+# It lives here rather than under `.github/workflows/` because Forgejo Actions
+# also picks workflows up from `.github/workflows` — a file at the final path
+# would run this job a second time on every push to this repository.
+#
+# Keep the Prettier version in step with the Forgejo workflow and with the
+# repo's devDependency: three copies of the number, one meaning.
+name: ci
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Node
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '22'
+
+      - name: Prettier check
+        run: npx --yes prettier@3.6.2 --check "apps/**/*.{ts,vue,json}" "libs/**/*.{ts,vue,json}" "plugins/**/*.{ts,json}"

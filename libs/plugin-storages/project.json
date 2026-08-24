@@ -1,0 +1,8 @@
+{
+  "name": "plugin-storages",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-storages/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:storages"],
+  "targets": {}
+}

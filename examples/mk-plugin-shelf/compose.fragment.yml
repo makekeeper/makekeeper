@@ -1,0 +1,19 @@
+# Paste this service into your MakeKeeper compose stack, set MK_INSTALL_TOKEN
+# from Settings → External plugins → "Generate install token", and start it.
+# The plugin registers itself; then approve it on the same screen.
+services:
+  mk-plugin-shelf:
+    image: ghcr.io/makekeeper/mk-plugin-shelf:latest
+    restart: unless-stopped
+    environment:
+      # Reachable from the CORE container, not from your browser.
+      MK_CORE_URL: http://app:3000
+      MK_PLUGIN_URL: http://mk-plugin-shelf:4400
+      MK_INSTALL_TOKEN: "paste-once-here"
+      # Persist the issued secret so restarts re-announce instead of reinstall.
+      MK_STATE_DIR: /data
+    volumes:
+      - mk-plugin-shelf-data:/data
+
+volumes:
+  mk-plugin-shelf-data:

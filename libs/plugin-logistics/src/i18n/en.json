@@ -1,0 +1,427 @@
+{
+  "agentConfirm": {
+    "create_order": "Create an order at «{store}» with {count} item(s)?",
+    "update_order_status": "Change status of the order at «{store}» to {status}?",
+    "delete_order": "Delete the order at «{store}»? Received stock will be reversed.",
+    "create_supplier": "Create supplier «{name}»?",
+    "update_supplier": "Update supplier «{name}»?",
+    "delete_supplier": "Delete supplier «{name}»?",
+    "refresh_tracking": "Refresh parcel tracking for the order at «{store}»?",
+    "receive_order_items": "Receive items for the order at «{store}»?",
+    "create_return": "Open a return for the order at «{store}»?",
+    "update_return_status": "Set the return status to {status}?"
+  },
+  "logistics": {
+    "page": {
+      "title": "Logistics",
+      "subtitle": "Purchase planning and parcel tracking."
+    },
+    "shoppingList": {
+      "title": "Shopping list",
+      "needsQty": "Required: {qty} pcs.",
+      "warehouseEquipped": "Warehouse fully stocked!",
+      "allDeficitsClosed": "All deficits closed.",
+      "createOrder": "Create order",
+      "copy": "Copy",
+      "exportCsv": "CSV"
+    },
+    "parcelTracking": {
+      "title": "Parcel tracking",
+      "addOrder": "Add order",
+      "trackingNumber": "Tracking number",
+      "noTrack": "No tracking",
+      "itemsInOrder": "Items in order",
+      "itemsCount": "{count} pcs.",
+      "cost": "Cost",
+      "delivered": "Delivered",
+      "expected": "Expected",
+      "searchPlaceholder": "Search by store or tracking…",
+      "filterAll": "All statuses",
+      "filterAllProjects": "All projects",
+      "noResults": "No orders match the filter.",
+      "edit": "Edit order",
+      "delete": "Delete order"
+    },
+    "confirm": {
+      "deleteOrder": "Delete the order at «{store}»? Any received stock will be reversed."
+    },
+    "toasts": {
+      "orderDeleted": "Order deleted",
+      "orderSaved": "Order saved",
+      "listCopied": "Shopping list copied to clipboard",
+      "supplierSaved": "Supplier saved",
+      "itemsReceived": "Items received",
+      "returnCreated": "Return opened"
+    },
+    "status": {
+      "CART": "Draft",
+      "ORDERED": "Ordered",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered"
+    },
+    "agentTools": {
+      "list_orders": {
+        "description": "Returns the list of purchase orders with their statuses, store, tracking number and contents. Use it to check the delivery status of components."
+      },
+      "get_shopping_list": {
+        "description": "Returns an aggregated list of parts missing for project needs (what to buy). Use it to build a new order."
+      },
+      "create_order": {
+        "description": "Creates a new order to purchase components from a store with the specified line items.",
+        "params": {
+          "storeName": "Store/supplier name",
+          "trackingNumber": "Shipment tracking number. Optional.",
+          "trackingUrl": "Tracking link (URL). Optional.",
+          "estimatedDelivery": "Estimated delivery date (ISO, e.g. 2026-08-01). Optional.",
+          "totalCost": "Total order cost. Optional.",
+          "currency": "Currency code (USD, EUR, RUB, CNY, GBP). Optional, defaults to USD.",
+          "supplierId": "Supplier id to link the order to (from list_suppliers). Optional.",
+          "projectId": "Project id to attribute this order's cost to. Optional.",
+          "items": "Order line items. Each: componentId (component ID), quantity, unitPrice (price per unit).",
+          "itemsItem": "Order line item",
+          "storageId": "Destination ROOT storage the parcel arrives at (top-level storage id or its mk://storages/storage/... reference). Optional. On receiving, components without a placement inherit this storage."
+        }
+      },
+      "update_order_status": {
+        "description": "Updates the order status (one of CART, ORDERED, SHIPPED, DELIVERED). When switching to DELIVERED, component stock is received into the warehouse; leaving DELIVERED reverses that intake.",
+        "params": {
+          "orderId": "Order identifier",
+          "status": "New order status (CART, ORDERED, SHIPPED or DELIVERED)"
+        }
+      },
+      "delete_order": {
+        "description": "Permanently deletes an order and its line items. If the order was DELIVERED, the received stock is reversed off the warehouse first.",
+        "params": {
+          "orderId": "Order identifier"
+        }
+      },
+      "list_suppliers": {
+        "description": "Returns the directory of suppliers/stores (name, url, country, tracking-URL template). Use it to resolve a supplier id for create_order."
+      },
+      "create_supplier": {
+        "description": "Adds a supplier/store to the directory.",
+        "params": {
+          "name": "Supplier/store name",
+          "url": "Website URL. Optional.",
+          "country": "Country. Optional.",
+          "trackingUrlTemplate": "Tracking URL template with a tracking-number placeholder. Optional.",
+          "notes": "Free-form notes. Optional."
+        }
+      },
+      "update_supplier": {
+        "description": "Updates a supplier's details (full replace of editable fields).",
+        "params": {
+          "supplierId": "Supplier identifier",
+          "name": "Supplier/store name",
+          "url": "Website URL. Optional.",
+          "country": "Country. Optional.",
+          "trackingUrlTemplate": "Tracking URL template with a tracking-number placeholder. Optional.",
+          "notes": "Free-form notes. Optional."
+        }
+      },
+      "delete_supplier": {
+        "description": "Deletes a supplier from the directory. Existing orders keep their store name and just lose the structured link.",
+        "params": {
+          "supplierId": "Supplier identifier"
+        }
+      },
+      "get_tracking": {
+        "description": "Returns the stored parcel-tracking checkpoints for an order, newest first.",
+        "params": {
+          "orderId": "Order identifier"
+        }
+      },
+      "refresh_tracking": {
+        "description": "Polls the configured tracking provider for an order now, updating its checkpoints and advancing ORDERED to SHIPPED on movement.",
+        "params": {
+          "orderId": "Order identifier"
+        }
+      },
+      "receive_order_items": {
+        "description": "Receives ordered items into stock line by line (partial deliveries). Idempotent — receiving to the same amount twice adds stock only once. When every line is fully received the order becomes DELIVERED.",
+        "params": {
+          "orderId": "Order identifier",
+          "lines": "Lines to receive. Each: orderComponentId (order line ID), receivedQty (total received so far for that line).",
+          "linesItem": "A received line"
+        }
+      },
+      "list_returns": {
+        "description": "Returns the return/RMA requests, optionally filtered to one order.",
+        "params": {
+          "orderId": "Order identifier to filter by. Optional."
+        }
+      },
+      "create_return": {
+        "description": "Opens a return/RMA for an order. If a componentId is given, the returned units are removed from stock (a RETURN movement).",
+        "params": {
+          "orderId": "Order identifier",
+          "componentId": "Component being returned. Optional.",
+          "quantity": "Number of units returned.",
+          "reason": "Reason for the return. Optional.",
+          "trackingNumber": "Return-shipment tracking number. Optional."
+        }
+      },
+      "update_return_status": {
+        "description": "Updates a return's status (INITIATED, SHIPPED_BACK or REFUND_RECEIVED).",
+        "params": {
+          "returnId": "Return identifier",
+          "status": "New return status"
+        }
+      },
+      "import_order_from_image": {
+        "description": "Extracts a reviewable order draft (store, items, prices, tracking) from a screenshot at the given uploads URL. Does not create the order.",
+        "params": {
+          "imageUrl": "URL of an uploaded image (/api/uploads/:id)"
+        }
+      }
+    },
+    "errors": {
+      "orderNotFound": "Order not found",
+      "supplierNotFound": "Supplier not found",
+      "loadFailed": "Failed to load logistics data",
+      "statusUpdateFailed": "Failed to update order status",
+      "componentsLoadFailed": "Failed to load components",
+      "deleteFailed": "Failed to delete order",
+      "loadOrderFailed": "Failed to load order",
+      "supplierSaveFailed": "Failed to save supplier",
+      "trackingRefreshFailed": "Failed to refresh tracking",
+      "returnNotFound": "Return not found",
+      "receiveFailed": "Failed to receive items",
+      "returnFailed": "Failed to save return",
+      "importNoImage": "No image provided",
+      "importNoProvider": "No AI provider configured — set one in Settings",
+      "importUnavailable": "Screenshot import needs the AI Chat plugin — enable it in Settings",
+      "importParseFailed": "Could not read an order from the image",
+      "importFailed": "Failed to import from image",
+      "secretUnavailable": "Cannot store the password: set APP_SECRET (or JWT_SECRET) on the server first",
+      "destinationNotRoot": "The order destination must be a top-level (root) storage."
+    },
+    "tracking": {
+      "refresh": "Refresh tracking",
+      "noEvents": "No tracking events yet.",
+      "inTransitDays": "{days} d in transit",
+      "latest": "Latest",
+      "showEarlier": "Show {count} earlier events",
+      "showLatestOnly": "Show latest only"
+    },
+    "settings": {
+      "subtitle": "Connect a tracking provider to auto-update parcel status.",
+      "provider": "Provider",
+      "providerNone": "Off",
+      "authMode": "Authentication",
+      "authApiKey": "API key",
+      "authCredentials": "Account login / password",
+      "login": "Account email",
+      "loginPlaceholder": "you@example.com",
+      "password": "Account password",
+      "passwordEmpty": "Your 17track account password",
+      "credentialsHint": "Uses your free 17track web account (like the Home Assistant integration). Add parcels in the 17track app; the password is encrypted at rest.",
+      "apiKey": "API key",
+      "apiKeyEmpty": "Paste the provider API key",
+      "keyHint": "The key is encrypted at rest. For safety, use a dedicated key scoped to tracking with a spend or rate limit so it can be revoked on its own.",
+      "autoTrack": "Auto-tracking",
+      "autoTrackHint": "Periodically poll in-transit orders in the background.",
+      "interval": "Poll interval (hours)",
+      "save": "Save",
+      "saved": "Settings saved",
+      "saveFailed": "Failed to save settings",
+      "test": "Test",
+      "testOk": "Connection OK",
+      "testFail": "Connection failed — check the key",
+      "testNoKey": "Select a provider and enter a key first"
+    },
+    "prompt": {
+      "importSystem": "You extract a purchase order from a screenshot of an online-store order page (Amazon, Temu, AliExpress, LCSC, a local shop, etc.). Reply with ONLY a JSON object, no prose and no markdown fences. Top-level fields: storeName (string), currency (ISO code such as USD, EUR, RUB or CNY), totalCost (number), trackingNumber (string), orderDate (in YYYY-MM-DD form), items (array). Each item has: name (string), sku (string), quantity (number), unitPrice (number — the price of a single unit). Use an empty string or 0 for anything not visible in the image. Never invent data that is not shown.",
+      "importUser": "Extract this order from the screenshot as JSON."
+    },
+    "notes": {
+      "orderReceived": "Received against order at store {storeName}",
+      "orderReverted": "Reversed intake for order at store {storeName}",
+      "returnCreated": "Return against order at store {storeName}"
+    },
+    "receive": {
+      "title": "Receive items",
+      "receivedOf": "{received} of {total}",
+      "receiveAll": "Receive all",
+      "save": "Save receipt",
+      "open": "Receive"
+    },
+    "returns": {
+      "title": "Returns",
+      "create": "New return",
+      "component": "Component",
+      "wholeOrder": "Whole order",
+      "quantity": "Quantity",
+      "reason": "Reason",
+      "trackingNumber": "Return tracking",
+      "submit": "Open return",
+      "empty": "No returns.",
+      "statuses": {
+        "INITIATED": "Initiated",
+        "SHIPPED_BACK": "Shipped back",
+        "REFUND_RECEIVED": "Refund received"
+      }
+    },
+    "budget": {
+      "spent": "Spent",
+      "planned": "Budget",
+      "over": "Over budget"
+    },
+    "card": {
+      "destination": "Destination",
+      "receivedOfOrdered": "{received} of {ordered} received",
+      "tabContents": "Contents",
+      "tabTracking": "Tracking",
+      "sections": "Order details"
+    },
+    "uxFeatures": {
+      "fullStatuses": "Full order lifecycle (draft & shipped)",
+      "returns": "Returns / RMA",
+      "tracking": "Parcel tracking",
+      "suppliers": "Supplier management",
+      "listFilters": "List filters & budget banner",
+      "orderExtras": "Order currency",
+      "projectTab": "Logistics tab",
+      "importFromImage": "Order import from a screenshot"
+    },
+    "import": {
+      "button": "Import from screenshot",
+      "title": "Import order from screenshot",
+      "subtitle": "Upload or paste a screenshot of an order (Amazon, Temu, AliExpress…) — AI extracts the items for review.",
+      "chooseFile": "Choose image",
+      "dropHere": "Drag & drop or click to choose an image",
+      "pasteHint": "…or paste a screenshot with Ctrl/Cmd+V",
+      "captureLabel": "Logistics import",
+      "extracting": "Reading the order…",
+      "createNew": "＋ Create new component",
+      "back": "Back",
+      "create": "Create order",
+      "noItems": "No items extracted.",
+      "unnamed": "Unnamed item",
+      "unknownStore": "Unknown store"
+    },
+    "fallbacks": {
+      "unknownDelivery": "Unknown"
+    },
+    "form": {
+      "backToLogistics": "Back to logistics",
+      "newOrderTitle": "New component order",
+      "editOrderTitle": "Edit order",
+      "subtitle": "Create a new order, track tracking number, and link items to component storage.",
+      "editSubtitle": "Update delivery details and line items.",
+      "saveDraft": "Save as draft",
+      "saveChanges": "Save changes",
+      "deliveryInfo": "Delivery information",
+      "storeLabel": "Store / Supplier *",
+      "storePlaceholder": "E.g., AliExpress, Chip & Dip",
+      "trackingLabel": "Tracking number",
+      "trackingPlaceholder": "E.g., LC987654321CN",
+      "trackingUrlLabel": "Tracking link",
+      "deliveryDateLabel": "Estimated delivery date",
+      "currencyLabel": "Currency",
+      "supplierLabel": "Supplier",
+      "supplierNone": "No supplier",
+      "projectLabel": "Project",
+      "projectNone": "No project",
+      "storageLabel": "Deliver to storage",
+      "storageNone": "No destination",
+      "storageHint": "Received parts without a place are put here",
+      "addSupplier": "New supplier",
+      "supplierModalTitle": "New supplier",
+      "supplierName": "Name *",
+      "supplierUrl": "Website",
+      "supplierCountry": "Country",
+      "supplierTrackingTemplate": "Tracking URL template",
+      "supplierTrackingHint": "Use {'{'}tracking{'}'} where the number goes.",
+      "supplierNotes": "Notes",
+      "saveSupplier": "Save supplier",
+      "totalCostLabel": "Total order cost",
+      "totalCostDesc": "Automatically calculated from the sum of all items.",
+      "orderContent": "Order content",
+      "createComponent": "Create component",
+      "addItem": "Add item",
+      "noItems": "No items in order.",
+      "addFirst": "Add first",
+      "componentLabel": "Component *",
+      "componentPlaceholder": "Select from warehouse catalog...",
+      "quantityLabel": "Quantity",
+      "unitPriceLabel": "Price per unit",
+      "cancel": "Cancel",
+      "placeOrder": "Place order",
+      "selectComponentsAlert": "Please select components for all order lines.",
+      "orderErrorAlert": "Error placing the order"
+    },
+    "dashboard": {
+      "incoming": "Expected deliveries",
+      "incomingOrders": "On the way",
+      "eta": "Expected: {date}",
+      "noEta": "No delivery estimate",
+      "more": "{count} more",
+      "noIncoming": "Nothing on the way",
+      "noIncomingHint": "Orders you place will show up here until they are delivered.",
+      "loadFailed": "Failed to load orders",
+      "spend": "Purchase spend",
+      "spendHint": "{total} {currency} spent in the last 12 weeks; the second line shows items still in transit by their order week.",
+      "spendAria": "Line chart: purchase spend and in-transit item counts per week over the last 12 weeks (each series on its own scale), {total} {currency} total.",
+      "noSpend": "No purchases yet",
+      "noSpendHint": "Weekly spending will appear here once you place orders.",
+      "seriesInTransit": "Items in transit"
+    },
+    "exchange": {
+      "sections": {
+        "orders": "Orders, suppliers and tracking",
+        "all": "All orders and suppliers (full backup)",
+        "settings": "Tracking provider settings (secrets)"
+      }
+    },
+    "bench": {
+      "newOrder": "New order"
+    }
+  },
+  "nav": {
+    "logistics": "Logistics"
+  },
+  "routeTitles": {
+    "logistics": "Purchases & Delivery",
+    "logistics-new": "New Order",
+    "logistics-edit": "Edit Order"
+  },
+  "plugins": {
+    "logistics": {
+      "name": "Logistics",
+      "description": "Purchase planning and parcel tracking"
+    }
+  },
+  "projectDetail": {
+    "logisticsTitle": "Project Deliveries",
+    "logisticsSubtitle": "This list shows orders containing parts required for this project.",
+    "noOrders": "No linked deliveries",
+    "noOrdersHint": "Once you order missing components, the deliveries will show up here.",
+    "trackingNumber": "Tracking Number",
+    "itemsCount": "Parts in Order",
+    "pcsCount": "{count} pcs.",
+    "cost": "Cost",
+    "expected": "Expected",
+    "unknownEta": "Unknown",
+    "tabs": {
+      "logistics": "Logistics"
+    },
+    "shopping": {
+      "order": "Create order"
+    }
+  },
+  "taskForm": {
+    "deliveryDependenciesTitle": "Delivery Dependencies",
+    "noLinkedOrders": "No linked deliveries.",
+    "selectOrderPlaceholder": "Link to order...",
+    "createMissingOrderBtn": "+ Create and link new delivery",
+    "quickOrderTitle": "Quick Delivery Setup",
+    "quickStorePlaceholder": "Store (AliExpress)",
+    "quickTrackingPlaceholder": "Tracking Number",
+    "orderItemsTitle": "Order Items",
+    "addOrderItemBtn": "Add Item",
+    "itemPlaceholder": "Part...",
+    "markReceived": "Mark as received",
+    "removeReceivedMark": "Remove receipt mark"
+  }
+}

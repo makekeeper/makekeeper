@@ -1,0 +1,36 @@
+{
+  "name": "MakeKeeper Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "containerEnv": {
+    "NX_DAEMON": "true"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "Prisma.prisma",
+        "Vue.volar",
+        "nrwl.angular-console",
+        "ms-vscode-remote.remote-containers",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+  "forwardPorts": [8080],
+  "postCreateCommand": "chmod +x .devcontainer/startup.sh .devcontainer/install-codebase-memory.sh && npm install -g nx @nestjs/cli && (bash .devcontainer/install-codebase-memory.sh || true)",
+  "postStartCommand": "bash .devcontainer/startup.sh",
+  "runArgs": [
+    "--name",
+    "makekeeper",
+    "-p", "8080:8080"
+  ],
+  "remoteUser": "node"
+}

@@ -1,0 +1,384 @@
+{
+  "settings": {
+    "agentCapabilities": {
+      "title": "AI Agent Capabilities (Permissions)",
+      "subtitle": "Configure execution policies and safety levels for each system capability.",
+      "toolName": "Tool Name",
+      "description": "Action Description",
+      "permission": "Risk Level",
+      "policy": "Execution Policy",
+      "policyAuto": "Auto-run",
+      "policyConfirm": "Require Confirmation",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "toggleAria": "Toggle {name}",
+      "saveSuccess": "Tool settings saved successfully",
+      "toolsCount": "{count} tools",
+      "empty": "No agent capabilities are registered yet.",
+      "sections": {
+        "ariaLabel": "Plugins with agent tools",
+        "autoRun": "Tools that change data and run without asking: {count}. READ tools always run without asking and are not counted."
+      },
+      "saveFailed": "Saving the tool setting failed",
+      "loadError": "Could not load the agent capabilities.",
+      "policyAria": "Execution policy for {name}"
+    },
+    "pluginSettings": {
+      "title": "Plugin Settings",
+      "subtitle": "Configure settings exposed by each installed plugin.",
+      "empty": "No plugin has its own settings yet.",
+      "version": "v{version}",
+      "sections": {
+        "ariaLabel": "Plugins with settings"
+      }
+    },
+    "pluginsAdmin": {
+      "title": "Plugins",
+      "subtitle": "Enable or disable installed plugins. Core plugins cannot be turned off.",
+      "core": "Core",
+      "coreHint": "Core plugin — cannot be disabled",
+      "enable": "Enable plugin",
+      "disable": "Disable plugin",
+      "coreGroup": "Core",
+      "optionalGroup": "Additional",
+      "count": "{count} plugins"
+    },
+    "updates": {
+      "title": "Version & Updates",
+      "subtitle": "See the installed version and check whether a newer release is available.",
+      "currentVersion": "Installed version",
+      "updateAvailable": "Update available",
+      "upToDate": "Up to date",
+      "newVersion": "A newer version ({version}) is available.",
+      "viewRelease": "Release notes",
+      "checkNow": "Check for updates",
+      "lastChecked": "Last checked: {time}",
+      "neverChecked": "never",
+      "unreachable": "Couldn't reach the update source on the last check.",
+      "auto": {
+        "title": "Check automatically",
+        "hint": "Check once a day for a newer version. This contacts GitHub — off by default.",
+        "hour": "Check at (UTC)"
+      },
+      "toast": {
+        "checkFailed": "Couldn't check for updates.",
+        "updateFound": "Update available: {version}",
+        "upToDate": "You're on the latest version.",
+        "saved": "Update settings saved.",
+        "saveFailed": "Couldn't save update settings."
+      },
+      "loadError": "Couldn’t load update information.",
+      "install": {
+        "loadError": "Could not load installation diagnostics.",
+        "method": "Install method",
+        "environment": "Environment",
+        "confidence": "Detection",
+        "container": "Container",
+        "host": "Host (no container)",
+        "methods": {
+          "install-sh": "Install script (install.sh)",
+          "compose": "Docker Compose",
+          "coolify": "Coolify",
+          "dokploy": "Dokploy",
+          "portainer": "Portainer",
+          "kubernetes": "Kubernetes",
+          "dev": "Development",
+          "unknown": "Not determined"
+        },
+        "confidences": {
+          "declared": "Declared by the deployment",
+          "inferred": "Inferred from the environment",
+          "guessed": "Guess — set MK_INSTALL_METHOD to make it exact"
+        }
+      },
+      "guide": {
+        "title": "How to update",
+        "hint": "Steps for this install method. Run them on the machine hosting the instance.",
+        "notes": {
+          "install-sh": "Re-run the installer's update helper from the folder it created.",
+          "compose": "Pull the new image and recreate the containers. Migrations run automatically on start.",
+          "coolify": "Open the resource in Coolify and press Redeploy (with “Pull latest images” enabled).",
+          "dokploy": "Open the application in Dokploy and press Deploy — it re-pulls the image.",
+          "portainer": "Open the stack in Portainer and press Update the stack with “Re-pull image” enabled.",
+          "kubernetes": "Point the deployment at the new image tag and wait for the rollout.",
+          "dev": "Pull the sources and reinstall dependencies, then restart the dev servers.",
+          "unknown": "The install method is unknown. Set MK_INSTALL_METHOD on the instance to get exact steps, or follow your deployment manager's redeploy action."
+        },
+        "backupWarning": "Back up the database and uploads before updating — migrations are forward-only.",
+        "copy": "Copy commands",
+        "copied": "Commands copied to the clipboard.",
+        "copyFailed": "Couldn't copy the commands — select and copy them manually."
+      },
+      "hook": {
+        "title": "One-click update",
+        "hint": "Paste the deploy webhook of your own deployment manager. “Update now” calls it so the manager pulls the new image and redeploys. Nothing is sent to us.",
+        "detected": "This instance looks like {method} — paste its deploy hook here.",
+        "source": {
+          "title": "Where do I get this hook?",
+          "hint": "Pick your deployment manager — the hook lives in its own UI, you copy it once.",
+          "manager": "Deployment manager",
+          "otherLabel": "Something else",
+          "expects": "What the form needs: HTTP {method}, {token}",
+          "withToken": "bearer token required",
+          "withoutToken": "no bearer token — the URL itself authenticates",
+          "urlTemplate": "URL shape:",
+          "steps": {
+            "coolify": {
+              "1": "Open the resource you want redeployed in Coolify and copy its UUID — the last segment of the browser URL on the resource page.",
+              "2": "Go to Keys & Tokens → API tokens and create a token with the “deploy” permission. Coolify shows it only once.",
+              "3": "Paste that URL into “Deploy hook URL” with your Coolify host and that UUID, put the token in “Bearer token” and pick GET."
+            },
+            "dokploy": {
+              "1": "Open the application (or Docker Compose service) in Dokploy and enable “Auto Deploy” on the General tab.",
+              "2": "Switch to the Deployments tab and copy the Webhook URL shown there.",
+              "3": "Paste it into “Deploy hook URL” and pick POST. The URL already carries its token, so leave “Bearer token” empty."
+            },
+            "portainer": {
+              "1": "Open Stacks → your stack in Portainer and scroll to the Webhooks section.",
+              "2": "Turn on “Create a stack webhook” and click Copy link. Enable “Re-pull image” under automatic updates so the redeploy actually fetches the new image (Business Edition).",
+              "3": "Paste the link into “Deploy hook URL” and pick POST — no token is needed, the link itself is the secret."
+            },
+            "other": {
+              "1": "Any HTTP endpoint that redeploys this instance works: a CI job trigger, an Argo CD sync webhook, a Watchtower HTTP trigger or a script of your own.",
+              "2": "Paste its URL into “Deploy hook URL”, pick the HTTP method it expects and add a bearer token if it needs one. It is called exactly once per press, with no body."
+            }
+          }
+        },
+        "url": "Deploy hook URL",
+        "urlPlaceholder": "https://manager.example.com/api/deploy/…",
+        "urlHint": "Treated as a secret: some managers put the deploy token in the URL, so it is encrypted at rest and never shown again.",
+        "token": "Bearer token (optional)",
+        "tokenPlaceholder": "Leave blank if the URL already authenticates",
+        "method": "HTTP method",
+        "methodHint": "Coolify uses GET with a bearer token; Dokploy uses POST.",
+        "save": "Save",
+        "notConfigured": "No deploy hook configured yet.",
+        "notPermitted": "Deploy hook settings are only available to an administrator.",
+        "loadError": "Couldn't load the deploy-hook settings. Reload the page to try again.",
+        "updateNow": "Update now",
+        "redeploy": "Redeploy",
+        "lastTriggered": "Last triggered {time} — {outcome} ({detail})",
+        "outcomes": {
+          "never": "never triggered",
+          "ok": "accepted by the manager",
+          "failed": "the manager rejected it"
+        },
+        "statusCode": "HTTP {code}",
+        "noResponse": "no response",
+        "confirm": {
+          "title": "Redeploy this instance?",
+          "message": "This calls your deploy hook, which restarts the instance to pull the new version. Everyone is briefly disconnected. Make sure you have a fresh backup.",
+          "messageRedeploy": "No update is pending — this calls your deploy hook anyway and restarts the instance on the version your manager already has. Everyone is briefly disconnected. Make sure you have a fresh backup.",
+          "action": "Redeploy"
+        },
+        "toast": {
+          "saved": "Deploy hook saved.",
+          "saveFailed": "Couldn't save the deploy hook.",
+          "triggered": "Redeploy requested. The manager is pulling the new version.",
+          "triggerFailed": "The deploy hook call failed. Check the URL and token."
+        }
+      },
+      "sections": {
+        "ariaLabel": "Update sections",
+        "attention": "An update is available",
+        "version": {
+          "title": "Version",
+          "description": "What is installed, and whether anything newer exists."
+        },
+        "auto": {
+          "title": "Automatic checks",
+          "description": "When this instance looks for a new release."
+        },
+        "update": {
+          "title": "Update",
+          "description": "Your deploy hook, or the commands to do it by hand."
+        },
+        "install": {
+          "title": "Install method",
+          "description": "How this instance was deployed. Diagnostics only."
+        }
+      },
+      "reference": {
+        "title": "Setup reference",
+        "description": "Where to copy the deploy hook from, and how to update by hand. Read once while setting this up.",
+        "link": "Setup reference"
+      }
+    },
+    "agentTools": {
+      "list_agent_tools": {
+        "description": "Returns the list of registered agent tools and their configuration (whether enabled, confirmation policy). Use it to self-check the available capabilities."
+      }
+    },
+    "exchange": {
+      "sections": {
+        "instance": "Instance settings (plugins, agent tools)"
+      }
+    },
+    "errors": {
+      "deployHookNotConfigured": "No deploy hook is configured for this instance.",
+      "deployHookUrlInvalid": "The deploy hook must be an absolute http(s) URL.",
+      "deployHookUrlRequired": "Paste the deploy hook URL first — a token or method alone has nothing to call."
+    },
+    "disk": {
+      "title": "Disk usage",
+      "subtitle": "What the uploads directory on disk is made of, and the only cleanup that is safe without a retention policy.",
+      "refresh": "Refresh",
+      "loadFailed": "Could not read disk usage",
+      "emptyTitle": "Nothing stored yet",
+      "emptyHint": "No uploaded file has landed in this instance, so the uploads directory is empty.",
+      "total": "Total on disk",
+      "files": "{count} files",
+      "unit": {
+        "b": "B",
+        "kib": "KiB",
+        "mib": "MiB",
+        "gib": "GiB",
+        "tib": "TiB"
+      },
+      "composition": {
+        "originals": "Originals",
+        "derivatives": "Previews",
+        "unreferenced": "Unreferenced",
+        "unowned": "Unowned",
+        "reserved": "Plugin areas"
+      },
+      "compositionHint": {
+        "originals": "The uploaded files themselves. Cannot be regenerated.",
+        "derivatives": "Generated renditions. Can be rebuilt from the originals at any time.",
+        "unreferenced": "On disk, claimed by no record — what a cleanup would take first.",
+        "unowned": "Written by neither the attachment store nor a declared owner. Deletable by hand below.",
+        "reserved": "Declared by a plugin as its own area. Managed by that plugin, never deleted here."
+      },
+      "missingFiles": "{count} records point at a file that is no longer on disk. Their bytes are not counted above.",
+      "byOwner": "By plugin",
+      "ownerColumns": {
+        "plugin": "Plugin"
+      },
+      "ownerUndeclared": "Undetermined",
+      "byScope": "By owner",
+      "scopeUnowned": "No owner",
+      "cleanup": {
+        "hint": "{count} files ({size}) can be swept now.",
+        "keptHint": "{count} more are younger than {hours}h and stay put.",
+        "action": "Delete unreferenced",
+        "confirmTitle": "Delete unreferenced files?",
+        "confirmMessage": "{count} files ({size}) will be deleted. They are reachable by no attachment, project or chat, so nothing in the app can lose them.",
+        "confirmKept": "{count} more ({size}) are younger than {hours}h and will be kept — an upload still in flight looks the same from here.",
+        "done": "Deleted {count} files, freed {size}",
+        "skipped": "{count} files were left alone as too recent to judge",
+        "failed": "{count} files could not be deleted — see the server log",
+        "error": "Could not delete the unreferenced files",
+        "none": "Nothing to sweep — every stored file is either in use or too recent to judge."
+      },
+      "reserved": {
+        "title": "Plugin areas",
+        "hint": "Subtrees a plugin declared as its own — the phone-bridge keeps its downloaded tunnel client here, for instance. They count toward the total and are never deleted from this page.",
+        "owner": "reserved by {plugin}"
+      },
+      "browser": {
+        "title": "Browse files",
+        "root": "uploads",
+        "empty": "This directory is empty.",
+        "truncated": "Only the first {count} entries are shown; drill into a directory to see the rest. Selecting all picks the visible rows.",
+        "loadFailed": "Could not list this directory",
+        "selectAll": "Select everything deletable here",
+        "selection": "Selected: {count} files ({size})",
+        "clear": "Clear",
+        "delete": "Delete selected",
+        "reservedBy": "{plugin}",
+        "kind": {
+          "claimed": "in use",
+          "orphan": "unreferenced",
+          "unowned": "unowned",
+          "reserved": "plugin area",
+          "mixed": "mixed"
+        },
+        "confirmTitle": "Delete the selected files?",
+        "confirmMessage": "{count} files ({size}) will be deleted. Files in use and plugin areas are kept regardless of the selection.",
+        "confirmRecent": "Anything written in the last {hours}h is kept too.",
+        "deleted": "Deleted {count} files, freed {size}",
+        "kept": "Kept: {claimed} in use, {reserved} plugin-owned, {recent} too recent",
+        "failed": "{count} files could not be deleted — see the server log",
+        "deleteFailed": "Could not delete the selected files",
+        "pathLabel": "Current directory",
+        "up": "Up one level",
+        "columnName": "Name",
+        "columnFiles": "Files",
+        "columnSize": "Size",
+        "select": "Select {name}",
+        "noSelection": "Nothing selected",
+        "open": "Browse files"
+      }
+    },
+    "api": {
+      "title": "API access",
+      "subtitle": "Where this instance's REST API lives, where its interactive docs are, and the token a script authenticates with.",
+      "loadFailed": "Could not read the API details.",
+      "endpoint": {
+        "title": "Base address",
+        "description": "Prefix every call with this address.",
+        "copyLabel": "Copy the API base address",
+        "source": {
+          "override": "Taken from this instance's PUBLIC_BASE_URL setting.",
+          "request": "Derived from the proxy headers of this request — this browser sent no address of its own.",
+          "client": "The address this browser reached the app on. A script running on this machine can use it as is."
+        },
+        "openDocs": "Open API docs",
+        "docsHint": "Interactive OpenAPI docs — browsable, and callable straight from the page."
+      },
+      "token": {
+        "title": "Your token",
+        "description": "The API takes the same session token this browser holds, sent as a Bearer header.",
+        "reveal": "Show my token",
+        "hide": "Hide my token",
+        "copyLabel": "Copy my token",
+        "missing": "This browser holds no session token right now.",
+        "noAuth": "Authentication is off on this instance, so calls need no token at all. Enable the multi-user overlay to require one.",
+        "lifetimeDays": "{days} days",
+        "lifetimeHours": "{hours} hours",
+        "facts": {
+          "lifetime": "Valid for {lifetime} from the moment it was issued.",
+          "revocation": "It stops working on logout and after a password change.",
+          "sessionKey": "It carries no encryption session key, so a client using it cannot re-arm encrypted storage after a backend restart: endpoints that read stored secrets stay partly unavailable until someone signs in through the app again."
+        }
+      },
+      "obtain": {
+        "title": "Getting a token",
+        "description": "Three ways to the same value.",
+        "here": "Reveal the token this browser already holds with the button above.",
+        "curl": "Ask the API for one",
+        "usernamePlaceholder": "YOUR_LOGIN",
+        "passwordPlaceholder": "YOUR_PASSWORD",
+        "copyCommandLabel": "Copy the login command",
+        "swagger": "Press Authorize in the API docs: it trades a login and a password for a token and attaches it to every call you make there."
+      },
+      "otherTokens": {
+        "title": "The other tokens in this app",
+        "description": "The install token and the connection tokens of external plugins are a different family: they let a plugin container in, and none of them authenticates an API call.",
+        "open": "Open External plugins"
+      },
+      "uxFeature": "API access (base address, docs, token)"
+    }
+  },
+  "nav": {
+    "settings": "Settings",
+    "general": "General",
+    "agentCapabilities": "Agent Capabilities",
+    "plugins": "Plugins",
+    "updates": "Updates",
+    "disk": "Disk"
+  },
+  "routeTitles": {
+    "settings": "Settings and Connections",
+    "settings-agent": "AI Agent Capabilities",
+    "settings-plugins": "Plugins",
+    "settings-updates": "Version & Updates",
+    "settings-disk": "Disk usage"
+  },
+  "plugins": {
+    "settings": {
+      "name": "Settings",
+      "description": "AI provider connection and API key configuration"
+    }
+  }
+}

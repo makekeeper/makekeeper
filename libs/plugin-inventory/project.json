@@ -1,0 +1,8 @@
+{
+  "name": "plugin-inventory",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-inventory/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:inventory"],
+  "targets": {}
+}

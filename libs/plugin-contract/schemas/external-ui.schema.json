@@ -1,0 +1,369 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makekeeper.app/schemas/external-ui.schema.json",
+  "title": "MakeKeeper server-driven UI vocabulary",
+  "description": "Structural schema of the component tree an external plugin returns from a render, and of the action result. The core's sanitizer (plugin-contract external-ui.ts) is authoritative; its forward-compatibility rule is skip-don't-fail — an installed core drops unknown or malformed nodes instead of rejecting the screen, so a tree valid against a NEWER vocabulary still renders partially on an older core.",
+  "type": "object",
+  "$ref": "#/$defs/screen",
+  "$defs": {
+    "screen": {
+      "type": "object",
+      "required": ["title", "children"],
+      "properties": {
+        "title": { "$ref": "#/$defs/text" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "actionResult": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["screen"],
+          "properties": { "screen": { "$ref": "#/$defs/screen" } }
+        },
+        {
+          "type": "object",
+          "required": ["commands"],
+          "properties": {
+            "commands": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/command" }
+            }
+          }
+        }
+      ]
+    },
+    "text": {
+      "type": "object",
+      "required": ["key"],
+      "properties": {
+        "key": { "type": "string", "minLength": 1 },
+        "params": {
+          "type": "object",
+          "additionalProperties": { "type": ["string", "number"] }
+        }
+      }
+    },
+    "textOrString": {
+      "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/text" }]
+    },
+    "action": {
+      "type": "object",
+      "required": ["action"],
+      "properties": {
+        "action": { "type": "string", "minLength": 1 },
+        "params": {
+          "type": "object",
+          "additionalProperties": { "type": ["string", "number", "boolean"] }
+        }
+      }
+    },
+    "tone": { "enum": ["neutral", "success", "warning", "danger", "brand"] },
+    "buttonVariant": { "enum": ["primary", "secondary", "danger", "ghost"] },
+    "badge": {
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "text": { "$ref": "#/$defs/text" },
+        "tone": { "$ref": "#/$defs/tone" }
+      }
+    },
+    "rowAction": {
+      "type": "object",
+      "required": ["label", "onClick"],
+      "properties": {
+        "label": { "$ref": "#/$defs/text" },
+        "onClick": { "$ref": "#/$defs/action" },
+        "confirm": { "$ref": "#/$defs/text" },
+        "variant": { "$ref": "#/$defs/buttonVariant" }
+      }
+    },
+    "paging": {
+      "type": "object",
+      "required": ["page", "pageSize"],
+      "properties": {
+        "page": { "type": "integer", "minimum": 0 },
+        "pageSize": { "type": "integer", "minimum": 1 },
+        "total": { "type": "integer", "minimum": 0 },
+        "hasMore": { "type": "boolean" },
+        "pageParam": { "type": "string" },
+        "sort": {
+          "type": "object",
+          "required": ["key", "direction"],
+          "properties": {
+            "key": { "type": "string" },
+            "direction": { "enum": ["asc", "desc"] }
+          }
+        },
+        "sortParam": { "type": "string" },
+        "directionParam": { "type": "string" }
+      }
+    },
+    "node": {
+      "oneOf": [
+        { "$ref": "#/$defs/textNode" },
+        { "$ref": "#/$defs/badgeNode" },
+        { "$ref": "#/$defs/statNode" },
+        { "$ref": "#/$defs/calloutNode" },
+        { "$ref": "#/$defs/dividerNode" },
+        { "$ref": "#/$defs/buttonNode" },
+        { "$ref": "#/$defs/detailNode" },
+        { "$ref": "#/$defs/tableNode" },
+        { "$ref": "#/$defs/listNode" },
+        { "$ref": "#/$defs/formNode" },
+        { "$ref": "#/$defs/sectionNode" }
+      ]
+    },
+    "textNode": {
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "text" },
+        "text": { "$ref": "#/$defs/text" },
+        "variant": { "enum": ["body", "muted", "heading"] }
+      }
+    },
+    "badgeNode": {
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "badge" },
+        "text": { "$ref": "#/$defs/text" },
+        "tone": { "$ref": "#/$defs/tone" }
+      }
+    },
+    "statNode": {
+      "type": "object",
+      "required": ["type", "label", "value"],
+      "properties": {
+        "type": { "const": "stat" },
+        "label": { "$ref": "#/$defs/text" },
+        "value": { "type": "string" },
+        "unit": { "$ref": "#/$defs/text" },
+        "icon": { "type": "string" }
+      }
+    },
+    "calloutNode": {
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "callout" },
+        "text": { "$ref": "#/$defs/text" },
+        "tone": { "$ref": "#/$defs/tone" }
+      }
+    },
+    "dividerNode": {
+      "type": "object",
+      "required": ["type"],
+      "properties": { "type": { "const": "divider" } }
+    },
+    "buttonNode": {
+      "type": "object",
+      "required": ["type", "label", "onClick"],
+      "properties": {
+        "type": { "const": "button" },
+        "label": { "$ref": "#/$defs/text" },
+        "onClick": { "$ref": "#/$defs/action" },
+        "variant": { "$ref": "#/$defs/buttonVariant" },
+        "icon": { "type": "string" },
+        "confirm": { "$ref": "#/$defs/text" }
+      }
+    },
+    "detailNode": {
+      "type": "object",
+      "required": ["type", "rows"],
+      "properties": {
+        "type": { "const": "detail" },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "value"],
+            "properties": {
+              "label": { "$ref": "#/$defs/text" },
+              "value": { "$ref": "#/$defs/textOrString" },
+              "ref": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "tableNode": {
+      "type": "object",
+      "required": ["type", "columns", "rows"],
+      "properties": {
+        "type": { "const": "table" },
+        "paging": { "$ref": "#/$defs/paging" },
+        "filterable": { "type": "boolean" },
+        "pageSize": { "type": "integer", "minimum": 0 },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["key", "label"],
+            "properties": {
+              "key": { "type": "string", "minLength": 1 },
+              "label": { "$ref": "#/$defs/text" },
+              "align": { "enum": ["left", "right"] },
+              "sortable": { "type": "boolean" }
+            }
+          }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["cells"],
+            "properties": {
+              "cells": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "text": { "$ref": "#/$defs/textOrString" },
+                    "badge": { "$ref": "#/$defs/badge" },
+                    "ref": { "type": "string" }
+                  }
+                }
+              },
+              "onClick": { "$ref": "#/$defs/action" },
+              "action": { "$ref": "#/$defs/rowAction" }
+            }
+          }
+        },
+        "empty": { "$ref": "#/$defs/text" }
+      }
+    },
+    "listNode": {
+      "type": "object",
+      "required": ["type", "items"],
+      "properties": {
+        "type": { "const": "list" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["title"],
+            "properties": {
+              "title": { "$ref": "#/$defs/textOrString" },
+              "subtitle": { "$ref": "#/$defs/textOrString" },
+              "icon": { "type": "string" },
+              "ref": { "type": "string" },
+              "badge": { "$ref": "#/$defs/badge" },
+              "onClick": { "$ref": "#/$defs/action" },
+              "action": { "$ref": "#/$defs/rowAction" }
+            }
+          }
+        },
+        "empty": { "$ref": "#/$defs/text" },
+        "paging": { "$ref": "#/$defs/paging" }
+      }
+    },
+    "formNode": {
+      "type": "object",
+      "required": ["type", "fields", "submit"],
+      "properties": {
+        "type": { "const": "form" },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "label"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "reloadOnChange": { "type": "boolean" },
+              "type": {
+                "enum": [
+                  "text",
+                  "textarea",
+                  "number",
+                  "switch",
+                  "select",
+                  "date",
+                  "time",
+                  "password"
+                ]
+              },
+              "label": { "$ref": "#/$defs/text" },
+              "placeholderKey": { "type": "string" },
+              "hintKey": { "type": "string" },
+              "required": { "type": "boolean" },
+              "value": { "type": ["string", "number", "boolean"] },
+              "width": { "enum": ["full", "half"] },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["value", "label"],
+                  "properties": {
+                    "value": { "type": "string" },
+                    "label": { "$ref": "#/$defs/text" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "submit": {
+          "type": "object",
+          "required": ["label", "onSubmit"],
+          "properties": {
+            "label": { "$ref": "#/$defs/text" },
+            "onSubmit": { "$ref": "#/$defs/action" }
+          }
+        }
+      }
+    },
+    "sectionNode": {
+      "type": "object",
+      "required": ["type", "children"],
+      "properties": {
+        "type": { "const": "section" },
+        "title": { "$ref": "#/$defs/text" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "command": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["command", "tone", "text"],
+          "properties": {
+            "command": { "const": "toast" },
+            "tone": { "enum": ["success", "error"] },
+            "text": { "$ref": "#/$defs/text" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["command"],
+          "properties": {
+            "command": { "const": "navigate" },
+            "screen": { "type": "string" },
+            "params": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            },
+            "ref": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["command"],
+          "properties": {
+            "command": { "const": "refresh" },
+            "toast": {
+              "type": "object",
+              "required": ["tone", "text"],
+              "properties": {
+                "tone": { "enum": ["success", "error"] },
+                "text": { "$ref": "#/$defs/text" }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "backend-core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend-core/src",
+  "projectType": "library",
+  "tags": ["scope:backend", "type:core"],
+  "targets": {}
+}

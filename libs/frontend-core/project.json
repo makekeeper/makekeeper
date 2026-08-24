@@ -1,0 +1,8 @@
+{
+  "name": "frontend-core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend-core/src",
+  "projectType": "library",
+  "tags": ["scope:frontend", "type:core"],
+  "targets": {}
+}

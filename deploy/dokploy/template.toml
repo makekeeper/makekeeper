@@ -1,0 +1,35 @@
+# MakeKeeper — Dokploy template config (blueprint half; pairs with docker-compose.yml).
+#
+# Dokploy runs the ${...} generators below only when this config is imported as a
+# template — either via a Compose service's Advanced → Import (paste import.base64,
+# no hosting; see ../../INSTALL.md §(d)) or from a template base URL. On deploy it
+# resolves the generators, writes [config.env] to the stack .env (the compose reads
+# it), and attaches the generated public domain + TLS to `web:80` — nothing typed.
+# A plain Environment tab does NOT run these generators.
+#
+# Generators used (all produce URL-safe alphanumeric values):
+#   ${domain}       → a public domain assigned by Dokploy
+#   ${password:N}   → a random N-char password (>=32 satisfies APP_SECRET/JWT_SECRET)
+
+[variables]
+main_domain = "${domain}"
+postgres_password = "${password:32}"
+app_secret = "${password:48}"
+jwt_secret = "${password:48}"
+
+[config]
+# Written to the stack .env; the compose consumes them via ${VAR}. POSTGRES_USER,
+# POSTGRES_DB, IMAGE_* and TAG keep the compose defaults. Leave PUBLIC_BASE_URL
+# unset so the app derives it from Traefik's X-Forwarded-* headers.
+env = [
+  "POSTGRES_PASSWORD=${postgres_password}",
+  "APP_SECRET=${app_secret}",
+  "JWT_SECRET=${jwt_secret}",
+]
+mounts = []
+
+[[config.domains]]
+serviceName = "web"
+# The container port Traefik routes to — never part of the public URL (#208).
+port = 80
+host = "${main_domain}"

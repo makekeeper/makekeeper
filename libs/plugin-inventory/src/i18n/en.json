@@ -1,0 +1,678 @@
+{
+  "agentConfirm": {
+    "create_component": "Add new item «{name}» to storage?",
+    "move_component": "Move item «{name}» to a new location?",
+    "update_component": "Update the details of item «{name}»?",
+    "adjust_component_quantity": "Change the stock of «{name}» by {amount} pcs?",
+    "delete_component": "Delete item «{name}» from storage?",
+    "reserve_component": "Reserve {qty} pcs of «{component}» for project «{project}»?",
+    "consume_component": "Write off {qty} pcs of «{component}» from the reserve into project «{project}»?",
+    "return_component": "Return {qty} pcs of «{component}» from project «{project}» back to stock?",
+    "create_item_category": "Create the category \"{name}\"?",
+    "update_item_category": "Change the category \"{name}\"?",
+    "add_category_property": "Add the property \"{name}\"?",
+    "update_category_property": "Change the property \"{name}\"?",
+    "delete_item_category": "Delete the category \"{name}\"? Its items keep their data as free-form fields.",
+    "delete_category_property": "Delete the property \"{name}\"? Filled values are kept as free-form fields."
+  },
+  "inventory": {
+    "cellScan": {
+      "contextLabel": "Filing into cell {cell}",
+      "place": "Put into {cell}",
+      "placed": "«{name}» moved to {cell}.",
+      "notFound": "Nothing matches the scanned code «{code}».",
+      "notAnItem": "Only an item can be put into a cell.",
+      "failed": "Could not move the item. Please try again."
+    },
+    "page": {
+      "title": "Inventory",
+      "subtitle": "Item and storage-location tracking."
+    },
+    "all": "All",
+    "searchPlaceholder": "Search by name, SKU, description...",
+    "addComponent": "Add item",
+    "component": "Item",
+    "category": "Category",
+    "noCategory": "No category",
+    "location": "Storage Location",
+    "price": "Price",
+    "lastPaid": "Last paid",
+    "quantity": "Quantity",
+    "actions": "Actions",
+    "noSku": "No SKU",
+    "lowStock": "Low stock! (min: {min})",
+    "editComponent": "Edit item",
+    "deleteFromWarehouse": "Delete from storage",
+    "descriptionAndSpecs": "Description and specifications:",
+    "usefulLinks": "Useful links:",
+    "paramsAndSpecs": "Parameters and characteristics:",
+    "movementHistory": "Item movement history:",
+    "loadingHistory": "Loading history...",
+    "noMovements": "No movements registered for this item yet.",
+    "noDescription": "No description",
+    "componentsNotFound": "Items not found",
+    "deleteConfirm": "Are you sure you want to delete this item from the warehouse?",
+    "deleteError": "Error deleting item",
+    "movementTypes": {
+      "PURCHASE": "Purchase",
+      "RESERVED": "Reserved",
+      "USED": "Used",
+      "ADJUSTMENT": "Adjustment",
+      "RETURN": "Return"
+    },
+    "form": {
+      "backToInventory": "Back to inventory",
+      "deleteComponent": "Delete item",
+      "editTitle": "Edit item",
+      "newTitle": "New item in storage",
+      "subtitle": "Configure item settings, specify description, links, and additional characteristics.",
+      "mainParams": "Main parameters",
+      "componentName": "Item Name *",
+      "namePlaceholder": "E.g., ESP32-WROOM-32D Development Board",
+      "skuLabel": "SKU / Article / Model",
+      "skuPlaceholder": "E.g., ESP32-WROOM-32D",
+      "skuDuplicateWarning": "This SKU is already used by:",
+      "categoryLabel": "Category",
+      "detailedDesc": "Detailed item description",
+      "editorPlaceholder": "Enter description, purpose, pin characteristics, and other information...",
+      "usefulLinks": "Useful links",
+      "add": "Add",
+      "noLinks": "No links. Add links to Datasheet, stores, guides, etc.",
+      "linkLabel": "Name (e.g., Datasheet)",
+      "linkPlaceholder": "Datasheet",
+      "urlLabel": "Link URL",
+      "linkNameColumn": "Name",
+      "linkUrlColumn": "Link",
+      "linkNoName": "(no name)",
+      "actions": "Actions",
+      "editLink": "Edit link",
+      "saveLink": "Save link",
+      "removeLink": "Remove link",
+      "saveSuccess": "Saved",
+      "stockControl": "Stock control",
+      "storageLocation": "Storage / Location",
+      "selectStorage": "Select storage/cell...",
+      "rowLabel": "Row",
+      "colLabel": "Column",
+      "currentStock": "Current stock (pcs)",
+      "minStock": "Min stock",
+      "minQuantityHint": "0 = don't track low stock",
+      "changeStock": "Change stock",
+      "quantityViaModal": "Stock changes are recorded from the inventory list",
+      "pricing": "Pricing",
+      "currency": "Currency",
+      "unitPrice": "Unit price",
+      "imageError": "Could not read the image",
+      "customSpecs": "Custom characteristics",
+      "noCustomSpecs": "No custom fields. Add voltage, pin pitch, package type, etc.",
+      "specKeyPlaceholder": "Field (e.g. Package)",
+      "specValuePlaceholder": "Value (e.g. SOP-8)",
+      "specKeyColumn": "Name",
+      "specValueColumn": "Value",
+      "specNoName": "(no name)",
+      "editSpec": "Edit characteristic",
+      "saveSpec": "Save characteristic",
+      "removeSpec": "Remove characteristic",
+      "cancel": "Cancel",
+      "saveComponent": "Save item",
+      "row": "Row {num}",
+      "column": "Column {char}",
+      "deleteConfirm": "Are you sure you want to delete this item?",
+      "saveError": "Error saving",
+      "deleteError": "Error deleting",
+      "currencies": {
+        "USD": "US Dollar",
+        "EUR": "Euro",
+        "RUB": "Ruble",
+        "CNY": "Yuan",
+        "GBP": "Pound sterling"
+      },
+      "unitLabel": "Unit",
+      "noCategory": "No category",
+      "categoryHint": "The category decides which properties this item carries.",
+      "categoryProperties": "Category properties",
+      "incomplete": "{count} not filled in",
+      "expected": "expected",
+      "noValue": "Not set",
+      "spilledToCustom": "Moved to free-form specs, {count} value(s): {names}. The new category does not define them.",
+      "photos": "Photographs",
+      "removePhotoConfirm": "Remove this photograph from the item? It will be deleted when you save."
+    },
+    "agentTools": {
+      "list_components": {
+        "description": "Returns the full list of items in storage: name, SKU, category, quantity, minimum stock, storage (storageId) and cell address (cellAddress, e.g. \"A1\"). Use it to find an item or check availability before reserving/ordering. Cell addressing: letter = column (A=column 0, B=column 1, …), number = row (row 0 → 1); the cell at row 0, column 0 is \"A1\". Always use ready-made addresses (cellAddress from tool responses or page context), do not compute them yourself. Each item also carries reservedTotal (quantity reserved across projects) and onOrder (quantity on active orders not yet delivered). Pass an optional query to search server-side by name, SKU, description, category and custom fields.",
+        "params": {
+          "query": "Optional free-text search filter (name, SKU, description, category, custom fields); omit to list everything."
+        }
+      },
+      "find_components_by_sku": {
+        "description": "Finds existing items with the exact given SKU (case-insensitive). Use it to check for a duplicate item before creating a new one. Returns id, name, sku and the canonical ref of each match (empty list when none).",
+        "params": {
+          "sku": "Stock-keeping unit (SKU) to look up."
+        }
+      },
+      "get_component_movements": {
+        "description": "Returns the movement history (receipts/withdrawals/adjustments) for the specified item. Use it to audit stock.",
+        "params": {
+          "componentId": "Item identifier"
+        }
+      },
+      "create_component": {
+        "description": "Creates a new item in the inventory. Only the name is required; category, quantity and minimum stock are optional (quantity and minimum stock default to 0; a minimum of 0 disables low-stock tracking). To place an item in a SPECIFIC cell of the storage grid, pass storageId AND cell (address, e.g. \"B1\") — without cell the item lands in storage without a cell binding. If the user has opened a cell (see page context), place it exactly there. Cell addressing: letter = column (A=column 0, B=column 1, …), number = row (row 0 → 1); the cell at row 0, column 0 is \"A1\". Always use ready-made addresses (cellAddress from tool responses or page context), do not compute them yourself.",
+        "params": {
+          "name": "Item name",
+          "quantity": "Current quantity (in the item's unit).",
+          "minQuantity": "Minimum stock (in the item's unit).",
+          "price": "Unit price",
+          "sku": "Article/SKU. Optional.",
+          "currency": "Currency. Optional.",
+          "storageId": "Storage cell ID. Optional.",
+          "cell": "Address of the storage grid cell to place the item in (e.g. \"B1\"). Requires storageId. Preferred method. Optional.",
+          "row": "Alternative to cell: row number (0-based). Specify together with col. Optional.",
+          "col": "Alternative to cell: column number (0-based). Specify together with row. Optional.",
+          "description": "Item description. Plain text or HTML. Optional.",
+          "links": "Array of useful links; each item is an object { label, url }. Optional.",
+          "linkItem": "A useful link: { label: display text, url: address }.",
+          "customFields": "Array of custom characteristics; each item is an object { key, value }. Optional.",
+          "customFieldItem": "A characteristic: { key: name, value: value }.",
+          "unit": "Measurement unit code (pcs, m, g, ml, roll, …). Optional; defaults to pcs.",
+          "categoryId": "Id (or mk:// reference) of an EXISTING item category. Call list_item_categories first and pick from it — never invent a category; if nothing fits, leave this empty and let the user create one.",
+          "propertyValues": "Values for the category's typed properties, as an object keyed by property id: {\"<propertyId>\": value}. Ids come from list_item_categories. Values that do not fit the declared type are ignored.",
+          "imageUrls": "The item's photographs, as a list of already-stored \"/api/uploads/:id\" URLs (for example ones another tool returned). The list IS the whole set — the first entry becomes the cover. Omit it for an item with no pictures; up to 5. Optional.",
+          "imageUrlItem": "One already-stored \"/api/uploads/:id\" photograph URL. It must be a picture the person actually provided — one this conversation carried, or one another tool returned. A URL that is invented, or that belongs to another item or project, is refused and the whole call fails."
+        }
+      },
+      "move_component": {
+        "description": "Moves an existing item: to another storage (storageId) and/or to a specific grid cell (cell, e.g. \"B1\"). Use it when the user asks to move an item to a cell/storage. To remove the cell binding, pass clearCell=true. Cell addressing: letter = column (A=column 0, B=column 1, …), number = row (row 0 → 1); the cell at row 0, column 0 is \"A1\". Always use ready-made addresses (cellAddress from tool responses or page context), do not compute them yourself.",
+        "params": {
+          "componentId": "Identifier of the item being moved",
+          "storageId": "Destination storage ID. Optional if only the cell of the current storage changes.",
+          "cell": "Address of the target grid cell (e.g. \"B1\"). Preferred method. Optional.",
+          "row": "Alternative to cell: row number (0-based). Specify together with col. Optional.",
+          "col": "Alternative to cell: column number (0-based). Specify together with row. Optional.",
+          "clearCell": "true — remove the item's cell binding (keep only the storage). Optional."
+        }
+      },
+      "update_component": {
+        "description": "Updates an item's attributes: name, SKU, category, minimum stock, description, photo. Does NOT change the on-hand quantity (use adjust_component_quantity) nor the storage/cell placement (use move_component). Pass componentId and only the fields you want to change.",
+        "params": {
+          "componentId": "Identifier of the item being updated",
+          "name": "New name. Optional.",
+          "sku": "New article/SKU. Optional.",
+          "description": "New description. Optional.",
+          "minQuantity": "New minimum stock, pcs. Optional.",
+          "price": "New unit price. Optional.",
+          "currency": "New currency. Optional.",
+          "unit": "Measurement unit code (pcs, m, g, ml, roll, …). Optional; defaults to pcs.",
+          "categoryId": "Id (or mk:// reference) of an existing item category; an empty string removes the item from its category. Values the new category does not define are kept as free-form key-value pairs, never deleted.",
+          "propertyValues": "Values for the category's typed properties, as an object keyed by property id. Only the properties passed are written; the rest keep their current values.",
+          "imageUrls": "REPLACES the item's photographs with this list of already-stored \"/api/uploads/:id\" URLs — it is the whole set, not an addition, and the first entry becomes the cover. An EMPTY list removes every photograph. Omit the parameter to leave the pictures untouched; up to 5. Optional.",
+          "imageUrlItem": "One already-stored \"/api/uploads/:id\" photograph URL. It must be a picture the person actually provided — one this conversation carried, or one another tool returned. A URL that is invented, or that belongs to another item or project, is refused and the whole call fails."
+        }
+      },
+      "adjust_component_quantity": {
+        "description": "Changes the quantity of an item in storage by the specified delta (positive or negative) and records a stock movement.",
+        "params": {
+          "componentId": "Item identifier",
+          "amount": "Quantity delta (e.g. 5 or -2)",
+          "type": "Movement type: ADJUSTMENT (default), PURCHASE (restock), USED (consumed) or RETURN (returned). Optional.",
+          "note": "Optional note stored with the movement."
+        }
+      },
+      "delete_component": {
+        "description": "Deletes an item from storage. WARNING: destructive action. The operation is forbidden if the item is used in projects, tasks or orders.",
+        "params": {
+          "componentId": "Identifier of the item being deleted"
+        }
+      },
+      "list_restock_needed": {
+        "description": "Returns items that need restocking, each with a suggested buy quantity (shortfall) — where free stock cannot cover the min-stock threshold or the unmet project demand. Use it to build a shopping list."
+      },
+      "reserve_component": {
+        "description": "Reserves the specified quantity of an item for a project (removes it from the general warehouse).",
+        "params": {
+          "projectId": "Project identifier",
+          "componentId": "Item identifier",
+          "qty": "Quantity to reserve"
+        }
+      },
+      "consume_component": {
+        "description": "Writes off (consumes) reserved stock into the project — the items leave inventory for good. Draws down the reserved quantity of the project link and records a USED movement. Does not change the item free quantity (already removed at reservation).",
+        "params": {
+          "projectId": "Project identifier",
+          "componentId": "Item identifier",
+          "qty": "Quantity to write off (from the reserved amount)"
+        }
+      },
+      "return_component": {
+        "description": "Returns unused reserved stock from the project back to the general warehouse. Draws down the reserved quantity and increases the item's free stock, recording a RETURN movement.",
+        "params": {
+          "projectId": "Project identifier",
+          "componentId": "Item identifier",
+          "qty": "Quantity to return (from the reserved amount)"
+        }
+      },
+      "list_item_categories": {
+        "description": "Lists the item categories with their own typed properties: id, name, parent, whether the category inherits its ancestors' properties, and each property's type, unit, options and whether it becomes a tag. Call this before creating or updating an item so the category and property ids are real."
+      },
+      "create_item_category": {
+        "description": "Creates an item category. A category owns a set of typed properties that every item in it carries; a child category adds to what it inherits from its parent.",
+        "params": {
+          "name": "Category name as the user would write it.",
+          "parentId": "Id (or mk:// reference) of the parent category. Omit for a top-level category.",
+          "inheritProperties": "Whether items in this category also carry the ancestors' properties. Defaults to true."
+        }
+      },
+      "update_item_category": {
+        "description": "Renames an item category, moves it under another parent, or switches inheritance of the ancestors' properties on or off.",
+        "params": {
+          "categoryId": "Id (or mk:// reference) of the category to change.",
+          "name": "New name.",
+          "parentId": "Id (or mk:// reference) of the new parent; an empty string moves the category to the top level.",
+          "inheritProperties": "Whether items in this category also carry the ancestors' properties."
+        }
+      },
+      "add_category_property": {
+        "description": "Adds a typed property to a category. The name must be free along the whole inheritance chain — a name already used by an ancestor or by an inheriting sub-category is rejected.",
+        "params": {
+          "categoryId": "Id (or mk:// reference) of the category the property belongs to.",
+          "name": "Property name as it should appear on the item card.",
+          "type": "text, number or select. A select property carries a closed list of allowed values.",
+          "unit": "Unit of measurement, for number properties only. Display-only and never converted, so \"Ohm\" and \"kOhm\" are two different properties.",
+          "required": "Marks the property as expected. It never blocks saving — an item missing it is only flagged as incomplete.",
+          "options": "Allowed values, for select properties only.",
+          "optionItem": "One allowed value."
+        }
+      },
+      "update_category_property": {
+        "description": "Changes a category property: its name, unit, whether it is expected, its allowed values, or whether it becomes a tag.",
+        "params": {
+          "propertyId": "Id of the property to change (from list_item_categories).",
+          "name": "New property name.",
+          "type": "New property type (text, number or select). Values stored under the old type move into the item’s free-form specs.",
+          "order": "Position of the property in the category list, from 0.",
+          "unit": "Unit of measurement, for number properties only.",
+          "required": "Marks the property as expected; it never blocks saving.",
+          "options": "Allowed values, for select properties only.",
+          "optionItem": "One allowed value."
+        }
+      },
+      "delete_item_category": {
+        "description": "Deletes an item category. Items in it are NOT deleted — they lose the category, and the values of its properties are kept on each item as free-form key-value pairs. Sub-categories move up to this category's parent.",
+        "params": {
+          "categoryId": "Id (or mk:// reference) of the category to delete."
+        }
+      },
+      "delete_category_property": {
+        "description": "Deletes a property from a category. The values items already carry are NOT lost — each is kept on its item as a free-form key-value pair.",
+        "params": {
+          "propertyId": "Id of the property to delete (from list_item_categories)."
+        }
+      }
+    },
+    "notes": {
+      "manualAdjustment": "Manual adjustment",
+      "initialStock": "Initial stock",
+      "directEdit": "Quantity edited directly"
+    },
+    "errors": {
+      "usedInProjects": "Cannot delete the item because it is used in projects: {names}",
+      "usedInTasks": "Cannot delete the item because it is linked to tasks: {names}",
+      "usedInOrders": "Cannot delete the item because it is present in delivery orders: {names}",
+      "malformedCell": "Malformed cell address: \"{cell}\". Expected the format \"A1\".",
+      "storageIdRequired": "To place an item into a cell, also specify the storage storageId.",
+      "moveTargetRequired": "Specify where to move: storageId and/or cell (cell address), or clearCell=true.",
+      "componentNotFound": "Item not found",
+      "invalidComponentRef": "Not a valid item reference: \"{ref}\". Expected an item id or a \"mk://inventory/component/<id>\" reference.",
+      "invalidStorageRef": "Not a valid storage reference: \"{ref}\". Expected a storage id or a \"mk://storages/storage/<id>\" reference.",
+      "listLoadFailed": "Failed to load items",
+      "recognizeUnavailable": "Photo recognition needs the AI Assistant plugin to be enabled and configured",
+      "recognizeNoProvider": "No AI provider is configured, so the photo cannot be recognized",
+      "recognizeNoImage": "The photo could not be stored",
+      "recognizeParseFailed": "The part could not be recognized from this photo",
+      "draftNotFound": "Draft not found",
+      "draftNeedsName": "This draft needs a name before it can be saved",
+      "draftFramesFull": "This item already holds {max} photographs — the frame was not added",
+      "photoNotStored": "A photograph must be an already-uploaded picture, not image data",
+      "photoUnknown": "No such picture: \"{url}\"",
+      "photoOwnedElsewhere": "This picture already belongs to another record: \"{url}\"",
+      "adjustWouldGoNegative": "There is not enough of “{name}” in stock for this change",
+      "adjustConflict": "The stock changed while this was being applied — try again",
+      "categoryNotFound": "Category not found.",
+      "propertyNotFound": "Property not found.",
+      "categoryCycle": "A category cannot be moved inside itself or one of its own sub-categories.",
+      "propertyNameTaken": "The property \"{name}\" already exists in \"{category}\". Names must be unique along an inheritance chain — rename it, or turn off inheritance for this category.",
+      "invalidCategoryRef": "\"{ref}\" is not a valid category id or reference.",
+      "invalidPropertyType": "\"{type}\" is not a property type. Use text, number or select."
+    },
+    "units": {
+      "pcs": "pcs",
+      "m": "m",
+      "cm": "cm",
+      "mm": "mm",
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "l": "l",
+      "roll": "roll",
+      "pack": "pack",
+      "set": "set"
+    },
+    "stockModal": {
+      "title": "Change stock",
+      "operation": "Operation",
+      "amountLabel": "Change (+ add / − remove)",
+      "amountPlaceholder": "e.g. 50 or -3",
+      "noteLabel": "Note",
+      "notePlaceholder": "Optional comment",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "currentStock": "Current",
+      "resultStock": "Result",
+      "moreOptions": "More options",
+      "error": "Failed to change stock"
+    },
+    "table": {
+      "locationUnknownBadge": "No location"
+    },
+    "uxFeatures": {
+      "extraFields": "Extra fields (SKU, unit, links, custom fields)",
+      "historyPanels": "Movement history & related orders",
+      "stockOperations": "Stock operation types & notes",
+      "categories": "Categories & typed properties"
+    },
+    "reserved": "Reserved: {qty}",
+    "views": {
+      "all": "All",
+      "low": "Low stock",
+      "restock": "Restock"
+    },
+    "restockEmpty": "Nothing to restock — every item is above its threshold.",
+    "restockCount": "{count} to restock",
+    "orderAll": "Order all",
+    "order": "Order",
+    "inStock": "In stock",
+    "toBuy": "To buy",
+    "onOrder": "On order: {qty}",
+    "relatedOrders": "Related orders",
+    "noOrders": "No related orders.",
+    "orderStatus": {
+      "CART": "In cart",
+      "ORDERED": "Ordered",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered"
+    },
+    "status": "Status",
+    "onOrderCol": "On order",
+    "quickCreate": {
+      "title": "New item",
+      "name": "Name",
+      "namePlaceholder": "e.g. M3×10 screws",
+      "category": "Category",
+      "quantity": "Quantity",
+      "storage": "Where is it?",
+      "noStorage": "No storage yet",
+      "cancel": "Cancel",
+      "create": "Create",
+      "success": "Item «{name}» created.",
+      "error": "Failed to create the item."
+    },
+    "dashboard": {
+      "lowStock": "Out of stock items",
+      "restockList": "Restock suggestions",
+      "inStock": "In stock: {quantity} {unit}",
+      "buy": "Buy {quantity}",
+      "more": "{count} more",
+      "allStocked": "All items are stocked",
+      "allStockedHint": "Nothing needs restocking — stock covers thresholds and project demand.",
+      "loadFailed": "Failed to load restock data",
+      "timeline": {
+        "title": "Stock over time",
+        "hint": "{stock} units in storages now, {inTransit} in transit · states per day for the last {days} days.",
+        "aria": "Stacked area chart: free stock, reservations, consumption and in-transit items per day over the last {days} days — {stock} units in storages now.",
+        "stock": "In storages",
+        "reserved": "Reserved",
+        "used": "Used",
+        "inTransit": "In transit",
+        "empty": "No stock history yet",
+        "emptyHint": "Receive deliveries or use items in projects to see the states here."
+      },
+      "flows": {
+        "title": "Stock flows",
+        "hint": "Where items came from and where they went over the last {days} days.",
+        "period": "Last {n} days",
+        "periodLabel": "Period",
+        "col": {
+          "sources": "Sources",
+          "warehouse": "Warehouse",
+          "projects": "Projects",
+          "outcome": "Outcome"
+        },
+        "warehouse": "Warehouse",
+        "stockNow": "{n} in stock now",
+        "noSupplier": "Other sources",
+        "adjustmentsIn": "Adjustments +",
+        "otherProjects": "Other projects ({count})",
+        "writeOffs": "Write-offs",
+        "used": "Used",
+        "stillReserved": "Still reserved",
+        "returned": "Returned to stock",
+        "deletedProject": "Deleted project",
+        "flowTooltip": "{from} → {to}",
+        "empty": "No stock movements in this period",
+        "emptyHint": "Receive orders or reserve items for projects to see the flows.",
+        "aria": "Sankey diagram of stock flows for the last {days} days: suppliers and adjustments into the warehouse, then to projects and outcomes (used, still reserved, returned)."
+      }
+    },
+    "stats": {
+      "unit": "pcs"
+    },
+    "stock": {
+      "errors": {
+        "linkNotFound": "Item-project link not found",
+        "insufficientStock": "Not enough stock in the warehouse. Available: {available}",
+        "reserveExceedsNeed": "You are trying to reserve more than the project needs. Project deficit: {deficit}",
+        "unreserveExceedsReserved": "You cannot release more than is reserved. Reserved: {reserved}",
+        "mustBePositive": "Quantity to write off must be greater than zero.",
+        "consumeExceedsReserved": "Cannot exceed the reserved quantity ({reserved})."
+      },
+      "notes": {
+        "reserved": "Reserved for project: {projectTitle}",
+        "unreserved": "Project reservation released: {projectTitle}",
+        "used": "Used in project: {projectTitle}",
+        "returned": "Returned to stock from project: {projectTitle}",
+        "unreservedUnlink": "Project reservation released (link removal): {projectTitle}"
+      },
+      "fallbackProject": "Project",
+      "reserveBtn": "Reserve",
+      "unreserveBtn": "Release Reserve",
+      "consumeBtn": "Write off",
+      "reserveModalTitle": "Reserve from Warehouse",
+      "unreserveModalTitle": "Release Reserve from Warehouse",
+      "consumeModalTitle": "Write off into project",
+      "modalPart": "Item:",
+      "modalReservedQty": "Total reserved for project: {qty} pcs.",
+      "modalAvailableQty": "Available in general warehouse: {qty} pcs. (Project needs: {needed} pcs)",
+      "modalQuantityLabel": "Specify quantity (pcs.)",
+      "reserveError": "Reservation error",
+      "consumeError": "Error writing off item"
+    },
+    "exchange": {
+      "sections": {
+        "components": "Items",
+        "stock": "Contents (items in cells)",
+        "all": "All inventory and stock history (full backup)"
+      },
+      "options": {
+        "strategy": "Item matching",
+        "createNew": "Always create new items",
+        "matchExisting": "Match existing by SKU / name"
+      },
+      "openingBalance": "Opening balance from import",
+      "datasheetLinkLabel": "Datasheet"
+    },
+    "bench": {
+      "addPart": "Add part",
+      "putAway": "Put away {n}"
+    },
+    "prompt": {
+      "recognizeSystem": "You identify a single physical part or component from photographs of it, its packaging or its label. You may be given SEVERAL photographs: they are the SAME part seen from different angles — the marking on one face, the footprint on another, the packaging label on a third. Read all of them and answer with ONE item assembled from everything they show together. Never answer with one item per photograph, and never describe only the last one. Answer with ONE JSON object and nothing else: {\"name\": string, \"sku\": string|null, \"categoryId\": string|null, \"description\": string|null, \"unit\": string|null}. `name` is what a person would call this part, specific enough to find it again (include the value and package for an electronic component, e.g. \"Resistor 10k 0805\"). `sku` is a manufacturer or vendor part number printed on the item — never invent one; use null when none is legible. `categoryId` MUST be one of the ids listed below, copied exactly, or null when none of them fits — never invent a category and never answer with its name. `description` describes the part in detail: everything visible on it and on its label — markings, ratings, dimensions, material, colour, connector or package type — written so that its characteristics can be read off later without the photo. `unit` is the unit this is counted in (pcs, m, g). Prefer null over a guess for every field except `name` and `description`.\n\nCategories:\n{categories}",
+      "recognizeUser": "Identify this part.",
+      "noCategories": "(none — answer null)",
+      "propertiesSystem": "You extract the values of declared properties from a description of a part. Answer with ONE JSON object and nothing else, keyed by property id: {\"<propertyId>\": string|number}. Include a property ONLY when its value is stated in or unambiguously follows from the description — omit the key entirely otherwise; a guess here becomes a fact in a warehouse. A `select` property must be answered with one of its listed values, copied exactly. A `number` property takes a bare number in the property's unit, with no unit in the value.\n\nProperties:\n{properties}",
+      "propertyOptions": "one of: {options}"
+    },
+    "mobile": {
+      "tab": "Intake",
+      "scanHint": "Point the camera at a barcode. No code on the part? Recognize it from the photo, or type it in.",
+      "recognize": "Recognize from photo",
+      "manual": "Enter manually",
+      "cameraError": "The camera is unavailable. Check the permission — and note that a plain http address blocks it outright.",
+      "noFrame": "The camera has no picture yet",
+      "newItem": "New item",
+      "knownItem": "Already on the shelf",
+      "maybeExisting": "This might be one of these",
+      "inStock": "in stock: {qty}",
+      "name": "Name",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "sku": "SKU",
+      "category": "Category",
+      "storage": "Storage",
+      "noStorage": "No placement",
+      "row": "Row",
+      "col": "Column",
+      "receiveQty": "How many arrived",
+      "receive": "Add to stock",
+      "save": "Save",
+      "cancel": "Cancel",
+      "photoAlt": "Photo of the part",
+      "created": "“{name}” was added",
+      "received": "{qty} added to “{name}”",
+      "saveError": "Could not save",
+      "lookupError": "Could not look up the code",
+      "recognizeError": "Recognition failed",
+      "shoot": "Shoot",
+      "review": "Review batch",
+      "reviewShot": "Review batch ({count})",
+      "drafts": "Batch",
+      "draftsSubtitle": "Photographed parts waiting to be confirmed. Nothing is written until you say so.",
+      "draftsEmpty": "Nothing waiting. Photograph a few parts and they will land here.",
+      "draftsLoadError": "Could not load the batch",
+      "recognizing": "Recognizing",
+      "recognizeFailed": "Not recognized",
+      "shotAt": "Shot {when}",
+      "commit": "Save to inventory",
+      "committed": "Saved",
+      "discard": "Discard this shot",
+      "discardConfirm": "Discard this shot? The photo goes with it.",
+      "discardAll": "Discard all ({count})",
+      "discardAllConfirm": "Discard all {count} shots and their photos?",
+      "undo": "Undo",
+      "undone": "Undone",
+      "undoError": "Could not undo",
+      "queuedShot": "Shot {n} (queued)",
+      "stockTab": "Stock",
+      "stockTitle": "Find a part",
+      "searchLabel": "Search the inventory",
+      "searchPlaceholder": "Name or SKU",
+      "scanToFind": "Scan a code to open the part",
+      "nothingFound": "Nothing matches.",
+      "stockEmpty": "Nothing is stocked yet.",
+      "cameraPreview": "Camera preview",
+      "clearSearch": "Clear the search",
+      "searchError": "Search failed",
+      "loadError": "Could not load the part",
+      "notFound": "This part no longer exists.",
+      "step": "step",
+      "increase": "Add to stock",
+      "decrease": "Take from stock",
+      "placement": "Where it lives",
+      "savePlacement": "Save placement",
+      "placementSaved": "Placement saved",
+      "zoom": "Camera zoom",
+      "unknownCode": "Not one of our codes: {code}. Nothing was opened — photograph the part and describe it, or use the code as its SKU.",
+      "useAsSku": "Use as SKU",
+      "dismissCode": "Ignore",
+      "help": {
+        "title": "On the Intake screen",
+        "shoot": "Shoot — photographs the part and adds it to the batch. The camera stays live, so you can work through a shelf without stopping.",
+        "recognize": "Recognize — asks the AI what a photographed part is. Offered per shot in the batch, so you only spend it where a part is not obvious.",
+        "manual": "By hand — opens an empty form when there is nothing to scan and nothing worth photographing.",
+        "review": "Batch — where shots are named, corrected and saved to the inventory. Nothing reaches the shelf until you confirm it here."
+      },
+      "properties": "Properties",
+      "description": "Description",
+      "oneMoreAngle": "One more angle ({count})",
+      "framesFull": "Maximum {max} frames",
+      "nextItem": "Done — next item",
+      "frameAlt": "Frame {index} of {total}",
+      "recognizeFrames": "Recognize ({count})",
+      "recognizeFramesLabel": "Recognize {count} frames",
+      "dropFrame": "Drop this frame",
+      "queuedDrop": "Dropped frame",
+      "dropFramesConfirm": "Discard {count} collected frames?",
+      "leaveCollecting": "Cancel and discard the frames",
+      "attachPhotos": "Add these photos to the item",
+      "attachNoRoom": "This item already holds {max} photographs — these frames will be discarded",
+      "attachSomeRoom": "Only {count} of them fit: an item holds {max} photographs",
+      "attachOverflow": "{count} frames did not fit and were discarded — an item holds {max} photographs"
+    },
+    "categories": {
+      "tab": "Categories",
+      "title": "Item categories",
+      "subtitle": "A category owns the set of properties every item in it carries. Sub-categories add to what they inherit.",
+      "add": "New category",
+      "name": "Name",
+      "parent": "Parent category",
+      "noParent": "No parent",
+      "created": "Category created",
+      "deleted": "Category deleted",
+      "deleteConfirm": "Delete the category \"{name}\"? Its items are kept — they lose the category, and the values of its properties stay on each item as free-form fields.",
+      "inherit": "Inherit the parent's properties",
+      "inheritHint": "Off means items in this category carry only the properties listed here.",
+      "properties": "Properties",
+      "propertyCount": "No properties on an item of this category | {count} property on an item of this category | {count} properties on an item of this category",
+      "addProperty": "Add property",
+      "editProperty": "Edit property",
+      "noProperties": "No properties yet. Add the fields every item of this kind should carry.",
+      "deletePropertyConfirm": "Delete the property \"{name}\"? Values already filled in are kept on their items as free-form fields.",
+      "type": "Type",
+      "types": {
+        "text": "Text",
+        "number": "Number",
+        "select": "List of values"
+      },
+      "unit": "Unit",
+      "unitHint": "Shown next to the value and never converted — \"Ohm\" and \"kOhm\" are two different properties.",
+      "options": "Allowed values",
+      "optionsHint": "One value per line.",
+      "required": "Expected",
+      "requiredHint": "Never blocks saving — an item missing it is only marked incomplete.",
+      "emptyTitle": "No categories yet",
+      "emptyDescription": "Create the first category to give your items a shared set of properties.",
+      "pickTitle": "Pick a category",
+      "pickDescription": "Select a category on the left to see and edit its properties.",
+      "expand": "Expand branch",
+      "collapse": "Collapse branch",
+      "treeHint": "Drag a category to reorder it; drop it onto another to nest it inside. With the keyboard: focus the handle and press Alt + up/down arrow.",
+      "reorder": "Reorder (Alt + up/down arrow)",
+      "optionsRequired": "Add at least one value — a list with none cannot be filled in."
+    }
+  },
+  "nav": {
+    "inventory": "Inventory"
+  },
+  "routeTitles": {
+    "inventory": "Item Inventory",
+    "inventory-new": "Add to Inventory",
+    "inventory-edit": "Edit Item",
+    "inventory-intake": "Batch"
+  },
+  "plugins": {
+    "inventory": {
+      "name": "Inventory",
+      "description": "Item and storage-location tracking"
+    }
+  }
+}

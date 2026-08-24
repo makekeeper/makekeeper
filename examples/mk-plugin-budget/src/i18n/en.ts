@@ -1,0 +1,20 @@
+export const en = {
+  name: 'Project budget',
+  description: 'Simple spend tracking with multi-currency totals.',
+  nav: 'Budget',
+  title: 'Project budget',
+  intro: 'Spending recorded in whatever currency you paid in.',
+  total: 'Total ({base})',
+  noRates:
+    'The currency-rates plugin is not available, so amounts are listed as entered.',
+  colWhat: 'What',
+  colAmount: 'Amount',
+  colConverted: 'Converted',
+  none: 'No spending recorded yet.',
+  fieldWhat: 'What for',
+  fieldAmount: 'Amount',
+  fieldCurrency: 'Currency',
+  currencyOption: '{code}',
+  add: 'Add entry',
+  added: 'Entry added',
+};

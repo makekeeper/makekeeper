@@ -1,0 +1,273 @@
+{
+  "plugins": {
+    "external": {
+      "name": "External plugins",
+      "description": "Out-of-process third-party plugins: registration, permissions and lifecycle."
+    }
+  },
+  "nav": {
+    "external": "External plugins"
+  },
+  "routeTitles": {
+    "external": "External plugins"
+  },
+  "external": {
+    "title": "External plugins",
+    "subtitle": "Third-party plugins running as separate containers next to this instance.",
+    "empty": "No external plugins are registered yet. Generate an install token and set it in the plugin container's environment to begin.",
+    "installToken": {
+      "generate": "Generate install token",
+      "title": "One-time install token",
+      "hint": "Set this as MK_INSTALL_TOKEN (with MK_CORE_URL) in the plugin container's environment and start it. The token is shown once and expires in 24 hours.",
+      "copy": "Copy",
+      "copied": "Token copied",
+      "copyAndClose": "Copy & Done",
+      "purpose": "The way in for a container you cannot pair by hand: a headless install, a container on another host, one started by a script. It installs a PLUGIN — it is not a credential for an outside client, those live in Tokens.",
+      "step1": "Generate the token below. It is shown once and expires in 24 hours.",
+      "step2": "Set it as MK_INSTALL_TOKEN, together with MK_CORE_URL, in the plugin container's environment.",
+      "step3": "Start the container: it registers itself and shows up here for your approval."
+    },
+    "connectionTokens": {
+      "title": "Connection tokens",
+      "hint": "Long-lived credentials an outside client — an MCP client, a script — presents to this instance's external API. A token acts as you, capped by its access ceiling; revoke it to cut the connection off. Each user sees only the tokens they issued.",
+      "empty": "No connection tokens yet.",
+      "issue": "Issue token",
+      "labelLabel": "Label",
+      "labelPlaceholder": "What will use this token?",
+      "ceilingLabel": "Access ceiling",
+      "created": "Issued {date}",
+      "rename": "Rename",
+      "revoke": "Revoke",
+      "revokeConfirm": "Revoke “{label}”? Clients using it lose access immediately.",
+      "issuedTitle": "Connection token",
+      "issuedHint": "Give this to the connecting client (Authorization: Bearer …). It is shown once and never expires — revoke it here when it is no longer needed.",
+      "issued": "Token issued",
+      "renamed": "Token renamed",
+      "revoked": "Token revoked",
+      "ceiling": {
+        "read-only": "Read-only",
+        "read-write": "Read and write",
+        "destructive": "Read, write and delete"
+      },
+      "ceilingHint": {
+        "read-only": "Queries only; nothing can be changed.",
+        "read-write": "May add and update data, never delete.",
+        "destructive": "May also delete data. Issue only for a client you fully trust."
+      },
+      "destructiveWarning": "This token will be able to DELETE data as you. The connected client still confirms each deletion, but a leaked token is a deletion credential.",
+      "copied": "Token copied",
+      "copyAndClose": "Copy & Done",
+      "installTokenElsewhere": "Installing a plugin needs the install token, which lives with pairing."
+    },
+    "status": {
+      "pending": "Awaiting approval",
+      "active": "Active",
+      "disabled": "Disabled",
+      "error": "Error"
+    },
+    "card": {
+      "version": "Version",
+      "contract": "Contract",
+      "baseUrl": "Base URL",
+      "scopeModel": "Scope model",
+      "permissions": "Permissions",
+      "noPermissions": "No permissions requested",
+      "capabilities": "Offers capabilities",
+      "tools": "Agent tools",
+      "pendingUpdate": "An update requests additional permissions",
+      "requested": "Requested permissions",
+      "assistant": "Allowed in the assistant",
+      "assistantHint": "The assistant may call this plugin's tools. It can pass them any data it can read.",
+      "assistantTools": "Tools it would add",
+      "settings": "Settings",
+      "assistantOn": "assistant on",
+      "assistantOff": "assistant off",
+      "disabledNoSettings": "The plugin is off: its screens, its tools and its settings are unavailable until you switch it back on. Nothing it stored is lost.",
+      "publicUrl": "Connection address",
+      "addressCopied": "Address copied"
+    },
+    "scopeModel": {
+      "instance": "Single scope",
+      "per-scope": "Multi-scope"
+    },
+    "permission": {
+      "scoped": "Data of “{target}” ({access})",
+      "instance": "All-scope aggregates of “{target}” (elevated)",
+      "capability": "Invoke capability “{target}”"
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "enable": "Enable",
+      "disable": "Disable",
+      "uninstall": "Uninstall",
+      "approveUpdate": "Approve update",
+      "rejectUpdate": "Dismiss update"
+    },
+    "confirm": {
+      "reject": "Reject and remove the registration of “{name}”?",
+      "uninstall": "Uninstall “{name}”? All of its tokens are revoked immediately.",
+      "purgeOption": "Also ask the plugin to erase its own data"
+    },
+    "toast": {
+      "approved": "Plugin approved",
+      "rejected": "Registration rejected",
+      "enabled": "Plugin enabled",
+      "disabled": "Plugin disabled",
+      "uninstalled": "Plugin uninstalled",
+      "updateApproved": "Update approved",
+      "updateRejected": "Update dismissed",
+      "assistantOn": "Plugin allowed in the assistant",
+      "assistantOff": "Plugin removed from the assistant"
+    },
+    "api": {
+      "register": "Self-registration endpoint for external plugin containers",
+      "list": "List registered external plugins with their grants and pending updates",
+      "installToken": "Generate a one-time install token for a new external plugin",
+      "approve": "Approve a pending installation or a pending permission-expanding update",
+      "reject": "Reject a pending installation (removes it) or dismiss a pending update",
+      "setEnabled": "Enable or disable an external plugin",
+      "uninstall": "Uninstall an external plugin, revoking all of its tokens first",
+      "shell": "Shell projection of installed external plugins (nav, widgets, screens, i18n)",
+      "render": "Render one screen of an external plugin through the signed proxy",
+      "action": "Run a user action on an external plugin screen",
+      "operations": "List the operations the calling external plugin's grants allow",
+      "invoke": "Invoke one capability-layer operation on the scoped surface",
+      "metrics": "Read a cross-scope per-day metric series (instance surface)",
+      "metricKeys": "List available metric keys for a plugin (instance surface)",
+      "notifyChanged": "Invalidate an external plugin screen for its scope (realtime nudge)",
+      "deadLetters": "List webhook deliveries that exhausted their retries for a plugin",
+      "redeliver": "Queue a dead webhook delivery for another attempt",
+      "setAssistantEnabled": "Allow or forbid an external plugin's tools in the assistant",
+      "capability": "Invoke a capability offered by another plugin (relayed opaquely)",
+      "deferredBlobs": "List exchange blocks waiting for a plugin that is not installed",
+      "discardDeferred": "Discard a waiting exchange block",
+      "tokens": "Exchange a plugin's registration secret for its current background tokens",
+      "announce": "Anonymous announce from a running plugin container (pairing window only)",
+      "claim": "Collect the issued secret after an admin paired this container",
+      "pairingStatus": "Whether the pairing window is open",
+      "openPairing": "Open the pairing window so running containers can announce themselves",
+      "closePairing": "Close the pairing window",
+      "candidates": "List containers awaiting pairing",
+      "pair": "Pair a candidate by the code it printed to its own log",
+      "dismissCandidate": "Dismiss a candidate without pairing it",
+      "ignoreCandidate": "Ignore a candidate so its container stops appearing",
+      "unignoreCandidate": "Stop ignoring a candidate; it returns on its next announce",
+      "budgets": "Effective per-surface time budgets with the code defaults",
+      "saveBudgets": "Update per-surface time budgets (admin-tunable defaults)",
+      "pubResolve": "Routing oracle for the nginx public-path proxy (auth_request sub-requests only)",
+      "connectionTokens": "List the caller's connection tokens",
+      "createConnectionToken": "Issue a long-lived connection token with an access ceiling",
+      "relabelConnectionToken": "Rename a connection token",
+      "revokeConnectionToken": "Revoke a connection token"
+    },
+    "errors": {
+      "invalidManifest": "The plugin presented an invalid manifest",
+      "unsupportedContract": "The plugin requires an unsupported contract version",
+      "idTaken": "The plugin id is already taken on this instance",
+      "badInstallToken": "The install token is invalid or expired",
+      "badSecret": "Plugin authentication failed",
+      "notFound": "External plugin not found",
+      "notPending": "There is nothing awaiting approval for this plugin",
+      "purgeFailed": "The plugin's purge hook failed; its own data may remain",
+      "badToken": "The token is invalid, expired or revoked",
+      "wrongSurface": "This operation is not available to this kind of caller",
+      "unknownOperation": "Unknown operation",
+      "destructiveDenied": "This operation deletes data and requires the destructive access class",
+      "permissionDenied": "The caller's grants or ceiling do not allow this operation",
+      "toolUnavailable": "The plugin's tools are not available right now",
+      "toolFailed": "The plugin's tool call failed",
+      "capabilityUnavailable": "That capability is not available right now",
+      "badPairingCode": "That pairing code does not match",
+      "manifestUnreadable": "The plugin's stored manifest can no longer be read; wait for the container to re-announce or uninstall the plugin",
+      "contextMissing": "The external plugins admin context is unavailable",
+      "failed": "That did not go through — try again"
+    },
+    "render": {
+      "unavailable": "“{plugin}” is unavailable right now.",
+      "timeout": "“{plugin}” did not respond in time.",
+      "failed": "“{plugin}” returned an unexpected response.",
+      "retry": "Retry",
+      "actionFailed": "The action could not be completed",
+      "empty": "This screen has nothing to show yet.",
+      "filter": "Filter",
+      "noMatches": "Nothing matches that.",
+      "noRows": "Nothing to show.",
+      "prev": "Back",
+      "next": "Next",
+      "page": "Page {page} of {pages} · {total} rows",
+      "pageOnly": "Page {page}",
+      "rowAction": "Actions",
+      "unauthorized": "The container for “{plugin}” is running but does not hold this installation’s secret — its own state was lost. Pair it again from Settings → External plugins: its permissions, its assistant consent and its data stay as they are."
+    },
+    "tools": {
+      "confirm": "Plugin “{plugin}” wants to run “{tool}” with: {args}"
+    },
+    "discovery": {
+      "title": "Discovered containers",
+      "open": "Connect a plugin",
+      "openHint": "Opens a 15-minute window during which running plugin containers can announce themselves. Anything they say about themselves is unverified until you enter their pairing code.",
+      "openUntil": "Pairing open until {at}",
+      "close": "Close pairing",
+      "none": "No containers have announced themselves yet. Start the plugin's container with MK_CORE_URL pointing here — it needs no token.",
+      "codeLabel": "Pairing code from the container's log",
+      "pairAction": "Pair",
+      "dismiss": "Dismiss",
+      "from": "announced from {ip}",
+      "conflict": "A plugin with this id is already installed. Pairing hands that installation to THIS container: it gets a new secret and this address, and keeps the permissions, the assistant consent and the data the installed one had. That is how a container comes back after losing its own state — and how a different container could take its place, so only do it for one you recognise.",
+      "selfAsserted": "Self-asserted by the container",
+      "paired": "Container paired — now review its permissions below",
+      "dismissed": "Candidate dismissed",
+      "pairingOpened": "Pairing window opened",
+      "pairingClosed": "Pairing window closed",
+      "openKnocking": "Connect a plugin ({count} waiting)",
+      "knocking": "{count} container(s) tried to connect while pairing was closed. Open the pairing window — they keep retrying, no restart needed.",
+      "filterWaiting": "Waiting",
+      "filterIgnored": "Ignored",
+      "ignore": "Ignore",
+      "unignore": "Stop ignoring",
+      "forget": "Forget",
+      "ignored": "Candidate ignored — its container stops appearing here",
+      "unignored": "No longer ignored — it returns on its next announce",
+      "noneIgnored": "Nothing is ignored.",
+      "waitingHint": "Listening for containers…",
+      "closedTitle": "Pairing is closed",
+      "closedHint": "Open the pairing window to let running plugin containers announce themselves. It stays open for 15 minutes."
+    },
+    "budgets": {
+      "title": "Time budgets",
+      "hint": "How long this instance waits for a plugin container on each surface before the call counts as a miss. Milliseconds; guest surfaces (widgets, slots) should stay tight.",
+      "saved": "Budgets saved",
+      "default": "Default: {ms} ms",
+      "surface": {
+        "screen": "Plugin's own screen",
+        "widget": "Dashboard widget",
+        "slot": "Slot contribution",
+        "ref": "Object-reference resolver",
+        "tool": "Agent tool call",
+        "hook": "Exchange / purge hook"
+      }
+    },
+    "sections": {
+      "ariaLabel": "External plugin sections",
+      "connect": {
+        "title": "Connect",
+        "description": "Pair a running container or hand out an install token, then approve what it asks for."
+      },
+      "settings": {
+        "title": "Settings",
+        "description": "How long this instance waits for a plugin container."
+      },
+      "tokens": {
+        "title": "Tokens",
+        "description": "Long-lived credentials for outside clients — MCP clients, scripts."
+      },
+      "connected": {
+        "title": "Connected",
+        "description": "Installed plugins, their consents and their own settings."
+      },
+      "attention": "{count} waiting for you"
+    },
+    "emptyTitle": "No external plugins yet"
+  }
+}

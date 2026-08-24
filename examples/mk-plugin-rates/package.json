@@ -1,0 +1,11 @@
+{
+  "name": "mk-plugin-rates",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference external plugin \u2014 offers a capability (currency rates).",
+  "scripts": {
+    "start": "node --experimental-strip-types src/main.ts",
+    "test": "esbuild src/*.test.ts src/**/*.test.ts --bundle --platform=node --format=esm --target=node22 --outdir=.test-build --external:node:* --alias:@makekeeper/plugin-sdk=../../libs/plugin-sdk/src/index.ts --alias:@makekeeper/plugin-contract=../../libs/plugin-contract/src/index.ts && node --test \".test-build/**/*.test.js\""
+  }
+}

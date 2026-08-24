@@ -1,0 +1,132 @@
+{
+  "common": {
+    "appName": "MakeKeeper",
+    "updateAvailable": "Update available",
+    "select": "Select...",
+    "noOptions": "No options available",
+    "loading": "Loading",
+    "refreshing": "Refreshing",
+    "close": "Close",
+    "confirm": "Confirm",
+    "copy": "Copy",
+    "copyLink": "Copy link",
+    "copied": "Copied!",
+    "validUntil": "Valid until {when}",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "addNew": "New",
+    "bold": "Bold",
+    "italic": "Italic",
+    "heading": "Heading",
+    "bulletList": "Bullet List",
+    "orderedList": "Numbered List",
+    "code": "Code",
+    "insertLink": "Insert Link",
+    "clearFormat": "Clear Formatting",
+    "enterUrl": "Enter URL link:",
+    "less": "Less",
+    "more": "More",
+    "search": "Search",
+    "nothingFound": "Nothing found",
+    "time": "Time",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "download": "Download",
+    "lightbox": {
+      "title": "Photo",
+      "unnamed": "File",
+      "alt": "Photo",
+      "previous": "Previous photo",
+      "next": "Next photo"
+    },
+    "photos": {
+      "add": "Add photos",
+      "addMore": "Add more ({remaining} left)",
+      "full": "Maximum {max} photos",
+      "dropHere": "Drop photos here",
+      "open": "Open photo",
+      "alt": "Photo",
+      "cover": "Cover",
+      "makeCover": "Make cover",
+      "remove": "Remove photo"
+    },
+    "secret": {
+      "stored": "Value saved — leave it as is to keep it",
+      "change": "Change",
+      "remove": "Remove",
+      "keep": "Keep saved value",
+      "willBeRemoved": "The saved value will be removed when you save",
+      "keepsSaved": "Empty leaves the saved value in place — type a new one to replace it",
+      "emptyRemoves": "Leaving this empty removes the saved value when you save"
+    }
+  },
+  "routeTitles": {
+    "home": "Dashboard"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "expandSection": "Expand {section}",
+    "collapseSection": "Collapse {section}"
+  },
+  "header": {
+    "toggleTheme": "Theme",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "scheme": {
+      "choose": "Colour scheme",
+      "default": "Ocean",
+      "violet": "Violet",
+      "teal": "Teal",
+      "sunset": "Sunset",
+      "orchid": "Orchid",
+      "graphite": "Graphite"
+    },
+    "aiAssistant": "AI Assistant",
+    "more": "More",
+    "moreCount": "More ({count} hidden)",
+    "language": "Language",
+    "overflowHint": "Buttons that no longer fit are kept here, in the profile menu.",
+    "duplicateItemId": "Duplicate header item id"
+  },
+  "offline": {
+    "startingTitle": "Starting up",
+    "startingDescription": "Waiting for the server to become available. This should only take a moment.",
+    "title": "Connection lost",
+    "description": "The app can't reach the server right now. It will resume automatically as soon as the connection is back.",
+    "waiting": "Waiting for the server…",
+    "reconnecting": "Trying to reconnect…",
+    "retryNow": "Retry now",
+    "restoredTitle": "Back online",
+    "restoredDescription": "The server is responding again — you can continue right where you left off.",
+    "restored": "Connection restored"
+  },
+  "dashboard": {
+    "welcome": "Welcome to MakeKeeper",
+    "welcomeDesc": "Your smart lab for project management, parts and components inventory, and procurement planning, powered by an AI assistant.",
+    "myProjects": "My projects",
+    "emptyTitle": "Nothing to show yet",
+    "emptyHint": "Enable plugins in Settings → Plugins — each one publishes its own blocks to this dashboard.",
+    "insights": {
+      "title": "Insights & charts",
+      "subtitle": "Key figures and the charts your plugins publish"
+    },
+    "emptyLensHint": "Your plugins publish blocks here, but the simple interface is hiding them. Bring any of them back in Settings → Interface mode."
+  },
+  "secretAccess": {
+    "genericPurpose": "an action",
+    "usedByGuest": "A workspace guest just used one of your saved credentials for {purpose}.",
+    "usedByJob": "A background task just used one of your saved credentials for {purpose}."
+  },
+  "core": {
+    "errors": {
+      "reservedRoutePrefix": "Route prefix /plugins/ is reserved for the external-plugin public proxy"
+    }
+  }
+}

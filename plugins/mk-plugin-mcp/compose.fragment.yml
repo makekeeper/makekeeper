@@ -1,0 +1,22 @@
+# Paste into an EXISTING MakeKeeper compose stack (or run as its own project
+# joined to the app's network — see README.md). The service name doubles as
+# the hostname in MK_PLUGIN_URL: rename both together or the core cannot call
+# back.
+#
+# MK_INSTALL_TOKEN: Settings → External plugins → "Generate install token"
+# (one-time; leave empty to pair via the code in `docker logs mcp` instead).
+services:
+  mcp:
+    image: ghcr.io/makekeeper/mk-plugin-mcp:latest
+    restart: unless-stopped
+    environment:
+      MK_CORE_URL: http://app:3000
+      MK_PLUGIN_URL: http://mcp:4410
+      PORT: '4410'
+      MK_STATE_DIR: /data
+      MK_INSTALL_TOKEN: 'paste-once-here'
+    volumes:
+      - mcp-data:/data
+
+volumes:
+  mcp-data:

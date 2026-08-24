@@ -1,0 +1,51 @@
+# Add this service to your MakeKeeper compose stack.
+#
+# Build it from the core repository (the examples import the SDK through the
+# monorepo, so the build context is the repo root):
+#
+#   docker build -f examples/Dockerfile --build-arg PLUGIN=mk-plugin-bambu \
+#                -t mk-plugin-bambu .
+#
+# Then choose ONE source:
+#
+#   LAN  — the printer's own MQTT broker. Needs BAMBU_HOST / BAMBU_SERIAL /
+#          BAMBU_ACCESS_CODE. Get the access code and enable LAN mode on the
+#          printer: Settings (gear) -> WLAN -> "LAN Only Mode" / access code.
+#
+#   HA   — Home Assistant entities, when the Bambu Lab integration is already
+#          installed there. Needs HA_URL, HA_TOKEN and the entity ids. Prefer
+#          this if HA already watches the printer: its MQTT broker accepts only
+#          a few concurrent clients, and every extra one costs stability for
+#          all of them.
+#
+# The container needs no install token: start it, open "Connect a plugin" in
+# Settings -> External plugins, and pair it with the six-digit code it prints
+# to its own log (`docker logs mk-plugin-bambu`).
+services:
+  mk-plugin-bambu:
+    image: mk-plugin-bambu:latest
+    restart: unless-stopped
+    environment:
+      MK_CORE_URL: http://app:3000
+      MK_PLUGIN_URL: http://mk-plugin-bambu:4400
+      PORT: "4400"
+
+      # ── Source A: the printer directly ────────────────────────────────────
+      BAMBU_HOST: "192.168.1.50"
+      BAMBU_SERIAL: "01PXXXXXXXXXXXX"
+      BAMBU_ACCESS_CODE: ""
+
+      # ── Source B: through Home Assistant (leave BAMBU_HOST empty to use) ──
+      # HA_URL: "http://homeassistant:8123"
+      # HA_TOKEN: ""
+      # HA_ENTITY_STATE: "sensor.p1s_print_status"
+      # HA_ENTITY_PROGRESS: "sensor.p1s_print_progress"
+      # HA_ENTITY_REMAINING: "sensor.p1s_remaining_time"
+      # HA_ENTITY_NOZZLE: "sensor.p1s_nozzle_temperature"
+      # HA_ENTITY_BED: "sensor.p1s_bed_temperature"
+      # HA_ENTITY_JOB: "sensor.p1s_current_stage"
+    volumes:
+      - mk-plugin-bambu-data:/data
+
+volumes:
+  mk-plugin-bambu-data:

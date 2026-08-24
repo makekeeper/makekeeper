@@ -1,0 +1,31 @@
+{
+  "plugins": {
+    "uxmode": {
+      "name": "Interface mode",
+      "description": "Simple/advanced interface switch with per-feature overrides"
+    }
+  },
+  "uxmode": {
+    "header": {
+      "group": "Interface mode",
+      "simpleLabel": "Simple",
+      "advancedLabel": "Pro",
+      "simpleTitle": "Simple interface: professional features are hidden",
+      "advancedTitle": "Pro interface: every feature is visible",
+      "firstRun": "The interface starts in simple mode. Switch between Simple and Pro in the header or in Settings."
+    },
+    "settings": {
+      "advancedLabel": "Pro mode",
+      "advancedHint": "Show every professional surface: statistics, tags, reservations, returns, tracking, grid editing and more.",
+      "featuresHint": "Each feature belongs to the Simple or the Pro tier. The switches set what the simple interface shows — flip one either way; Pro mode always shows everything.",
+      "resetOverrides": "Reset to defaults",
+      "searchPlaceholder": "Search features",
+      "groupCount": "{shown} of {total} in Simple",
+      "groupAll": "All",
+      "groupNone": "None",
+      "groupAllAria": "Show every {plugin} feature in Simple mode",
+      "groupNoneAria": "Hide every {plugin} feature in Simple mode",
+      "noMatches": "No feature matches your search."
+    }
+  }
+}

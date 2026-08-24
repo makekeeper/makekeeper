@@ -1,0 +1,49 @@
+{
+  "plugins": {
+    "stats": {
+      "name": "Statistics",
+      "description": "Aggregates activity from your plugins into daily series and charts."
+    }
+  },
+  "stats": {
+    "dashboard": {
+      "pilot": {
+        "title": "Assistant messages",
+        "hint": "{total} messages in the last {days} days.",
+        "aria": "Daily assistant messages over the last {days} days, {total} in total.",
+        "empty": "No activity yet",
+        "emptyHint": "Message counts will appear here once you start chatting.",
+        "loadFailed": "Could not load statistics",
+        "series": "Messages"
+      }
+    },
+    "errors": {
+      "unknownMetric": "Unknown statistics metric \"{metric}\".",
+      "unknownGraph": "Unknown statistics graph \"{graph}\"."
+    },
+    "view": {
+      "title": "Statistics",
+      "empty": "No charts yet",
+      "emptyHint": "Charts appear here as plugins declare them.",
+      "chartFailed": "Could not load chart",
+      "chartEmpty": "No data yet",
+      "chartAria": "{title}: {total} in total over the period.",
+      "graphOnDashboard": "Shown on the dashboard",
+      "graphOnDashboardHint": "This flow diagram renders on the home dashboard."
+    },
+    "exchange": {
+      "sections": {
+        "all": "Daily statistics (full backup)"
+      }
+    },
+    "ux": {
+      "page": "Statistics page"
+    }
+  },
+  "nav": {
+    "stats": "Statistics"
+  },
+  "routeTitles": {
+    "stats": "Statistics"
+  }
+}

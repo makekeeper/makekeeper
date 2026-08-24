@@ -1,0 +1,8 @@
+{
+  "name": "plugin-logistics",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-logistics/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:logistics"],
+  "targets": {}
+}

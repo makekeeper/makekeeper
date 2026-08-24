@@ -1,0 +1,12 @@
+# Add files here to ignore them from prettier formatting
+/dist
+/coverage
+/.nx/cache
+/.nx/workspace-data
+
+# npm owns the lockfile's formatting. It sits inside the plugins/** glob the
+# format gate checks, and an npm rewrite must never be able to fail CI.
+package-lock.json
+
+# Local scratch build of the MCP plugin's test bundle (gitignored).
+**/.test-build

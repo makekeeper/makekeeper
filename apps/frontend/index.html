@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- The brand mark (#260), generated from one geometry definition by
+         tools/brand/generate-brand-assets.mjs. It wears the brand's OWN colour
+         and does not follow the colour scheme: a tab icon identifies the
+         product among other products, where a user's accent preference has no
+         say. The `.ico` is the fallback for browsers that ignore SVG icons —
+         and the file they fetch from /favicon.ico unasked, which until now
+         404'd. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>MakeKeeper</title>
+    <!-- Mobile surface (#198): the manifest describes the /m scope only, so
+         installing from the desktop app is not offered and the installed app
+         always opens the phone shell. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- The default scheme's accent; the script below rewrites it to the
+         stored scheme's, and the preferences store keeps it in step (#236). -->
+    <meta name="theme-color" content="#3b82f6" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <!-- Linked here rather than imported from main.ts so the scheme variables
+         reach the cascade without waiting for the JS bundle. In dev this is
+         the sheet itself; in a build Vite folds it into the bundled CSS. -->
+    <link rel="stylesheet" href="/src/themes.css" />
+    <script>
+      // Anti-FOUC: resolve the stored theme (mirrors preferences-store's rules)
+      // and set `.dark` before Vue mounts, so a dark-theme user never sees a
+      // white flash. `system` (default when unset) follows the OS preference.
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var mode =
+            stored === 'light' || stored === 'dark' || stored === 'system'
+              ? stored
+              : 'system';
+          var dark =
+            mode === 'dark' ||
+            (mode === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+          // Colour scheme (#236): set `data-scheme` pre-mount too, or the
+          // first paint flashes the default palette. Deliberately NOT a copy
+          // of the store's id list — a second list here would be one more
+          // place to forget when a scheme is added, and it buys nothing: an
+          // unknown id matches no selector in themes.css, so the default
+          // palette renders, which is exactly what the store's fallback
+          // settles on when it normalises the value at mount. The pattern
+          // test only keeps a junk stored value out of the attribute.
+          var scheme = localStorage.getItem('colorScheme');
+          if (scheme && scheme !== 'default' && /^[a-z]+$/.test(scheme)) {
+            document.documentElement.setAttribute('data-scheme', scheme);
+          }
+        } catch (e) {
+          /* localStorage/matchMedia unavailable — fall through to light */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <script>
+      // Browser chrome (#236) follows the active scheme from the first paint,
+      // not from the moment Vue mounts — otherwise the toolbar shows default
+      // blue for the whole boot. Separate from the script above, and here
+      // rather than in <head>, because it is the only spot where BOTH have
+      // happened: `data-scheme` is set, and every stylesheet is applied (a
+      // build hoists the bundled CSS link below that script). The accent is
+      // read back out of the cascade, never copied from the palette.
+      (function () {
+        try {
+          var meta = document.querySelector('meta[name="theme-color"]');
+          var channels = getComputedStyle(document.documentElement)
+            .getPropertyValue('--mk-brand-500')
+            .trim();
+          if (meta && channels) {
+            meta.setAttribute('content', 'rgb(' + channels + ')');
+          }
+        } catch (e) {
+          /* no cascade yet (or no meta) — the store syncs it at mount */
+        }
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,112 @@
+# MakeKeeper — production stack (single file for BOTH install paths).
+#
+#   Path 1: `install.sh` writes a `.env` next to this file, then runs it.
+#   Path 2: paste into Portainer/Coolify/Dokploy (or `docker compose` directly)
+#           and set the env vars in the manager UI / a `.env`.
+#
+# Portability rules (do not break):
+#   - Pre-built ghcr images only, NO `build:` (managers can't build the monorepo).
+#   - Everything env-driven with defaults; secrets are REQUIRED (`:?`) so a
+#     misconfigured deploy fails loud instead of booting insecurely.
+#   - No reverse-proxy-specific labels — the manager's proxy owns TLS/domain.
+#
+# Full guide: ../INSTALL.md
+name: makekeeper
+
+services:
+  db:
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-makekeeper}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-makekeeper}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-makekeeper} -d ${POSTGRES_DB:-makekeeper}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  # Node backend (API only). Applies pending DB migrations on every start via its
+  # entrypoint (`prisma migrate deploy`) — this is what makes updates automatic.
+  # Keep a single replica so migrations never race.
+  app:
+    image: ${IMAGE_APP:-ghcr.io/makekeeper/app}:${TAG:-latest}
+    # Re-check the registry on every (re)deploy. Without this, a mutable tag like
+    # `latest` that already exists locally is reused from cache and the manager's
+    # "redeploy" silently keeps the old image. A pinned immutable TAG just returns
+    # its cached digest, so this is safe either way.
+    pull_policy: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-makekeeper}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:-makekeeper}?schema=public
+      # >= 32 chars. Encrypts stored secrets at rest — rotating it invalidates them.
+      APP_SECRET: ${APP_SECRET:?APP_SECRET is required (>=32 chars)}
+      # >= 32 chars. Signs multiuser JWTs.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required (>=32 chars)}
+      PORT: '3000'
+      UPLOADS_DIR: /data/uploads
+      # Set to a fixed origin (no trailing slash) for stable phone-capture links;
+      # leave empty to derive per-request from X-Forwarded-* headers.
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      # Opt-in first-time demo seed (0/1). The app self-seeds plugin defaults anyway.
+      RUN_SEED: ${RUN_SEED:-0}
+      # X-Forwarded-For hops Express trusts for the real client IP (the login
+      # throttle keys on it, #237). 1 = the `web` nginx alone; set 2 when the
+      # recommended TLS-terminating proxy fronts `web`.
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+      # Self-declared install method (diagnostics only). install.sh writes
+      # `install-sh` into .env; a hand-rolled compose run keeps the default.
+      MK_INSTALL_METHOD: ${MK_INSTALL_METHOD:-compose}
+    volumes:
+      - uploads:/data/uploads
+    restart: unless-stopped
+
+  # nginx: serves the SPA and reverse-proxies /api to `app`. This is the only
+  # service that publishes a host port; put a TLS-terminating proxy in front.
+  web:
+    image: ${IMAGE_WEB:-ghcr.io/makekeeper/web}:${TAG:-latest}
+    pull_policy: always
+    depends_on:
+      app:
+        condition: service_healthy
+    # Host side is free to be anything (default 8080); the container side is
+    # always 80 — the port a proxy routes to must never surface publicly (#208).
+    ports:
+      - '${PUBLIC_WEB_PORT:-8080}:80'
+    restart: unless-stopped
+
+  # OPTIONAL: the MCP server plugin (#248) — exposes the instance's agent
+  # tools to MCP clients at https://<instance>/plugins/mcp. Off by default;
+  # start it with `docker compose --profile mcp up -d`. After the container
+  # announces itself, pair it once in Settings → External plugins and issue a
+  # connection token (`mkt_…`) for each MCP client.
+  mcp:
+    image: ${IMAGE_MCP:-ghcr.io/makekeeper/mk-plugin-mcp}:${MCP_TAG:-latest}
+    pull_policy: always
+    profiles: ['mcp']
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      MK_CORE_URL: http://app:3000
+      MK_PLUGIN_URL: http://mcp:4410
+      PORT: '4410'
+      MK_STATE_DIR: /data
+      # Optional headless install: paste a one-time install token from
+      # Settings → External plugins. Without it the container announces
+      # itself and prints a pairing code to its log (`docker logs mcp`).
+      MK_INSTALL_TOKEN: ${MCP_INSTALL_TOKEN:-}
+    volumes:
+      - mcpdata:/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  uploads:
+  mcpdata:

@@ -1,0 +1,8 @@
+{
+  "name": "plugin-contract",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-contract/src",
+  "projectType": "library",
+  "tags": ["scope:shared", "type:contract"],
+  "targets": {}
+}

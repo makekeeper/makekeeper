@@ -1,0 +1,8 @@
+{
+  "name": "mk-plugin-budget",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference external plugin — consumes another plugin's capability (budget).",
+  "scripts": { "start": "node --experimental-strip-types src/main.ts" }
+}

@@ -1,0 +1,78 @@
+# The DEVELOPMENT stack — PostgreSQL and the nginx that fronts `nx serve`.
+# It lives here, next to its nginx.conf and its only consumer (startup.sh),
+# and deliberately NOT in the repo root: `docker compose up -d` after a clone
+# is a reflex, and in the root this file answered it with a dev database
+# holding a plaintext password (#256). The product's own stacks are in deploy/.
+#
+# `name` is pinned because compose otherwise derives the project — and from it
+# the volume — from this file's directory. Moving the file here would have made
+# the project `devcontainer` and mounted an empty `devcontainer_postgres_data`,
+# i.e. the dev database "disappearing". The network name is pinned for the
+# opposite reason: it must NOT follow the project, because it is the fixed name
+# both plugin launchers probe for.
+name: diy-inspector
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: makekeeper-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: diy_inspector
+    # Published, not host-networked: the docker daemon runs inside the
+    # devcontainer, so binding here is binding on the same localhost the
+    # backend's DATABASE_URL already points at. Explicitly 127.0.0.1 — a bare
+    # `5432:5432` binds 0.0.0.0, which is how a database whose password is in
+    # .env.example ended up on the LAN address in the first place (#256).
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d diy_inspector']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: makekeeper-nginx
+    # Deliberately NOT clamped to 127.0.0.1 the way postgres is: the
+    # devcontainer itself is started with `-p 8080:8080` (devcontainer.json
+    # runArgs), which forwards the outer host's port to this devcontainer's
+    # *interface address*, not to its loopback. Clamping here would make the
+    # app unreachable from the machine you develop on. It is the app's own
+    # front door, behind the core's auth — unlike a database whose password
+    # ships in .env.example.
+    ports:
+      - '8080:8080'
+    # The API and Vite are processes in the devcontainer, not containers on
+    # this network; nginx.conf proxies to them through the docker gateway.
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+networks:
+  default:
+    # The name both plugin launchers auto-detect; fixed so it does not follow
+    # the directory this file sits in.
+    name: makekeeper_default
+
+volumes:
+  # Named `diy-inspector_postgres_data` by the pinned project above. That is
+  # the volume this checkout's dev database lives in, because the project name
+  # used to be derived from the clone directory (`/workspaces/diy-inspector`).
+  # A checkout cloned under a different directory name has its data in
+  # `<that-name>_postgres_data` instead: either rename the volume once
+  # (`docker volume create diy-inspector_postgres_data` + copy) or start the
+  # stack with `COMPOSE_PROJECT_NAME=<that-name>`. Pinning is still right —
+  # without it the project would follow *this file's* directory and become
+  # `devcontainer`, which matches nobody's existing volume.
+  postgres_data:

@@ -1,0 +1,204 @@
+{
+  "agentConfirm": {
+    "create_storage": "Create storage cell «{name}»?",
+    "update_storage": "Update storage cell «{name}»?",
+    "update_storage_grid": "Resize the grid of «{name}» to {rows}×{cols}?",
+    "merge_storage_grid_cells": "Merge grid cells in «{name}»?",
+    "split_storage_grid_cell": "Split a merged cell in «{name}»?",
+    "delete_storage_cell": "Delete storage cell «{name}»? Child cells are removed and their components lose their location."
+  },
+  "storages": {
+    "title": "Storages",
+    "desc": "Create storage structures (shelves, cabinets, cells) or 2D grids and visually inspect their contents.",
+    "createButton": "Create Storage",
+    "structureTitle": "Storage Structure",
+    "noStorages": "No storages yet",
+    "noStoragesDesc": "Start with your first shelf or room.",
+    "addSubsection": "Add subsection",
+    "edit": "Edit",
+    "delete": "Delete",
+    "row": "Row {num}",
+    "column": "Column {char}",
+    "deleteConfirm": "Are you sure you want to delete storage \"{name}\"? All nested storages will be deleted!",
+    "deleteError": "Failed to delete storage",
+    "cellTitle": "Cell {address}",
+    "cellPath": "Cell path",
+    "zone": "Zone: {location}",
+    "visualGridTitle": "Visual cell grid ({rows}x{cols})",
+    "exitMergeMode": "Exit merge mode",
+    "mergeCells": "Merge cells",
+    "showAllCells": "Show all cells",
+    "mergeInstructions": "Select a rectangle of adjacent cells to merge them.",
+    "mergeValidationTooltip": "The selected area must be a solid rectangle and cannot contain already merged cells.",
+    "mergeCount": "Merge ({count} cells)",
+    "splitCell": "Split cell",
+    "resetSelection": "Reset selection",
+    "nestedContainersTooltip": "Nested containers",
+    "addPartToCell": "Add part to this cell",
+    "pcs": "{count} pcs",
+    "nestedContainersInCell": "Nested containers / organizers in cell {address}:",
+    "nestedContainersInStorage": "Nested containers / organizers in this storage:",
+    "partsInCell": "Parts in cell",
+    "filterByCell": "Filter by cell: {address}",
+    "totalCount": "(total: {count})",
+    "addBoxDrawer": "Add box/drawer",
+    "addComponent": "Add component",
+    "selectStorageHint": "Select a storage from the tree on the left to view its parts.",
+    "emptyInCell": "Cell {address} is empty",
+    "emptyInStorage": "This storage is empty",
+    "emptyHint": "Add parts to the storage and specify this cell as the storage location.",
+    "table": {
+      "component": "Component",
+      "category": "Category",
+      "exactAddress": "Exact address",
+      "quantity": "Quantity",
+      "actions": "Actions"
+    },
+    "noSku": "No SKU",
+    "cellAddressLabel": "Cell: {address}",
+    "modal": {
+      "editTitle": "Edit storage cell",
+      "createTitle": "Create storage cell",
+      "nameLabel": "Cell/box name",
+      "namePlaceholder": "E.g., Shelf 1, Box B, Compartment 2",
+      "parentLabel": "Parent storage (nesting)",
+      "rootStorage": "Root storage (no parent)",
+      "placeInRow": "Place in row",
+      "placeInCol": "Place in column",
+      "physicalZone": "Physical zone (for root storages)",
+      "physicalZonePlaceholder": "E.g., Garage, Office, Workshop",
+      "useGrid": "Use cell grid (2D matrix)",
+      "rowsCount": "Number of rows",
+      "colsCount": "Number of columns",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "context": {
+      "storage": "The user is currently viewing storage «{path}» (storageId: {storageId}).",
+      "cell": "The user is currently viewing cell «{cell}» of storage «{path}». «{cell}» is the cell's grid address (row {row}, column {col}); its storageId is {storageId}. When the user says \"this cell\"/\"the selected cell\", they mean cell «{cell}» — always refer to it by that name."
+    },
+    "agentTools": {
+      "list_storages": {
+        "description": "Returns a flat list of all storage cells/containers with their metadata: name, location, grid size (gridRows/gridCols), position within the parent cell (the cellAddress field — a ready-made address, e.g. \"B3\"), component count. Use it to find the needed storage before calling other tools. Cell addressing: letter = column (A=column 0, B=column 1, …), number = row (row 0 → 1); the cell at row 0, column 0 is \"A1\". Always use ready-made addresses (cellAddress from tool responses or the page context), do not compute them yourself."
+      },
+      "get_storage_details": {
+        "description": "Returns detailed information about a single storage cell: its child cells (children), the list of components (components), grid dimensions and spans (merged cells). Every component and child cell has a cellAddress field (e.g. \"A1\") — use it as the address, do NOT compute the address yourself. Use it when you already know the storageId.",
+        "params": {
+          "storageId": "Unique identifier of the storage cell (storage ID)"
+        }
+      },
+      "get_storage_components": {
+        "description": "Returns the list of the storage's components/parts. Each component includes a cellAddress field — a ready-made cell address (e.g. \"A1\"). ALWAYS take the address from cellAddress, do NOT compute it yourself. Without a cell specified — recursively across the whole storage. To get the contents of ONE cell, pass its address in the cell field (e.g. \"A1\") — this is the preferred way. The address of the cell selected by the user and the storageId are available in the current page context — use them directly. Cell addressing: letter = column (A=column 0, B=column 1, …), number = row (row 0 → 1); the cell at row 0, column 0 is \"A1\". Always use ready-made addresses (cellAddress from tool responses or the page context), do not compute them yourself.",
+        "params": {
+          "storageId": "Identifier of the storage cell (storage ID).",
+          "cell": "Address of a specific grid cell, e.g. \"A1\" or \"B3\" (letter=column, number=row). The preferred way to choose a cell. Optional.",
+          "row": "Alternative to cell: the row number (0-based). Specify together with col. Optional.",
+          "col": "Alternative to cell: the column number (0-based). Specify together with row. Optional."
+        }
+      },
+      "create_storage": {
+        "description": "Creates a new storage cell (drawer, shelf, container). You can specify a name, a physical location, a parent cell (parentId) and a position in the parent's grid — preferably via the parentCell address (e.g. \"B1\"). If an internal grid is needed, specify gridRows and gridCols. Cell addressing: letter = column (A=column 0, B=column 1, …), number = row (row 0 → 1); the cell at row 0, column 0 is \"A1\". Always use ready-made addresses (cellAddress from tool responses or the page context), do not compute them yourself.",
+        "params": {
+          "name": "Name of the new storage cell (e.g. \"Drawer A1\", \"Top shelf\")",
+          "location": "Physical location (e.g. \"Garage, left rack\"). Optional.",
+          "parentId": "ID of the parent storage cell if a nested container is being created. Optional.",
+          "parentCell": "Address of the parent grid cell into which the container is placed (e.g. \"B1\"). The preferred way to specify the position. Optional.",
+          "parentRow": "Alternative to parentCell: the row number (0-based) in the parent's grid. Specify together with parentCol. Optional.",
+          "parentCol": "Alternative to parentCell: the column number (0-based) in the parent's grid. Specify together with parentRow. Optional.",
+          "gridRows": "Number of rows in this cell's internal grid. Defines that the cell is divided into sections. Optional.",
+          "gridCols": "Number of columns in this cell's internal grid. Optional."
+        }
+      },
+      "update_storage": {
+        "description": "Updates a storage cell's metadata: name, location, the link to the parent cell and the position in its grid (preferably via the parentCell address, e.g. \"B1\"). Unlike update_storage_grid, it allows changing any fields, not only the grid size. Cell addressing: letter = column (A=column 0, B=column 1, …), number = row (row 0 → 1); the cell at row 0, column 0 is \"A1\". Always use ready-made addresses (cellAddress from tool responses or the page context), do not compute them yourself.",
+        "params": {
+          "storageId": "Identifier of the storage cell to update",
+          "name": "New name of the storage cell. Optional.",
+          "location": "New physical location. Optional.",
+          "parentId": "New parent cell ID (to move the container). Optional.",
+          "parentCell": "New cell address in the parent's grid (e.g. \"B1\"). The preferred way. Optional.",
+          "parentRow": "Alternative to parentCell: the new row number (0-based). Specify together with parentCol. Optional.",
+          "parentCol": "Alternative to parentCell: the new column number (0-based). Specify together with parentRow. Optional."
+        }
+      },
+      "update_storage_grid": {
+        "description": "Updates the size of a storage cell's internal grid (number of rows and columns). Use it to set or change how a drawer/container is split into sections.",
+        "params": {
+          "storageId": "Identifier of the storage cell (storage ID)",
+          "rows": "Number of rows in the storage grid",
+          "cols": "Number of columns in the storage grid"
+        }
+      },
+      "merge_storage_grid_cells": {
+        "description": "Merges several adjacent grid cells into one (like \"merge cells\" in Excel/spreadsheets). The selected cells must form a rectangle; the top-left corner is set by the startCell address (e.g. \"A1\") — preferably, or by the startRow/startCol pair. Use it to create custom-size sections inside a drawer/container. Cell addressing: letter = column (A=column 0, B=column 1, …), number = row (row 0 → 1); the cell at row 0, column 0 is \"A1\". Always use ready-made addresses (cellAddress from tool responses or the page context), do not compute them yourself.",
+        "params": {
+          "storageId": "Identifier of the storage cell whose grid cells need to be merged",
+          "startCell": "Address of the top-left cell of the rectangle to merge (e.g. \"A1\"). The preferred way. Optional if startRow/startCol are set.",
+          "startRow": "Alternative to startCell: the first row number of the rectangle (0-based)",
+          "startCol": "Alternative to startCell: the first column number of the rectangle (0-based)",
+          "rowSpan": "Number of rows to merge (minimum 1)",
+          "colSpan": "Number of columns to merge (minimum 1)"
+        }
+      },
+      "split_storage_grid_cell": {
+        "description": "Splits a previously merged grid cell back into separate cells (like \"unmerge\" in Excel). To get the spanId, first call get_storage_details and find the needed span in the gridSpans field.",
+        "params": {
+          "storageId": "Identifier of the storage cell whose grid contains the merged cell to split",
+          "spanId": "Unique identifier of the merged cell (span). Get it from get_storage_details → gridSpans[].id"
+        }
+      },
+      "delete_storage_cell": {
+        "description": "Deletes a storage cell. WARNING: Destructive action — all components attached to this cell will lose their location. Child cells are also deleted cascadingly.",
+        "params": {
+          "storageId": "Identifier of the storage cell to delete"
+        }
+      }
+    },
+    "errors": {
+      "invalidCellAddress": "Invalid cell address: \"{cell}\". Expected format \"A1\".",
+      "missingRectangleStart": "Specify the start of the rectangle: startCell (e.g. \"A1\") or a startRow/startCol pair.",
+      "storageNotFound": "Storage not found: {storageId}",
+      "invalidStorageRef": "Not a valid storage reference: \"{ref}\". Expected a storage id or a \"mk://storages/storage/<id>\" reference."
+    },
+    "pageContext": {
+      "cellOpen": "The user is in storage «{path}» (storageId: {storageId}) and has opened cell «{cell}» in it. Any questions and actions about «this cell» / «the selected cell» refer to cell «{cell}» of this storage — refer to it only by this address and pass it to the tools (the cell parameter) as-is.",
+      "noCell": "The user is in storage «{path}» (storageId: {storageId}). No specific grid cell is open."
+    },
+    "restrictions": {
+      "byStorage": "Access to specific storages (incl. nested)"
+    },
+    "uxFeatures": {
+      "gridEditing": "Cell merge & split editing",
+      "advancedFields": "Zone & parent-cell placement fields"
+    },
+    "dashboard": {
+      "total": "Storage locations"
+    },
+    "exchange": {
+      "root": "Storage with contents",
+      "sections": {
+        "structure": "Structure (hierarchy and grids)",
+        "all": "All storages (full backup)"
+      },
+      "options": {
+        "targetStorage": "Import under storage (empty = new root)",
+        "targetRow": "Target cell row",
+        "targetCol": "Target cell column"
+      },
+      "importedSuffix": "(imported)"
+    },
+    "noCategory": "No category"
+  },
+  "nav": {
+    "storages": "Storage"
+  },
+  "routeTitles": {
+    "storages": "Storage and Locations"
+  },
+  "plugins": {
+    "storages": {
+      "name": "Storage",
+      "description": "Component storage cells and locations"
+    }
+  }
+}

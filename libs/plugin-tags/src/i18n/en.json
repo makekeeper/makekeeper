@@ -1,0 +1,165 @@
+{
+  "agentConfirm": {
+    "create_tag": "Create tag «{name}»?",
+    "update_tag": "Update tag «{name}»?",
+    "assign_tag": "Attach tag «{tag}» to {ref}?",
+    "unassign_tag": "Remove tag «{tag}» from {ref}?",
+    "delete_tag": "Delete tag «{name}» everywhere?"
+  },
+  "tags": {
+    "page": {
+      "title": "Tags",
+      "subtitle": "Labels shared across every object in the app.",
+      "createButton": "New tag",
+      "empty": "No tags yet",
+      "emptyDesc": "Create a tag, then attach it to projects, components, storages and more.",
+      "usageCount": "{count} objects",
+      "objectsFor": "Objects tagged «{name}»",
+      "objectsEmpty": "Nothing is tagged with this yet.",
+      "backToAll": "All tags",
+      "unavailableObject": "Unavailable object",
+      "deleteTag": "Delete tag",
+      "loadError": "Failed to load tags"
+    },
+    "form": {
+      "createTitle": "New tag",
+      "editTitle": "Edit tag",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. rework, urgent, RF",
+      "colorLabel": "Colour",
+      "customColor": "Custom colour",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "colors": {
+      "slate": "Slate",
+      "red": "Red",
+      "orange": "Orange",
+      "amber": "Amber",
+      "emerald": "Emerald",
+      "teal": "Teal",
+      "sky": "Sky",
+      "violet": "Violet",
+      "pink": "Pink",
+      "brand": "Brand"
+    },
+    "chip": {
+      "add": "Add tag",
+      "remove": "Remove tag {name}"
+    },
+    "picker": {
+      "placeholder": "Add a tag…",
+      "createOption": "Create «{name}»",
+      "noResults": "No matching tags",
+      "assignError": "Failed to add tag",
+      "unassignError": "Failed to remove tag"
+    },
+    "filter": {
+      "label": "Tag",
+      "all": "All tags"
+    },
+    "header": {
+      "searchPlaceholder": "Search tags — try #electronics",
+      "noResults": "No matching tags"
+    },
+    "toasts": {
+      "created": "Tag created",
+      "updated": "Tag updated",
+      "deleted": "Tag deleted",
+      "assigned": "Tag added",
+      "unassigned": "Tag removed",
+      "error": "Something went wrong"
+    },
+    "confirmDelete": "Delete tag «{name}»? It is attached to {count} objects.",
+    "errors": {
+      "invalidRef": "«{ref}» is not a valid object reference.",
+      "targetNotFound": "The object «{ref}» does not exist or is out of scope.",
+      "notFound": "Tag not found.",
+      "duplicateName": "A tag named «{name}» already exists.",
+      "nameTooLong": "Tag name is too long — {max} characters at most.",
+      "invalidColor": "Unknown tag colour.",
+      "emptyName": "Tag name cannot be empty."
+    },
+    "agentTools": {
+      "list_tags": {
+        "description": "List all tags with how many objects each is attached to. Optionally filter by a name substring.",
+        "params": {
+          "query": "Optional case-insensitive substring to filter tag names by."
+        }
+      },
+      "get_object_tags": {
+        "description": "List the tags currently attached to one object, given its canonical object reference (mk://…).",
+        "params": {
+          "ref": "Canonical object reference of the object whose tags to read."
+        }
+      },
+      "find_objects_by_tag": {
+        "description": "Find every object attached to a given tag, resolved to name and location. Fails for an unknown tag; an empty result means the tag exists but is unused.",
+        "params": {
+          "tag": "Tag id, name, or mk://tags/tag/<id> reference to look up."
+        }
+      },
+      "create_tag": {
+        "description": "Create a new tag in the shared vocabulary.",
+        "params": {
+          "name": "The tag name (must be unique).",
+          "color": "Optional colour tone for the tag chip."
+        }
+      },
+      "update_tag": {
+        "description": "Rename a tag and/or change its colour. Affects the tag everywhere it is used.",
+        "params": {
+          "tag": "Tag id, name, or mk://tags/tag/<id> reference to update.",
+          "name": "New name for the tag.",
+          "color": "New colour tone for the tag chip."
+        }
+      },
+      "assign_tag": {
+        "description": "Attach a tag to any object by its canonical reference. Creates the tag if the given name does not exist yet.",
+        "params": {
+          "tag": "Tag id, name (created if unknown), or mk://tags/tag/<id> reference.",
+          "ref": "Canonical object reference (mk://…) of the object to tag."
+        }
+      },
+      "unassign_tag": {
+        "description": "Remove a tag from one object. The tag itself is kept.",
+        "params": {
+          "tag": "Tag id, name, or mk://tags/tag/<id> reference to remove.",
+          "ref": "Canonical object reference (mk://…) of the object to untag."
+        }
+      },
+      "delete_tag": {
+        "description": "Delete a tag from the vocabulary and detach it from every object.",
+        "params": {
+          "tag": "Tag id, name, or mk://tags/tag/<id> reference to delete."
+        }
+      }
+    },
+    "exchange": {
+      "sections": {
+        "links": "Tags and tag links",
+        "all": "All tags (full backup)"
+      }
+    },
+    "sources": {
+      "label": "Values of this field become tags",
+      "hint": "The value is added as a tag when the item is created. It is not kept in sync afterwards."
+    },
+    "ux": {
+      "page": "Tags page",
+      "everywhere": "Tag filters, chips & search"
+    }
+  },
+  "nav": {
+    "tags": "Tags"
+  },
+  "routeTitles": {
+    "tags": "Tags"
+  },
+  "plugins": {
+    "tags": {
+      "name": "Tags",
+      "description": "Universal tagging and tag search across every object in the app."
+    }
+  }
+}

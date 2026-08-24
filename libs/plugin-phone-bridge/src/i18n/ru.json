@@ -1,0 +1,86 @@
+{
+  "plugins": {
+    "phone-bridge": {
+      "name": "Связь с телефоном",
+      "description": "Подключите телефон по QR-коду, чтобы передавать данные прямо в приложение (фото, сканирование и другое) — через опциональный Cloudflare-туннель."
+    }
+  },
+  "phoneBridge": {
+    "title": "Связь с телефоном",
+    "attachingTo": "Прикрепляется к: {target}",
+    "checking": "Проверяем ссылку…",
+    "invalid": "Ссылка больше недействительна. Сгенерируйте новый QR-код на компьютере.",
+    "desktop": {
+      "title": "Сканировать телефоном",
+      "creating": "Готовим ссылку…",
+      "warmup": "Почти готово — {seconds} с…",
+      "warmupNote": "Ждём, пока адрес туннеля распространится, чтобы телефон смог его открыть.",
+      "createFailed": "Не удалось создать сессию.",
+      "scanHint": "Наведите камеру телефона. Код открывает страницу MakeKeeper, связанную с этим окном, — всё, что вы отсканируете или сфотографируете на телефоне, придёт сюда.",
+      "linkHint": "Не получается отсканировать? Откройте эту ссылку на телефоне.",
+      "cannotScanTitle": "Не удаётся начать сканирование",
+      "openSettings": "Открыть настройки",
+      "localWarning": "Это локальный адрес — на телефоне он не откроется. Включите туннель в настройках плагина или задайте PUBLIC_BASE_URL.",
+      "insecureWarning": "Это http://-адрес — телефону нужен HTTPS. Включите Cloudflare-туннель или откройте приложение по HTTPS. Если приложение уже доступно по HTTPS за обратным прокси, задайте PUBLIC_BASE_URL с публичным https://-адресом (промежуточный прокси мог сбросить проброшенную схему)."
+    },
+    "settings": {
+      "intro": "Откройте приложению доступ по HTTPS, чтобы телефон мог подключиться. Используется временный <a href=\"https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/do-more-with-tunnels/trycloudflare/\" target=\"_blank\" class=\"text-brand-600 dark:text-brand-400 hover:underline\">Cloudflare Quick Tunnel</a> — без аккаунта и домена.<br>Уже открыто по HTTPS за обратным прокси? Тогда задайте PUBLIC_BASE_URL с публичным https://-адресом.",
+      "modeLabel": "Режим туннеля",
+      "modes": {
+        "off": "Выкл",
+        "auto": "Авто",
+        "on": "Вкл"
+      },
+      "modeHints": {
+        "off": "Туннель не поднимается. Подключение телефона работает, только если приложение уже доступно по HTTPS.",
+        "auto": "Туннель поднимается автоматически, когда нужен сессии, и гаснет при простое.",
+        "on": "Держать туннель поднятым постоянно."
+      },
+      "statusLabel": "Состояние",
+      "states": {
+        "disabled": "Отключён",
+        "stopped": "Остановлен",
+        "starting": "Запуск…",
+        "running": "Работает",
+        "error": "Ошибка"
+      },
+      "start": "Запустить",
+      "stop": "Остановить",
+      "binaryPathLabel": "Свой путь (опционально)",
+      "binaryPathPlaceholder": "напр. /usr/local/bin/cloudflared",
+      "download": "Установить официальный клиент Cloudflare",
+      "idleTtlLabel": "Держать туннель после последнего использования",
+      "idleTtlHint": "В режиме Авто туннель живёт столько после последней сессии, затем гаснет.",
+      "toast": {
+        "saved": "Сохранено",
+        "saveFailed": "Не удалось сохранить изменение.",
+        "downloadDone": "cloudflared загружен.",
+        "downloadFailed": "Не удалось загрузить cloudflared.",
+        "controlFailed": "Действие с туннелем не выполнено.",
+        "deleteDone": "cloudflared удалён.",
+        "deleteFailed": "Не удалось удалить cloudflared."
+      },
+      "idleTtlUnit": "мин",
+      "sectionConnection": "Соединение",
+      "sectionBinary": "Бинарь cloudflared",
+      "binaryInstalled": "Установлен",
+      "binaryNotFound": "Не найден",
+      "downloadedOk": "Скачано.",
+      "downloadedError": "Не удалось скачать.",
+      "delete": "Удалить",
+      "deletedOk": "Удалено.",
+      "deletedError": "Не удалось удалить.",
+      "binaryPathValue": "Путь к бинарю: {path}"
+    },
+    "agentTools": {
+      "get_phone_bridge_status": {
+        "description": "Возвращает состояние публичного доступа для подключения телефона: режим Cloudflare-туннеля (off/on/auto), текущее состояние, публичный URL (если поднят) и найден ли бинарь cloudflared. Используй, чтобы понять, может ли сейчас телефон достучаться до приложения по HTTPS."
+      }
+    },
+    "exchange": {
+      "sections": {
+        "settings": "Настройки туннеля связи с телефоном"
+      }
+    }
+  }
+}

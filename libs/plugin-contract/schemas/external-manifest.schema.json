@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://makekeeper.app/schemas/external-manifest.schema.json",
+  "title": "MakeKeeper external plugin manifest",
+  "description": "Structural schema of the manifest an out-of-process plugin presents at registration. The core's validator (plugin-contract external-manifest.ts) is authoritative and additionally checks cross-references this schema cannot express: contract-major support, screen keys referenced by nav/widgets/slots/settings/objectRefs existing in `screens`, capability ids carrying the plugin's own prefix, and every referenced i18n key resolving in the mandatory `en` bundle.",
+  "type": "object",
+  "required": [
+    "contract",
+    "pluginId",
+    "version",
+    "nameKey",
+    "icon",
+    "scopeModel",
+    "permissions",
+    "i18n",
+    "screens"
+  ],
+  "properties": {
+    "contract": {
+      "type": "object",
+      "required": ["major", "minor"],
+      "properties": {
+        "major": { "type": "integer", "minimum": 1 },
+        "minor": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "pluginId": { "$ref": "#/$defs/pluginId" },
+    "version": { "type": "string", "minLength": 1 },
+    "nameKey": { "$ref": "#/$defs/i18nKey" },
+    "descriptionKey": { "$ref": "#/$defs/i18nKey" },
+    "icon": { "type": "string", "minLength": 1 },
+    "scopeModel": { "enum": ["instance", "per-scope"] },
+    "permissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/permission" }
+    },
+    "i18n": {
+      "type": "object",
+      "description": "locale -> message tree. `en` is mandatory and must cover every key the manifest references; other locales fall back to en.",
+      "required": ["en"],
+      "additionalProperties": { "type": "object" }
+    },
+    "screens": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/screenKey" }
+    },
+    "nav": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["screen", "titleKey", "icon"],
+        "properties": {
+          "screen": { "$ref": "#/$defs/screenKey" },
+          "titleKey": { "$ref": "#/$defs/i18nKey" },
+          "icon": { "type": "string", "minLength": 1 },
+          "section": { "enum": ["main", "system"] },
+          "advanced": { "type": "boolean" },
+          "hub": { "type": "string" },
+          "order": { "type": "number" }
+        }
+      }
+    },
+    "widgets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "screen", "titleKey", "icon"],
+        "properties": {
+          "key": { "type": "string", "minLength": 1 },
+          "screen": { "$ref": "#/$defs/screenKey" },
+          "titleKey": { "$ref": "#/$defs/i18nKey" },
+          "icon": { "type": "string", "minLength": 1 },
+          "size": { "enum": ["stat", "panel", "full"] },
+          "order": { "type": "number" },
+          "advanced": { "type": "boolean" }
+        }
+      }
+    },
+    "slots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slot", "screen"],
+        "properties": {
+          "slot": { "type": "string", "minLength": 1 },
+          "screen": { "$ref": "#/$defs/screenKey" },
+          "order": { "type": "number" },
+          "labelKey": { "$ref": "#/$defs/i18nKey" }
+        }
+      }
+    },
+    "settingsScreen": { "$ref": "#/$defs/screenKey" },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "descriptionKey", "permission", "parameters"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "descriptionKey": { "$ref": "#/$defs/i18nKey" },
+          "permission": {
+            "description": "DESTRUCTIVE is rejected for external plugins by the runtime.",
+            "enum": ["READ", "WRITE", "DESTRUCTIVE"]
+          },
+          "parameters": {
+            "type": "object",
+            "required": ["properties"],
+            "properties": {
+              "properties": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "required": ["type", "descriptionKey"],
+                  "properties": {
+                    "type": { "enum": ["string", "number", "boolean"] },
+                    "descriptionKey": { "$ref": "#/$defs/i18nKey" },
+                    "enum": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              },
+              "required": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "version"],
+        "properties": {
+          "id": { "$ref": "#/$defs/capabilityId" },
+          "version": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "objectRefs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entityType", "screen"],
+        "properties": {
+          "entityType": { "type": "string", "minLength": 1 },
+          "screen": { "$ref": "#/$defs/screenKey" }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "exchange": { "type": "boolean" },
+    "purgeHook": { "type": "boolean" },
+    "publicPaths": {
+      "type": "array",
+      "description": "Path prefixes of the plugin's own HTTP surface the instance may expose to the web at /plugins/<pluginId>/… (contract 1.10). Relative, no leading slash; '' declares the whole surface. The signed mk/* surface can never be declared.",
+      "items": {
+        "type": "string",
+        "pattern": "^$|^(?!mk$|mk/)[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)*$"
+      }
+    },
+    "uxFeatures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "labelKey"],
+        "properties": {
+          "key": { "type": "string", "minLength": 1 },
+          "labelKey": { "$ref": "#/$defs/i18nKey" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "pluginId": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,31}$" },
+    "screenKey": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" },
+    "capabilityId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,31}\\.[a-z][a-z0-9-]{1,63}$"
+    },
+    "i18nKey": { "type": "string", "minLength": 1 },
+    "permission": {
+      "type": "string",
+      "description": "scoped `<plugin>:read|write|destructive` (contract 1.11), instance `instance:<plugin>:read`, or capability `capability:<owner>.<name>`.",
+      "pattern": "^(([a-z][a-z0-9-]{1,31}):(read|write|destructive)|instance:([a-z][a-z0-9-]{1,31}):read|capability:[a-z][a-z0-9-]{1,31}\\.[a-z][a-z0-9-]{1,63})$"
+    }
+  }
+}

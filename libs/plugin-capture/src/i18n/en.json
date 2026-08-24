@@ -1,0 +1,31 @@
+{
+  "plugins": {
+    "capture": {
+      "name": "Phone photo",
+      "description": "Shoot a photo on your phone via a QR code and drop it straight into the app, over the phone-link tunnel."
+    }
+  },
+  "capture": {
+    "option": {
+      "fromPhone": "From phone"
+    },
+    "done": "Sent {count} photo(s). You can close this page.",
+    "shoot": "Take photo",
+    "finish": "Done",
+    "shotCount": "{count} shot",
+    "errors": {
+      "insecure": "The camera needs a secure (HTTPS) connection. Open the link over HTTPS.",
+      "camera": "Could not access the camera. Grant camera permission and retry."
+    },
+    "desktop": {
+      "button": "Capture from phone",
+      "active": "Phone connected — capturing…",
+      "chatContext": "Chat"
+    },
+    "exchange": {
+      "sections": {
+        "attachments": "Uploaded files (full backup)"
+      }
+    }
+  }
+}

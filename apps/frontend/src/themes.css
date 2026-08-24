@@ -1,0 +1,157 @@
+/*
+ * Colour schemes (#236). The accent (`brand.*`) and the dark surface ramp
+ * (`dark.*`) are CSS custom properties consumed by tailwind.config.js via
+ * `rgb(var(--mk-…) / <alpha-value>)`, so utility class names never change —
+ * the active scheme is `data-scheme` on <html>, set by the preferences store
+ * (and pre-mount by the anti-FOUC script in index.html).
+ *
+ * Scheme selectors deliberately match ANY element, not just :root: a swatch in
+ * the header's scheme picker previews a non-active scheme by carrying its own
+ * `data-scheme`, re-scoping the variables for that subtree only.
+ *
+ * Values are raw RGB triplets, not hex: Tailwind's `<alpha-value>` slot needs
+ * the channels bare so `bg-brand-500/30`-style opacity utilities keep working.
+ *
+ * Every scheme declares BOTH ramps: the accent (a stock Tailwind family, so
+ * contrast behaviour is known-good) and its own dark surface tint (the default
+ * ramp hue-rotated to the accent's hue — dark mode should feel native to the
+ * scheme, not blue-tinted under an orange accent). Light surfaces stay on the
+ * neutral `slate` ramp for every scheme, keeping text contrast predictable.
+ *
+ * The default scheme (no data-scheme / unknown value) must stay bit-identical
+ * to the palette previously hardcoded in tailwind.config.js.
+ *
+ * Accent contrast is held to WCAG AA for the white-on-accent pair the primary
+ * `Button` renders (`bg-brand-600 text-white`): every scheme's `--mk-brand-600`
+ * clears 4.5:1 against white. Two accents (teal, orange) only reach that at
+ * their 700 step, so those two ramps sit one step deeper from 600 down — see
+ * the note on each. Dark mode needs no such shift: brand-400 on the scheme's
+ * own dark-900/800 surfaces ranges 5.9:1–8.9:1 across all six.
+ */
+
+/* `:root` is what an absent attribute matches; the explicit selector is what a
+ * PREVIEW matches — a swatch in the picker carries `data-scheme="default"` to
+ * show this palette while another scheme is active, and without the second
+ * selector it would inherit the active one instead. */
+:root,
+[data-scheme='default'] {
+  /* default — the original blue accent */
+  --mk-brand-50: 239 246 255;
+  --mk-brand-100: 219 234 254;
+  --mk-brand-200: 191 219 254;
+  --mk-brand-300: 147 197 253;
+  --mk-brand-400: 96 165 250;
+  --mk-brand-500: 59 130 246;
+  --mk-brand-600: 37 99 235;
+  --mk-brand-700: 29 78 216;
+  --mk-brand-800: 30 64 175;
+  --mk-brand-900: 30 58 138;
+
+  --mk-dark-600: 63 78 102;
+  --mk-dark-700: 43 55 74;
+  --mk-dark-800: 26 35 51;
+  --mk-dark-900: 12 19 34;
+  --mk-dark-950: 7 10 19;
+}
+
+[data-scheme='violet'] {
+  /* accent: Tailwind `violet` */
+  --mk-brand-50: 245 243 255;
+  --mk-brand-100: 237 233 254;
+  --mk-brand-200: 221 214 254;
+  --mk-brand-300: 196 181 253;
+  --mk-brand-400: 167 139 250;
+  --mk-brand-500: 139 92 246;
+  --mk-brand-600: 124 58 237;
+  --mk-brand-700: 109 40 217;
+  --mk-brand-800: 91 33 182;
+  --mk-brand-900: 76 29 149;
+
+  --mk-dark-600: 75 63 102;
+  --mk-dark-700: 52 43 74;
+  --mk-dark-800: 34 26 51;
+  --mk-dark-900: 19 12 34;
+  --mk-dark-950: 11 7 19;
+}
+
+[data-scheme='teal'] {
+  /* accent: Tailwind `teal`, shifted one step deeper from 600 down — white on
+     teal-600 is 3.7:1, below AA; teal-700 in the 600 slot gives 5.5:1. */
+  --mk-brand-50: 240 253 250;
+  --mk-brand-100: 204 251 241;
+  --mk-brand-200: 153 246 228;
+  --mk-brand-300: 94 234 212;
+  --mk-brand-400: 45 212 191;
+  --mk-brand-500: 20 184 166;
+  --mk-brand-600: 15 118 110;
+  --mk-brand-700: 17 94 89;
+  --mk-brand-800: 19 78 74;
+  --mk-brand-900: 4 47 46;
+
+  --mk-dark-600: 63 102 97;
+  --mk-dark-700: 43 74 70;
+  --mk-dark-800: 26 51 48;
+  --mk-dark-900: 12 34 31;
+  --mk-dark-950: 7 19 18;
+}
+
+[data-scheme='sunset'] {
+  /* accent: Tailwind `orange`, shifted one step deeper from 600 down — white on
+     orange-600 is 3.6:1, below AA; orange-700 in the 600 slot gives 5.2:1. */
+  --mk-brand-50: 255 247 237;
+  --mk-brand-100: 255 237 213;
+  --mk-brand-200: 254 215 170;
+  --mk-brand-300: 253 186 116;
+  --mk-brand-400: 251 146 60;
+  --mk-brand-500: 249 115 22;
+  --mk-brand-600: 194 65 12;
+  --mk-brand-700: 154 52 18;
+  --mk-brand-800: 124 45 18;
+  --mk-brand-900: 67 20 7;
+
+  --mk-dark-600: 102 79 63;
+  --mk-dark-700: 74 56 43;
+  --mk-dark-800: 51 36 26;
+  --mk-dark-900: 34 21 12;
+  --mk-dark-950: 19 12 7;
+}
+
+[data-scheme='orchid'] {
+  /* accent: Tailwind `fuchsia` */
+  --mk-brand-50: 253 244 255;
+  --mk-brand-100: 250 232 255;
+  --mk-brand-200: 245 208 254;
+  --mk-brand-300: 240 171 252;
+  --mk-brand-400: 232 121 249;
+  --mk-brand-500: 217 70 239;
+  --mk-brand-600: 192 38 211;
+  --mk-brand-700: 162 28 175;
+  --mk-brand-800: 134 25 143;
+  --mk-brand-900: 112 26 117;
+
+  --mk-dark-600: 97 63 102;
+  --mk-dark-700: 70 43 74;
+  --mk-dark-800: 48 26 51;
+  --mk-dark-900: 31 12 34;
+  --mk-dark-950: 17 7 19;
+}
+
+[data-scheme='graphite'] {
+  /* accent: Tailwind `slate` — the monochrome scheme; surfaces desaturated */
+  --mk-brand-50: 248 250 252;
+  --mk-brand-100: 241 245 249;
+  --mk-brand-200: 226 232 240;
+  --mk-brand-300: 203 213 225;
+  --mk-brand-400: 148 163 184;
+  --mk-brand-500: 100 116 139;
+  --mk-brand-600: 71 85 105;
+  --mk-brand-700: 51 65 85;
+  --mk-brand-800: 30 41 59;
+  --mk-brand-900: 15 23 42;
+
+  --mk-dark-600: 78 81 87;
+  --mk-dark-700: 55 58 62;
+  --mk-dark-800: 36 38 41;
+  --mk-dark-900: 22 22 24;
+  --mk-dark-950: 12 13 14;
+}

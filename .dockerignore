@@ -1,0 +1,54 @@
+# Build context hygiene — keep images small and never leak local state/secrets.
+node_modules
+**/node_modules
+dist
+tmp
+out-tsc
+coverage
+
+# NX + Vite caches
+.nx/cache
+.nx/workspace-data
+**/.vite
+
+# Secrets / local env — must never enter an image layer
+.env
+.env.*
+!.env.example
+
+# Local uploads and logs
+uploads
+.devcontainer/logs
+
+# VCS / editor / CI metadata not needed for the build
+.git
+.gitignore
+.vscode
+.idea
+.claude
+.agents
+.tools
+.forgejo
+.devcontainer
+
+# Deployment recipes and docs: not inputs to `nx build backend|frontend`, so they
+# only bloat the context and the `COPY . .` layer.
+#
+# NOTE: this file is shared by EVERY build that uses the repo root as its
+# context, which is why two source trees are deliberately NOT ignored here:
+#   plugins/  — plugins/mk-plugin-mcp/Dockerfile copies plugins/mk-plugin-mcp/**
+#               plus libs/plugin-{contract,sdk} out of this context.
+#   examples/ — examples/Dockerfile copies examples/${PLUGIN}/** out of it too
+#               (its header states the context is the repo root).
+# Ignoring either would break those builds with a missing-source COPY, and only
+# the plugin one is covered by CI — the examples fail in a contributor's shell.
+deploy
+docs
+**/.test-build
+
+# nx migration bookkeeping (gitignored, alongside the caches above).
+.nx/migrate-runs
+
+# Docs / misc that don't affect the build
+*.md
+!README.md

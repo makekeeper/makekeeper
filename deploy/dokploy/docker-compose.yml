@@ -1,0 +1,124 @@
+# MakeKeeper — Dokploy-native stack.
+#
+# Same two-image stack as ../docker-compose.prod.yml, adapted to Dokploy's
+# Compose + Domains model:
+#   - `web` joins the external `dokploy-network` and uses `expose` (not `ports`)
+#     so Dokploy's Traefik reaches it on the container port; the Domains tab
+#     (or the paired template.toml) attaches the public domain + TLS. Dokploy
+#     adds the Traefik labels itself — do not hand-write them here.
+#   - `db` and `app` stay on the private `internal` network only.
+#
+# Secrets are still REQUIRED (`:?` → fails loud). Provide them either via the
+# paired `template.toml` (auto-generated on first deploy) or the Environment tab.
+# Use this ONLY on Dokploy; for plain docker compose / Portainer use
+# ../docker-compose.prod.yml; for Coolify use ../coolify/makekeeper.yaml.
+# Full guide: ../../INSTALL.md
+name: makekeeper
+
+services:
+  db:
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-makekeeper}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-makekeeper}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-makekeeper} -d ${POSTGRES_DB:-makekeeper}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - internal
+
+  # Node backend (API only). Applies pending DB migrations on every start via its
+  # entrypoint (`prisma migrate deploy`). Keep a single replica so migrations
+  # never race. The image ships its own /api/health HEALTHCHECK.
+  app:
+    image: ${IMAGE_APP:-ghcr.io/makekeeper/app}:${TAG:-latest}
+    # Re-check the registry on every Redeploy so a mutable `latest` isn't served
+    # from local cache; a pinned immutable TAG just returns its cached digest.
+    pull_policy: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-makekeeper}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@db:5432/${POSTGRES_DB:-makekeeper}?schema=public
+      # >= 32 chars. Encrypts stored secrets at rest — rotating it invalidates them.
+      APP_SECRET: ${APP_SECRET:?APP_SECRET is required (>=32 chars)}
+      # >= 32 chars. Signs multiuser JWTs.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required (>=32 chars)}
+      PORT: '3000'
+      UPLOADS_DIR: /data/uploads
+      # Leave empty to derive per-request from the X-Forwarded-* headers Dokploy's
+      # Traefik sets; set a fixed origin only if you need stable phone-capture links.
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      RUN_SEED: ${RUN_SEED:-0}
+      # Two proxies front the API here — Dokploy's Traefik, then the `web`
+      # nginx — so Express must trust two X-Forwarded-For hops to see the real
+      # client IP (the login throttle keys on it, #237). Raise only if you put
+      # a FURTHER proxy in front of Traefik.
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-2}
+      # Self-declared install method (diagnostics only) — Dokploy injects nothing
+      # identifying into the app container, so we stamp it here.
+      MK_INSTALL_METHOD: dokploy
+    volumes:
+      - uploads:/data/uploads
+    restart: unless-stopped
+    networks:
+      - internal
+
+  # nginx: serves the SPA and reverse-proxies /api to `app`. Reached by Traefik
+  # over `dokploy-network`; no host port is published.
+  web:
+    image: ${IMAGE_WEB:-ghcr.io/makekeeper/web}:${TAG:-latest}
+    pull_policy: always
+    depends_on:
+      app:
+        condition: service_healthy
+    expose:
+      - '80'
+    restart: unless-stopped
+    networks:
+      - internal
+      - dokploy-network
+
+  # OPTIONAL: the MCP server plugin (#248) — exposes the instance's agent
+  # tools to MCP clients at https://<your-domain>/plugins/mcp. Dokploy has no
+  # compose-profiles switch, so the service ships commented out: uncomment it
+  # (and the `mcpdata` volume below), redeploy, then pair the container once
+  # in Settings → External plugins and issue `mkt_…` connection tokens there.
+  # No domain and no Traefik wiring needed — MCP clients enter through `web`.
+  # mcp:
+  #   image: ${IMAGE_MCP:-ghcr.io/makekeeper/mk-plugin-mcp}:${MCP_TAG:-latest}
+  #   pull_policy: always
+  #   depends_on:
+  #     app:
+  #       condition: service_healthy
+  #   environment:
+  #     MK_CORE_URL: http://app:3000
+  #     MK_PLUGIN_URL: http://mcp:4410
+  #     PORT: '4410'
+  #     MK_STATE_DIR: /data
+  #     # Optional headless install: a one-time install token from Settings →
+  #     # External plugins; without it the container prints a pairing code to
+  #     # its log.
+  #     MK_INSTALL_TOKEN: ${MCP_INSTALL_TOKEN:-}
+  #   volumes:
+  #     - mcpdata:/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - internal
+
+volumes:
+  pgdata:
+  uploads:
+  # mcpdata:
+
+networks:
+  internal:
+  dokploy-network:
+    external: true

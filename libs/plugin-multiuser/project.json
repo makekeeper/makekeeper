@@ -1,0 +1,8 @@
+{
+  "name": "plugin-multiuser",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-multiuser/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:multiuser"],
+  "targets": {}
+}

@@ -1,0 +1,8 @@
+{
+  "name": "mk-plugin-loans",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference external plugin — per-scope model (lent-out tracker).",
+  "scripts": { "start": "node --experimental-strip-types src/main.ts" }
+}

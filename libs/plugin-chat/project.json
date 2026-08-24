@@ -1,0 +1,8 @@
+{
+  "name": "plugin-chat",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-chat/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:chat"],
+  "targets": {}
+}

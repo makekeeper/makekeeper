@@ -1,0 +1,82 @@
+{
+  "exchange": {
+    "roots": {
+      "instance": "Full instance backup",
+      "scope": "Single user backup"
+    },
+    "sections": {
+      "instance": "Instance metadata",
+      "scope": "User workspace"
+    },
+    "ux": {
+      "page": "Export / Import page"
+    },
+    "errors": {
+      "archiveMalformed": "The file is not a valid export archive",
+      "archiveTooLarge": "The archive exceeds the allowed size",
+      "formatTooNew": "The archive was created by a newer app version",
+      "rootUnavailable": "This export type is not available",
+      "rootNotFound": "The requested object was not found",
+      "unknownSection": "Unknown data section: {key}",
+      "unknownScope": "Unknown scope: no such user account",
+      "importNotFound": "The uploaded archive has expired — upload it again",
+      "dependencyMissing": "Section «{key}» requires «{dep}»",
+      "instanceNotEmpty": "Full restore requires a fresh, empty instance",
+      "adminOnly": "Only an administrator can run a full backup or restore"
+    },
+    "warnings": {
+      "pluginDisabled": "Provided by a disabled plugin — cannot be imported",
+      "unknownSection": "Not recognized by this instance — will be skipped",
+      "externalPluginMissing": "Belongs to plugin “{plugin}” which is not installed — the data will be kept until you install it"
+    },
+    "page": {
+      "title": "Export / Import",
+      "subtitle": "Move data between instances as archive files.",
+      "loadFailed": "Failed to load export options",
+      "entityHint": "To export a single project or storage, use the “Export…” action on its page."
+    },
+    "action": {
+      "export": "Export…"
+    },
+    "export": {
+      "title": "Export to file",
+      "hint": "Choose which data sections go into the archive.",
+      "includeSecrets": "Include secrets (API keys, accounts)",
+      "secretsWarning": "The archive will contain credentials — store it securely.",
+      "download": "Download archive",
+      "done": "Archive downloaded",
+      "failed": "Export failed"
+    },
+    "import": {
+      "title": "Import from file",
+      "hint": "Upload a .mkx archive exported from this or another instance.",
+      "pickFile": "Choose archive…",
+      "inspectFailed": "The file could not be read",
+      "previewHint": "Archive from {date}. Choose what to import.",
+      "run": "Import",
+      "done": "Import finished",
+      "failed": "Import failed",
+      "resultTitle": "Imported successfully",
+      "createdCount": "{count} records",
+      "openResult": "Open imported object",
+      "again": "Import another file"
+    },
+    "backup": {
+      "title": "Full instance backup",
+      "hint": "Every plugin’s data in one archive — for migration to another server or disaster recovery. Restores only into a fresh instance.",
+      "export": "Create backup…"
+    }
+  },
+  "nav": {
+    "exchange": "Export / Import"
+  },
+  "routeTitles": {
+    "exchange": "Export / Import"
+  },
+  "plugins": {
+    "exchange": {
+      "name": "Export / Import",
+      "description": "Move projects, storages and full backups between instances as archive files."
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "plugin-tags",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-tags/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:tags"],
+  "targets": {}
+}

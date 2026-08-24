@@ -1,0 +1,17 @@
+# Paste into your MakeKeeper compose stack; get MK_INSTALL_TOKEN from
+# Settings -> External plugins -> "Generate install token", then approve the
+# registration on the same screen.
+services:
+  mk-plugin-rates:
+    image: ghcr.io/makekeeper/mk-plugin-rates:latest
+    restart: unless-stopped
+    environment:
+      MK_CORE_URL: http://app:3000
+      MK_PLUGIN_URL: http://mk-plugin-rates:4403
+      MK_INSTALL_TOKEN: "paste-once-here"
+      MK_STATE_DIR: /data
+    volumes:
+      - mk-plugin-rates-data:/data
+
+volumes:
+  mk-plugin-rates-data:

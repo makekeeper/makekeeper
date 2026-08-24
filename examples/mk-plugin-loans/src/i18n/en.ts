@@ -1,0 +1,16 @@
+export const en = {
+  name: 'Lent out',
+  description: 'Track tools and materials you lent to other people.',
+  nav: 'Lent out',
+  title: 'Lent out',
+  intro: 'Things currently in someone else’s hands.',
+  count: 'Out on loan',
+  none: 'Nothing is lent out right now.',
+  fieldWhat: 'What',
+  fieldWho: 'To whom',
+  add: 'Record a loan',
+  added: '“{what}” recorded as lent to {who}',
+  returned: 'Marked as returned',
+  since: 'since {date}',
+  tool: 'List the things the current user has lent out and to whom',
+};

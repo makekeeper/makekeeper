@@ -1,0 +1,69 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# compiled output
+dist
+tmp
+out-tsc
+
+# dependencies
+node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs
+.claude/worktrees
+.claude/settings.local.json
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# local dev-agent tooling (e.g. a cloned MCP server) — see CLAUDE.md §9
+.tools/
+
+# logs
+.devcontainer/logs/
+*.log
+# Uploaded attachments (served via /api/uploads/:id)
+/uploads/
+
+# Bundled test output of the example plugins (npm test in examples/*).
+.test-build
+# State files an example plugin writes when run from its own directory.
+examples/*/notes.json
+examples/*/telegram.json
+examples/*/bambu.json

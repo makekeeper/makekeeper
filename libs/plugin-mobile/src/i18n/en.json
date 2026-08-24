@@ -1,0 +1,134 @@
+{
+  "mobile": {
+    "tabs": {
+      "home": "Home",
+      "ariaLabel": "Mobile sections"
+    },
+    "screen": {
+      "back": "Back",
+      "backTo": "Back to {section}"
+    },
+    "home": {
+      "title": "MakeKeeper on your phone",
+      "subtitle": "Stock the inventory where the parts actually are.",
+      "noSurfaces": "No plugin offers a mobile screen right now."
+    },
+    "install": {
+      "title": "Install on this phone",
+      "offer": "Installing puts MakeKeeper on the home screen: it opens full-screen like an app, and this phone keeps its own sign-in. Install first, then pair the installed app — it has its own storage.",
+      "action": "Install",
+      "manual": "This browser has no install button of its own. Open its menu — on iPhone that is the Share button — and choose “Add to Home Screen”.",
+      "accepted": "MakeKeeper was added to your home screen",
+      "ephemeralHost": "This address is a temporary tunnel and its name changes on every restart. The icon will keep working only until then, and everything this phone stored goes with it.",
+      "insecure": "Installation needs a secure (https) address. Over plain http the browser also blocks the camera."
+    },
+    "pair": {
+      "title": "Pair this phone",
+      "subtitle": "One scan, and this phone stays signed in.",
+      "nameLabel": "Name this device",
+      "defaultName": "My phone",
+      "action": "Pair",
+      "failed": "Pairing failed. The code may have expired or already been used.",
+      "scanHint": "Scan the pairing QR from the desktop app: open MakeKeeper on the computer and press the QR button in the header.",
+      "scanAction": "Scan the QR code",
+      "cancelScan": "Cancel",
+      "cameraFailed": "The camera could not be opened. Allow camera access for this app, or sign in with your password instead.",
+      "cameraPreview": "Camera preview",
+      "passwordInstead": "Sign in with a password instead"
+    },
+    "login": {
+      "title": "Sign in",
+      "subtitle": "This phone lost its pairing. Sign in to get it back.",
+      "scanInstead": "Pair by scanning a QR instead",
+      "deviceTokenFailed": "Signed in, but this phone could not be remembered — it may ask again later. Scan the pairing QR to fix that."
+    },
+    "queue": {
+      "pending": "{count} waiting for a connection",
+      "failed": "Did not apply: {label}",
+      "dismiss": "Dismiss"
+    },
+    "api": {
+      "origin": {
+        "summary": "Whether the address this request arrived at can host an installed mobile app, whether a phone can be paired at all, and where the surface is published"
+      },
+      "settings": {
+        "summary": "Mobile app settings: where the surface is published",
+        "updateSummary": "Change the mobile app settings",
+        "customOriginDescription": "Absolute origin the mobile surface is published at. Empty clears it and the surface lives at /m on the main address."
+      }
+    },
+    "errors": {
+      "invalidOrigin": "Enter an absolute address, for example https://phone.example.com",
+      "noPhoneAddress": "There is no address a phone could reach this instance at"
+    },
+    "devices": {
+      "title": "Paired devices",
+      "subtitle": "Phones signed in to this instance with their own long-lived credential.",
+      "pair": "Pair a phone",
+      "empty": "No phone is paired yet.",
+      "lastSeen": "Last seen: {when}",
+      "never": "never",
+      "revoke": "Revoke this device",
+      "revokeConfirm": "Revoke “{name}”? It stops working immediately and has to be paired again.",
+      "revoked": "“{name}” was revoked",
+      "revokeError": "Could not revoke the device",
+      "loadError": "Could not load paired devices",
+      "separateOrigin": "Phones connect to {origin}",
+      "separateOriginNote": "The mobile surface is published on its own host, so the session cookie is issued for the domain configured in SESSION_COOKIE_DOMAIN and travels to every host under it. Keep that domain as narrow as the two addresses allow.",
+      "pairingStatusSummary": "Whether a pairing offer has been taken up yet, so the desktop can close its QR",
+      "pairSelfSummary": "Issue a device token to the phone that is already signed in",
+      "defaultDeviceName": "Phone",
+      "errors": {
+        "pairingRejected": "This pairing code is not valid. It may have expired or already been used.",
+        "notFound": "No such device.",
+        "selfPairFailed": "Could not remember this device. Please try again."
+      }
+    },
+    "settings": {
+      "title": "Publishing",
+      "description": "Where phones reach this instance.",
+      "saved": "Saved",
+      "saveError": "Could not save the settings",
+      "origin": {
+        "label": "Address of the mobile app",
+        "help": "Leave empty to serve it at /m on the main address. A separate host installs as its own app and needs SESSION_COOKIE_DOMAIN set.",
+        "placeholder": "https://phone.example.com",
+        "envOverride": "Set by MOBILE_BASE_URL in the environment, which wins over this field. Clear the variable to manage the address here."
+      },
+      "cookieDomain": {
+        "label": "Session cookie domain",
+        "help": "Read-only: SESSION_COOKIE_DOMAIN has to be known before the first request is served, so it stays an environment variable.",
+        "unset": "not set"
+      }
+    },
+    "pairQr": {
+      "title": "Open the app on your phone",
+      "description": "Scan with the phone camera. This both opens the app and connects the phone — the code works once, for the next few minutes.",
+      "linkHint": "Can't scan it? Open this link on the phone.",
+      "alt": "QR code opening the mobile app",
+      "error": "Could not prepare the code",
+      "aria": "Open the app on a phone",
+      "label": "Open on the phone",
+      "preparing": "Preparing the address…",
+      "warmup": "Bringing the tunnel up — {seconds} s",
+      "warmupNote": "A tunnel that has just started is not reachable for a few seconds. The code appears once it is.",
+      "paired": "The phone is connected",
+      "expired": "The code expired — press the button again"
+    },
+    "exchange": {
+      "sections": {
+        "instance": "Mobile app settings"
+      }
+    },
+    "orientation": {
+      "title": "Turn the phone upright",
+      "body": "This screen is built for portrait. On its side the camera controls fall below the fold and the tab bar covers the page."
+    }
+  },
+  "plugins": {
+    "mobile": {
+      "name": "Mobile app",
+      "description": "The phone-sized surface: stocking the inventory where the parts are, paired devices, and where it is published."
+    }
+  }
+}

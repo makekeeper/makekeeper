@@ -1,0 +1,108 @@
+# documentation: https://github.com/makekeeper/makekeeper/blob/main/INSTALL.md
+# slogan: MakeKeeper is a personal platform for DIY projects — task tracker, parts inventory, storage map, order logistics and an AI assistant, in self-contained plugins.
+# category: productivity
+# tags: diy, maker, inventory, projects, storage, logistics, workshop, self-hosted
+# logo: svgs/makekeeper.png
+# port: 80
+#
+# MakeKeeper on Coolify. Usage and the rationale for every deviation from the
+# sibling compose files: ./README.md and ../../INSTALL.md §(c).
+#
+# Service names are load-bearing: the `web` image's nginx proxies /api to the
+# `app` host and `app` reaches Postgres at `db`. Renaming a service here breaks
+# that wiring — see apps/frontend/nginx.prod.conf.
+
+services:
+  db:
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-makekeeper}
+      - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+      - POSTGRES_DB=${POSTGRES_DB:-makekeeper}
+    volumes:
+      - makekeeper-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 20s
+      retries: 10
+    restart: unless-stopped
+
+  # Node backend (API only). Applies pending migrations on every start via its
+  # entrypoint (`prisma migrate deploy`), so keep a single replica. Health comes
+  # from the image's own HEALTHCHECK (/api/health/ready) — see apps/backend/Dockerfile.
+  app:
+    image: ${IMAGE_APP:-ghcr.io/makekeeper/app}:${TAG:-latest}
+    # Re-check the registry on every (re)deploy so a mutable `latest` isn't
+    # served from local cache; a pinned immutable TAG returns its cached digest.
+    pull_policy: always
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-makekeeper}:${SERVICE_PASSWORD_POSTGRES}@db:5432/${POSTGRES_DB:-makekeeper}?schema=public
+      # >= 32 chars. Encrypts stored secrets at rest — rotating it invalidates them.
+      - APP_SECRET=${SERVICE_BASE64_64_APPSECRET}
+      # >= 32 chars. Signs multiuser JWTs.
+      - JWT_SECRET=${SERVICE_BASE64_64_JWTSECRET}
+      - PORT=3000
+      - UPLOADS_DIR=/data/uploads
+      # Empty: derived per request from X-Forwarded-*. Set only behind a FURTHER
+      # TLS-terminating proxy — see ../../docs/tls-public-access.md.
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-}
+      - RUN_SEED=${RUN_SEED:-0}
+      # Two proxies front the API here — Coolify's Traefik, then the `web`
+      # nginx — so Express must trust two X-Forwarded-For hops to see the real
+      # client IP (the login throttle keys on it, #237). Raise only behind a
+      # FURTHER proxy in front of Traefik.
+      - TRUST_PROXY_HOPS=${TRUST_PROXY_HOPS:-2}
+      # Self-declared install method (diagnostics only) — Coolify's own SERVICE_*
+      # variables never reach this container, so we stamp it here.
+      - MK_INSTALL_METHOD=coolify
+    volumes:
+      - makekeeper-uploads:/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # nginx: serves the SPA and reverse-proxies /api to `app`. This is the service
+  # you attach the domain to.
+  web:
+    image: ${IMAGE_WEB:-ghcr.io/makekeeper/web}:${TAG:-latest}
+    pull_policy: always
+    # Makes Coolify generate an address on first deploy; a domain typed into the
+    # Domains field later replaces it permanently. FQDN, not URL, no `_80`
+    # suffix — see ./README.md.
+    environment:
+      - SERVICE_FQDN_WEB
+    expose:
+      - '80'
+    # Start order only — deliberately NOT `condition: service_healthy`, see ./README.md.
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  # OPTIONAL: the MCP server plugin (#248) — exposes the instance's agent
+  # tools to MCP clients at https://<your-domain>/plugins/mcp. Coolify's
+  # one-click flow has no profiles switch, so the service ships commented out:
+  # uncomment it (and the `makekeeper-mcpdata` volume below), redeploy, then
+  # pair the container once in Settings → External plugins and issue `mkt_…`
+  # connection tokens there. No domain of its own — MCP clients enter through
+  # `web`.
+  # mcp:
+  #   image: ${IMAGE_MCP:-ghcr.io/makekeeper/mk-plugin-mcp}:${MCP_TAG:-latest}
+  #   pull_policy: always
+  #   environment:
+  #     - MK_CORE_URL=http://app:3000
+  #     - MK_PLUGIN_URL=http://mcp:4410
+  #     - PORT=4410
+  #     - MK_STATE_DIR=/data
+  #     - MK_INSTALL_TOKEN=${MCP_INSTALL_TOKEN:-}
+  #   volumes:
+  #     - makekeeper-mcpdata:/data
+  #   depends_on:
+  #     - app
+  #   restart: unless-stopped
+
+volumes:
+  makekeeper-pgdata:
+  makekeeper-uploads:
+  # makekeeper-mcpdata:

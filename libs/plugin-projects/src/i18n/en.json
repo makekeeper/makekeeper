@@ -1,0 +1,595 @@
+{
+  "agentConfirm": {
+    "create_project": "Create project «{title}»?",
+    "update_project": "Update project «{title}»?",
+    "add_task": "Add task «{title}» to project «{project}»?",
+    "update_task": "Update task «{title}»?",
+    "toggle_task_complete": "Mark task «{title}» as completed?",
+    "toggle_task_reopen": "Reopen task «{title}»?",
+    "link_component_to_project": "Link component «{component}» to project «{project}» ({qty} pcs)?",
+    "delete_project": "Delete project «{title}» with all its tasks and reservations?",
+    "delete_task": "Delete task «{title}»?",
+    "unlink_component_from_project": "Unlink component «{component}» from project «{project}» and release its reservation?",
+    "create_project_group": "Create project group «{name}»?",
+    "move_project_to_group": "Move project «{project}» to group «{group}»?",
+    "delete_project_group": "Delete group «{name}»? Its {projects} project(s) and {subgroups} subgroup(s) move to «{destination}»."
+  },
+  "projects": {
+    "title": "My Projects",
+    "manageDesc": "Manage your DIY projects, tasks, and reserve components.",
+    "newProjectBtn": "New project",
+    "totalProjects": "Total projects",
+    "inProgress": "In progress",
+    "completed": "Completed",
+    "tasksProgress": "Tasks: {completed}/{total}",
+    "budgetProgress": "Budget: {actual} / {planned} {currency}",
+    "componentsCount": "Components: {count}",
+    "dueDate": "Due date: {date}",
+    "noDueDate": "No due date",
+    "overdue": "Overdue",
+    "dueSoon": "Due soon",
+    "view": {
+      "grid": "Grid view",
+      "board": "Board view",
+      "gantt": "Timeline view"
+    },
+    "board": {
+      "emptyColumn": "Drop projects here"
+    },
+    "filters": {
+      "searchPlaceholder": "Search projects…",
+      "allStatuses": "All statuses"
+    },
+    "sort": {
+      "created": "Newest first",
+      "due": "By due date",
+      "progress": "By progress"
+    },
+    "empty": {
+      "title": "No projects yet",
+      "description": "Create your first DIY project to start tracking tasks, parts and budget."
+    },
+    "noResults": {
+      "title": "No matching projects",
+      "description": "Try a different search or clear the filters.",
+      "clear": "Clear filters"
+    },
+    "toasts": {
+      "loadFailed": "Failed to load. Check your connection and try again.",
+      "saveFailed": "Failed to save. Please try again.",
+      "deleteFailed": "Failed to delete. Please try again.",
+      "taskAddFailed": "Failed to add the task.",
+      "taskUpdateFailed": "Failed to update the task.",
+      "componentLinkFailed": "Failed to link the component.",
+      "componentUnlinkFailed": "Failed to unlink the component."
+    },
+    "status": {
+      "idea": "Idea",
+      "planning": "Planning",
+      "inProgress": "In Progress",
+      "testing": "Testing",
+      "completed": "Completed"
+    },
+    "statusBucket": {
+      "planned": "Planned",
+      "doing": "In progress",
+      "done": "Done"
+    },
+    "uxFeatures": {
+      "fullStatuses": "Full 5-stage statuses & board columns",
+      "listFilters": "List sorting & filters",
+      "specsCard": "Specifications card",
+      "budgetPlanning": "Budget planning",
+      "reservations": "Component reservations",
+      "taskAdvanced": "Advanced task editor (priority & dependencies)",
+      "benchCharts": "Project charts on the bench (statuses & activity)",
+      "groups": "Project groups",
+      "gantt": "Project timeline"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "agentTools": {
+      "list_projects": {
+        "description": "Returns a list of all DIY projects: title, status, budget, number of tasks. Use it to select a project before detailed operations."
+      },
+      "get_project_details": {
+        "description": "Returns detailed information about a project: tasks, linked components (reservations) and orders. Use it when the projectId is known.",
+        "params": {
+          "projectId": "Project identifier"
+        }
+      },
+      "get_task_details": {
+        "description": "Returns details of a project task: description, priority, status, linked components and orders.",
+        "params": {
+          "taskId": "Task identifier"
+        }
+      },
+      "get_shopping_list": {
+        "description": "Returns the project's shopping list — components still to buy (needed minus reserved minus free stock), with a last-paid cost estimate and total.",
+        "params": {
+          "projectId": "Project identifier"
+        }
+      },
+      "create_project": {
+        "description": "Creates a new DIY project with a title and status. Optionally sets start/due dates.",
+        "params": {
+          "title": "Project title",
+          "status": "Status: IDEA, PLANNING, IN_PROGRESS, TESTING, COMPLETED",
+          "description": "Project description. Optional.",
+          "startDate": "Planned start date (ISO 8601, e.g. 2026-07-15). Optional.",
+          "dueDate": "Target completion date (ISO 8601, e.g. 2026-08-30). Optional.",
+          "groupId": "Identifier or reference of the group to file the project in; omit for the default group"
+        }
+      },
+      "update_project": {
+        "description": "Updates project fields: title, description, status, start/due dates, planned budget. Pass only the fields you want to change.",
+        "params": {
+          "projectId": "Project identifier",
+          "title": "New title. Optional.",
+          "status": "New status. Optional.",
+          "description": "New description. Optional.",
+          "startDate": "New planned start date (ISO 8601). Optional.",
+          "dueDate": "New target completion date (ISO 8601). Optional."
+        }
+      },
+      "add_task": {
+        "description": "Adds a new task to a project.",
+        "params": {
+          "projectId": "Project identifier",
+          "title": "Task title"
+        }
+      },
+      "toggle_task": {
+        "description": "Marks a task as completed or not completed.",
+        "params": {
+          "taskId": "Task identifier",
+          "isCompleted": "true — completed, false — in progress"
+        }
+      },
+      "update_task": {
+        "description": "Updates a task's fields: title, description, priority (LOW/MEDIUM/HIGH), due date. Use toggle_task to change completion. Pass taskId and only the fields you want to change.",
+        "params": {
+          "taskId": "Identifier of the task being updated",
+          "title": "New title. Optional.",
+          "description": "New description. Optional.",
+          "priority": "New priority: LOW, MEDIUM or HIGH. Optional.",
+          "dueDate": "Task due date (ISO 8601, e.g. 2026-07-20). Optional."
+        }
+      },
+      "link_component_to_project": {
+        "description": "Links a warehouse component to a project with the required quantity specified.",
+        "params": {
+          "projectId": "Project identifier",
+          "componentId": "Component identifier",
+          "neededQty": "Required quantity for the project"
+        }
+      },
+      "delete_project": {
+        "description": "Deletes the entire project. WARNING: destructive action — the project tasks, reservations and links will be deleted.",
+        "params": {
+          "projectId": "Identifier of the project to delete"
+        }
+      },
+      "delete_task": {
+        "description": "Deletes a project task. WARNING: destructive action.",
+        "params": {
+          "taskId": "Identifier of the task to delete"
+        }
+      },
+      "unlink_component_from_project": {
+        "description": "Unlinks a component from a project and releases its reservation. WARNING: destructive action.",
+        "params": {
+          "projectId": "Project identifier",
+          "componentId": "Component identifier"
+        }
+      },
+      "list_project_files": {
+        "description": "Lists the files stored in a project: name, type, size and a reference for each. Use it to find a file to read with read_attachment, or to tell the user what the project holds.",
+        "params": {
+          "projectId": "Project reference (\"mk://projects/project/<id>\") or its raw id."
+        }
+      },
+      "list_project_groups": {
+        "description": "Returns the tree of project groups — the folders projects are filed in.",
+        "params": {}
+      },
+      "create_project_group": {
+        "description": "Creates a project group. Give parentId to nest it inside another group.",
+        "params": {
+          "name": "Name of the new group",
+          "parentId": "Identifier or reference of the parent group; omit for a top-level group"
+        }
+      },
+      "move_project_to_group": {
+        "description": "Moves a project into another group.",
+        "params": {
+          "projectId": "Identifier or reference of the project to move",
+          "groupId": "Identifier or reference of the destination group"
+        }
+      },
+      "delete_project_group": {
+        "description": "Deletes a project group. WARNING: destructive action — the group disappears; its projects and subgroups move to the parent group.",
+        "params": {
+          "groupId": "Identifier or reference of the group to delete"
+        }
+      }
+    },
+    "notes": {},
+    "errors": {
+      "groupNotFound": "Project group not found.",
+      "groupNameRequired": "A group needs a name.",
+      "groupNameTaken": "A group with this name already exists here.",
+      "groupCycle": "A group cannot be moved into itself or into one of its own subgroups.",
+      "groupDefaultUndeletable": "The default group cannot be deleted.",
+      "invalidGroupRef": "«{ref}» is not a project group reference.",
+      "invalidProjectRef": "«{ref}» is not a project reference."
+    },
+    "fallbacks": {
+      "unknown": "Unknown",
+      "project": "Project"
+    },
+    "restrictions": {
+      "byProject": "Access to specific projects"
+    },
+    "dashboard": {
+      "activeProjects": "Active projects",
+      "noActiveProjects": "No active projects",
+      "createProjectHint": "Create your first DIY project in the \"Projects\" tab.",
+      "activity": "Activity",
+      "activityHint": "{total} actions in the last 12 months.",
+      "activityAria": "Contribution calendar: project actions per day over the last 12 months, {total} total.",
+      "activityFailed": "Failed to load activity",
+      "loadFailed": "Failed to load projects",
+      "statuses": "Projects by status",
+      "statusesCenter": "projects",
+      "statusesAria": "Donut chart: how projects split across lifecycle statuses."
+    },
+    "stats": {
+      "activity": {
+        "label": "Project actions",
+        "unit": "actions",
+        "title": "Project activity"
+      }
+    },
+    "activityCalendar": {
+      "title": "Activity",
+      "hint": "{total} actions in the last 12 months.",
+      "aria": "Contribution calendar: actions in this project per day over the last 12 months, {total} total.",
+      "failed": "Failed to load activity"
+    },
+    "exchange": {
+      "root": "Project with data",
+      "sections": {
+        "project": "Project card and cover",
+        "tasks": "Tasks and their links",
+        "activity": "Activity log",
+        "all": "All projects (full backup)",
+        "taskOrders": "Task–order links (full backup)"
+      }
+    },
+    "bench": {
+      "title": "Bench",
+      "focus": "Current focus",
+      "open": "Open project",
+      "due": "Due {date}",
+      "openTasks": "{n} open tasks",
+      "canBuild": "Can be built right now",
+      "unblocks": "Unblocks {date}",
+      "notOrdered": "Waiting on parts nobody ordered yet",
+      "parts": "{secured} of {total} parts secured",
+      "seg": {
+        "reserved": "reserved",
+        "inStock": "in stock",
+        "onOrder": "on order",
+        "missing": "not ordered"
+      },
+      "blockers": "Blocking parts",
+      "shortN": "short {n}",
+      "onOrderN": "{n} on the way",
+      "noBlockers": "Nothing is blocking you — you can build.",
+      "switch": "Switch focus:",
+      "empty": "No active projects",
+      "emptyHint": "Readiness is computed for projects in planning, in progress or testing.",
+      "loadFailed": "Couldn't load the bench",
+      "queue": {
+        "title": "Task queue",
+        "summary": "{n} project(s) fully stocked",
+        "tab": {
+          "ready": "Can start",
+          "waitingOrder": "Waiting on a delivery",
+          "noParts": "Short of parts",
+          "all": "All"
+        },
+        "ready": "everything needed is on the shelf",
+        "waiting": "waiting on {store}, {date}",
+        "shortOf": "short of {names}",
+        "high": "HIGH",
+        "empty": {
+          "ready": "Nothing can be started right now",
+          "waitingOrder": "Nothing is waiting on a delivery",
+          "noParts": "Nothing is short of parts",
+          "all": "No open tasks"
+        },
+        "emptyHint": "A task is startable when every part it links has free stock and no order blocks it."
+      },
+      "ribbon": {
+        "buildable": "Ready to build",
+        "notOrdered": "Parts not ordered",
+        "incoming": "On the way",
+        "unplaced": "Not put away"
+      }
+    },
+    "fileLink": {
+      "unavailableTitle": "This file has no project",
+      "unavailableText": "The file is stored outside any project, so there is no page to show it on. It can still be downloaded from the conversation it was attached to."
+    },
+    "groups": {
+      "defaultName": "General",
+      "subtitle": "Folders your projects are filed in",
+      "add": "New group",
+      "addChild": "Add a subgroup",
+      "nameLabel": "Name",
+      "parentLabel": "Parent group",
+      "noParent": "No parent",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "reorder": "Reorder",
+      "delete": "Delete group",
+      "deleteTitle": "Delete «{name}»?",
+      "deleteMessage": "{projects} project(s) and {subgroups} subgroup(s) move to «{destination}».",
+      "deleteConfirm": "Delete",
+      "created": "Group created",
+      "renamed": "Group renamed",
+      "deleted": "Group deleted",
+      "emptyTitle": "No groups yet",
+      "emptyDescription": "Create a group to file your projects into.",
+      "field": "Group",
+      "manage": "Manage groups",
+      "loadFailedTitle": "Groups could not be loaded",
+      "loadFailedDescription": "The list of groups did not arrive. Check the connection and try again.",
+      "retry": "Try again",
+      "settingsDescription": "Folders your projects are filed in",
+      "allGroups": "All groups"
+    },
+    "gantt": {
+      "canvasLabel": "Project timeline. Arrow keys pan, plus and minus zoom.",
+      "hint": "Wheel to zoom, drag to move through time",
+      "otherGroup": "Other projects",
+      "emptyWindowTitle": "Nothing in this stretch of time",
+      "emptyWindow": "Zoom out or drag sideways to reach the projects you filtered for.",
+      "tasksDone": "{done} of {total} tasks done",
+      "step": {
+        "label": "Grid step",
+        "day": "day",
+        "week": "week",
+        "month": "month",
+        "quarter": "quarter"
+      },
+      "edge": {
+        "ongoing": "still running",
+        "inferred": "dates worked out from the project’s history"
+      }
+    }
+  },
+  "projectForm": {
+    "back": "Back",
+    "deleteProject": "Delete project",
+    "editTitle": "Edit Project",
+    "createTitle": "Create New Project",
+    "subtitle": "Fill in the description, status, and timeline of your DIY device.",
+    "titleLabel": "Project Name",
+    "titlePlaceholder": "E.g., Smart weather station",
+    "statusLabel": "Current Status",
+    "startDateLabel": "Start Date",
+    "dueDateLabel": "Target Completion Date",
+    "budgetLabel": "Planned Budget",
+    "budgetPlaceholder": "E.g., 150.00",
+    "currencyLabel": "Budget Currency",
+    "descriptionLabel": "Project Description",
+    "descriptionPlaceholder": "Describe in detail the goals of the project, the technologies used, and the expected result...",
+    "cancel": "Cancel",
+    "save": "Save",
+    "deleteConfirm": "Are you sure you want to delete this project? All associated tasks will be deleted."
+  },
+  "projectDetail": {
+    "back": "Back to projects",
+    "editBtn": "Edit",
+    "deleteBtn": "Delete",
+    "progressTitle": "Project Progress",
+    "tasksCompleted": "Tasks completed: {completed} of {total}",
+    "noDescription": "No description.",
+    "tabs": {
+      "dashboard": "Dashboard & Tasks",
+      "components": "Component Inventory",
+      "photos": "Files"
+    },
+    "shopping": {
+      "title": "Shopping list",
+      "subtitle": "Components still to buy (needed − reserved − free stock).",
+      "copy": "Copy",
+      "csv": "CSV",
+      "copied": "Shopping list copied to clipboard.",
+      "buyQty": "Buy {qty}",
+      "totalLabel": "Estimated total:"
+    },
+    "photos": {
+      "title": "Project files",
+      "subtitle": "A build-log of photos and files for this project.",
+      "upload": "Upload files",
+      "uploading": "Uploading…",
+      "uploadError": "Failed to upload the file.",
+      "delete": "Delete file",
+      "deleteConfirm": "Delete this file? This cannot be undone.",
+      "dropHere": "Drop files to upload",
+      "alt": "Project photo",
+      "emptyTitle": "No files yet",
+      "emptyDescription": "Drag files here or use the button — photos, 3D models, code, archives or receipts."
+    },
+    "files": {
+      "download": "Download",
+      "downloadError": "Download failed",
+      "dragOutUnsupported": "This browser cannot save a file dragged out of the window. Use the button below instead:",
+      "dragOutUnsupportedTitle": "Download the file",
+      "unnamed": "File",
+      "pinCover": "Set as cover",
+      "unpinCover": "Unset cover",
+      "name": "Name",
+      "type": "Type",
+      "size": "Size",
+      "added": "Added",
+      "preview": "Preview",
+      "actions": "Actions",
+      "viewLabel": "File view",
+      "viewGrid": "Tiles",
+      "viewList": "List"
+    },
+    "taskListTitle": "Project Task Checklist",
+    "addTaskPlaceholder": "Create a new project task...",
+    "addBtn": "Add",
+    "addTaskAdvanced": "Advanced…",
+    "noTasks": "No tasks yet",
+    "noTasksHint": "Add the first task using the field above.",
+    "characteristics": "Project Specifications",
+    "createdAt": "Creation Date",
+    "startDate": "Start Date",
+    "dueDate": "Due Date",
+    "neededComponents": "Required Components",
+    "pcsCount": "{count} pcs.",
+    "projectOrders": "Project Deliveries",
+    "unitsCount": "{count} units",
+    "budgetTitle": "Project Budget",
+    "changeBtn": "Change",
+    "spent": "Spent:",
+    "budgetSpentProgress": "{percent}% spent",
+    "budgetExceeded": "Exceeded!",
+    "noBudget": "Planned budget is not set.",
+    "setBudget": "Set Budget",
+    "budget": {
+      "spentOnly": "Spent: {amount}"
+    },
+    "componentsTable": {
+      "reservedBadge": "{qty} reserved"
+    },
+    "componentsTitle": "Components for Project",
+    "componentsSubtitle": "Reserve parts from your warehouse for this project.",
+    "linkComponentBtn": "Link Component",
+    "table": {
+      "component": "Component",
+      "needed": "Required",
+      "reserved": "Reserved",
+      "available": "Available in Warehouse",
+      "actions": "Actions"
+    },
+    "pcs": "{qty} pcs.",
+    "incNeeded": "Increase required quantity",
+    "decNeeded": "Decrease required quantity",
+    "unlinkTitle": "Remove Component",
+    "noComponents": "No linked components",
+    "noComponentsHint": "Link components to the project using the button above.",
+    "cancel": "Cancel",
+    "projectNotFound": "Project not found",
+    "backToList": "Back to Project List",
+    "deleteConfirm": "Delete the project permanently? All associated tasks will be lost.",
+    "unlinkConfirm": "Are you sure you want to unlink this part from the project? All reserved units will return to the warehouse.",
+    "deleteTaskConfirm": "Delete this task? This cannot be undone.",
+    "deleteTaskError": "Error deleting task",
+    "kpi": {
+      "title": "At a glance",
+      "tasks": "Tasks",
+      "reserved": "Reserved",
+      "budget": "Budget",
+      "components": "Components",
+      "budgetSpent": "{percent}% spent",
+      "reservedUnit": "{n} pcs",
+      "noBudget": "—"
+    },
+    "lightbox": {
+      "open": "Open {name}"
+    }
+  },
+  "linkComponent": {
+    "back": "To Project",
+    "title": "Link Component to Project",
+    "subtitle": "Select a component from the existing catalog or create a brand new one.",
+    "chooseLabel": "Select Component",
+    "createNewBtn": "+ Create new component",
+    "selectPlaceholder": "Select a component...",
+    "neededQtyLabel": "Required Quantity for Project",
+    "createTitle": "Create New Component in Catalog",
+    "selectFromCatalogBtn": "Select from Catalog",
+    "nameLabel": "Component Name",
+    "namePlaceholder": "E.g., ESP32 NodeMCU",
+    "skuLabel": "SKU / Article",
+    "skuPlaceholder": "E.g., ESP32-S",
+    "categoryLabel": "Category",
+    "currencyLabel": "Currency",
+    "priceLabel": "Unit Price",
+    "qtyInStockLabel": "Stock Quantity (pcs.)",
+    "neededForProjectLabel": "Required for Project",
+    "cancel": "Cancel",
+    "linkBtn": "Link",
+    "createError": "Error creating component",
+    "componentOption": "{name} ({sku} - In stock: {quantity} pcs)",
+    "noSku": "No SKU",
+    "noCategory": "No category"
+  },
+  "taskForm": {
+    "back": "To Project",
+    "deleteBtn": "Delete Task",
+    "editTitle": "Edit Task",
+    "createTitle": "Create New Task",
+    "subtitle": "Describe the task, set priority, and specify required components and delivery orders.",
+    "nameLabel": "Task Name",
+    "namePlaceholder": "E.g., Assemble weather station case",
+    "priorityLabel": "Task Priority",
+    "dueDateLabel": "Due Date",
+    "isCompletedLabel": "Task Completed",
+    "descriptionLabel": "Task Description",
+    "descriptionPlaceholder": "Describe the steps, soldering details, or software settings...",
+    "neededComponentsTitle": "Required Components",
+    "markMissing": "Mark as missing",
+    "markAvailable": "Mark as available",
+    "quantityPcs": "Quantity: {qty} pcs",
+    "noLinkedComponents": "No linked components.",
+    "selectPlaceholder": "Link project component...",
+    "linkBtn": "Link",
+    "createMissingComponentBtn": "+ Order/Create component not in list",
+    "quickCreateTitle": "Quick Component Creation",
+    "cancel": "Cancel",
+    "quickNamePlaceholder": "Name (e.g., DHT22 Sensor)",
+    "quickCategoryPlaceholder": "Category (Sensors)",
+    "quickPricePlaceholder": "Price ($)",
+    "quickStockPlaceholder": "In stock",
+    "quickNeededPlaceholder": "Needed",
+    "quickCreateBtn": "Create and Link",
+    "trackingLabel": "Track: {tracking}",
+    "save": "Save",
+    "defaultComponentName": "Part",
+    "createTaskError": "Error creating task",
+    "deleteTaskConfirm": "Delete this task?",
+    "componentOptionReserve": "{name} (Reserve: {reserved}/{needed} pcs)",
+    "noTracking": "No tracking",
+    "dependenciesReadOnly": "Linked components & orders"
+  },
+  "nav": {
+    "projects": "Projects"
+  },
+  "routeTitles": {
+    "projects": "My Projects",
+    "project-new": "New Project",
+    "project-detail": "Project Details",
+    "project-edit": "Edit Project",
+    "task-form": "Project Task",
+    "task-new": "New Task",
+    "project-link-component": "Link Component"
+  },
+  "plugins": {
+    "projects": {
+      "name": "Projects",
+      "description": "DIY project stages and task management"
+    }
+  }
+}

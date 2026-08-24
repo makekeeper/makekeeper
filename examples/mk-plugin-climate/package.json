@@ -1,0 +1,8 @@
+{
+  "name": "mk-plugin-climate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MakeKeeper external plugin — workshop climate monitor (Home Assistant / push).",
+  "scripts": { "start": "node --experimental-strip-types src/main.ts" }
+}

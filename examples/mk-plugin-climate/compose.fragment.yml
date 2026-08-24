@@ -1,0 +1,28 @@
+# Paste into your MakeKeeper compose stack. Get MK_INSTALL_TOKEN from
+# Settings -> External plugins -> "Generate install token", then approve the
+# registration on the same screen (it asks for storages:read).
+#
+# Configure at least one intake path:
+#   PULL  — HA_URL + HA_TOKEN (a Home Assistant long-lived access token),
+#           then name the entity ids on each spot in the UI;
+#   PUSH  — CLIMATE_INGEST_TOKEN, then POST readings to
+#           http://mk-plugin-climate:4405/ingest?token=...
+#           {"spot":"<spot name or id>","temp":21.4,"humidity":38}
+services:
+  mk-plugin-climate:
+    image: ghcr.io/makekeeper/mk-plugin-climate:latest
+    restart: unless-stopped
+    environment:
+      MK_CORE_URL: http://app:3000
+      MK_PLUGIN_URL: http://mk-plugin-climate:4405
+      MK_INSTALL_TOKEN: "paste-once-here"
+      MK_STATE_DIR: /data
+      HA_URL: "http://homeassistant:8123"
+      HA_TOKEN: ""
+      CLIMATE_INGEST_TOKEN: "choose-a-long-random-string"
+      CLIMATE_POLL_MS: "300000"
+    volumes:
+      - mk-plugin-climate-data:/data
+
+volumes:
+  mk-plugin-climate-data:

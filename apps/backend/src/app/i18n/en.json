@@ -1,0 +1,49 @@
+{
+  "core": {
+    "apiDocs": {
+      "title": "MakeKeeper API",
+      "description": "REST API for the MakeKeeper backend. Endpoints are grouped by the plugin that owns them.\n\n**Authentication.** Secured routes use a Bearer JWT, active only when the multiuser plugin is enabled (single-user mode needs no auth).\n\nThe simplest way to authorize: click **Authorize**, and in the **oauth2 (password)** section enter your username and password — the docs fetch a token and attach it to every request automatically (leave client credentials blank). No account yet? `POST /api/auth/register` first.\n\nPrefer a token by hand? Call `POST /api/auth/login` with `{ \"username\", \"password\" }`, take the response `token`, and either paste it into the **bearer** section of the Authorize dialog or send it as the `Authorization: Bearer <token>` header."
+    },
+    "diskUsage": {
+      "summary": "Disk usage of stored attachments, broken down by owner, scope and rendition",
+      "purgeSummary": "Delete stored files that no attachment record claims (older than the safety grace period)",
+      "browseSummary": "List one level of the uploads directory, with each subdirectory rolled up to what it contains",
+      "deleteSummary": "Delete an explicit selection of stored files or directories; claimed and plugin-reserved paths are refused",
+      "pathsDescription": "Root-relative paths to delete. A directory expands to the deletable files it contains."
+    },
+    "uploads": {
+      "prewarmSummary": "Queue preview variants for the given attachments, so opening one does not wait on a resize. Returns once the batch is accepted, not once it is rendered",
+      "prewarmIdsDescription": "Attachment ids to warm. Non-images and renditions that already exist are skipped.",
+      "prewarmVariantDescription": "Which rendition to have ready (the lightbox uses lg)."
+    },
+    "devices": {
+      "errors": {
+        "deviceRevoked": "This device is no longer paired with this instance"
+      }
+    },
+    "errors": {
+      "tooManyAttempts": "Too many attempts. Please wait a minute and try again.",
+      "pluginDisabled": "Plugin \"{pluginId}\" is disabled",
+      "unknownPlugin": "Unknown plugin: {pluginId}",
+      "pluginCoreCannotDisable": "Plugin \"{pluginId}\" is core and cannot be disabled",
+      "attachmentNotFound": "Attachment not found",
+      "unknownPreviewVariant": "Unknown preview variant \"{variant}\" — expected one of: {allowed}",
+      "unknownModel": "Unknown data model",
+      "transliterationTablesMissing": "Transliteration tables folder not found — the paths tried are in the log above",
+      "appSecretMissing": "APP_SECRET is required and must be at least 32 characters — set it in the environment (see .env.example)",
+      "appSecretUnavailable": "APP_SECRET is unavailable",
+      "realtimeRoomDenied": "Access to this realtime channel is denied",
+      "realtimeCommandUnknown": "Unknown realtime command: {command}",
+      "realtimeGuestForbidden": "This connection may only listen to its own channel",
+      "exchangeCycle": "Exchange sections form a dependency cycle",
+      "exchangeRootDuplicate": "Exchange root \"{rootType}\" is declared twice",
+      "exchangeSectionNamespace": "Exchange section \"{key}\" must be namespaced by its plugin \"{pluginId}\"",
+      "exchangeSectionDuplicate": "Exchange section \"{key}\" is declared twice",
+      "exchangeUnknownRoot": "Exchange section \"{key}\" targets unknown root \"{rootType}\"",
+      "exchangeUnknownDependency": "Exchange section \"{key}\" depends on unknown section \"{dep}\"",
+      "exchangeProviderMissing": "Exchange section \"{key}\" has no registered provider",
+      "exchangeDeclarationMissing": "Exchange provider \"{key}\" has no manifest declaration",
+      "exchangeRootSectionCount": "Exchange root \"{rootType}\" needs exactly one root section, has {count}"
+    }
+  }
+}
