@@ -93,3 +93,50 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+
+// Push (#311). The worker is already here for the installed phone app, so the
+// notification channel that needs no third party rides along with it.
+//
+// Deliberately tolerant about the payload: a push that arrives without one (a
+// service waking the worker, or an older sender) still shows something rather
+// than nothing, because a silent push is worse than a vague one.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
+  const title = data.title || 'MakeKeeper';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      // One banner per notification, however many devices or repeats: the tag
+      // replaces rather than stacks.
+      tag: data.tag,
+      data: { url: data.url },
+    }),
+  );
+});
+
+// Tapping the banner. An app window that is already open is focused and
+// navigated rather than duplicated — a second copy of the app is never what
+// somebody tapping a notification wanted.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data && event.notification.data.url;
+  if (!url) return;
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clients) => {
+        for (const client of clients) {
+          if ('focus' in client) {
+            client.navigate(url);
+            return client.focus();
+          }
+        }
+        return self.clients.openWindow(url);
+      }),
+  );
+});

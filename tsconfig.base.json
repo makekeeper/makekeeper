@@ -93,6 +93,18 @@
       "@makekeeper/plugin-stats/frontend": [
         "libs/plugin-stats/src/frontend/index.ts"
       ],
+      "@makekeeper/plugin-schedule/backend": [
+        "libs/plugin-schedule/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-schedule/frontend": [
+        "libs/plugin-schedule/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-notify/backend": [
+        "libs/plugin-notify/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-notify/frontend": [
+        "libs/plugin-notify/src/frontend/index.ts"
+      ],
       "@makekeeper/plugin-tags/backend": [
         "libs/plugin-tags/src/backend/index.ts"
       ],

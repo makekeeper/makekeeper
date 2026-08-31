@@ -84,10 +84,11 @@
       "geminiSystemWrapper": "SYSTEM INSTRUCTION (follow it unconditionally):\n{systemPrompt}\n\nLet's start the dialogue.",
       "geminiPrimingReply": "Understood. I am ready to help you with your project according to the system instructions.",
       "pendingToolNote": "[Tool call {name} has been proposed and is awaiting user confirmation — it has not been executed yet]",
-      "toolCancelledNote": "[Action {name} cancelled by the user]",
+      "toolCancelledNote": "[Action {name} cancelled by the user. Say so in words and stop: do not call another tool in this turn, and do not offer a different action. If something else is needed, the person will ask.]",
       "functionCallNote": "[Function call: {name} with arguments {args}]",
       "functionResultNote": "[Function result: {result}]",
-      "attachedFileNote": "The user attached a file: «{filename}» ({mimeType}, {size}), reference {ref}. Its content is NOT shown above — use the read_attachment tool with this reference to read it. When mentioning the file in your reply, link its name as [{filename}]({ref})."
+      "attachedFileNote": "The user attached a file: «{filename}» ({mimeType}, {size}), reference {ref}. Its content is NOT shown above — use the read_attachment tool with this reference to read it. When mentioning the file in your reply, link its name as [{filename}]({ref}).",
+      "now": "Right now it is {now} where the person is, in the time zone {zone}. Read every relative request against that clock — \"in two minutes\", \"tomorrow morning\", \"Monday\". A schedule's rule must carry its own DTSTART written in that zone; the current moment in that form is {stamp}, e.g. DTSTART;TZID={zone}:{stamp}."
     },
     "messages": {
       "actionCancelledByUser": "Action \"{name}\" cancelled by the user.",

@@ -161,6 +161,12 @@ export const HEADER_OVERFLOW: InjectionKey<HeaderOverflowContext> =
 export const HEADER_PRIORITY = {
   userMenu: Number.POSITIVE_INFINITY,
   aiAssistant: 8,
+  /**
+   * The inbox bell. Ranked above every other plugin slot because it is the one
+   * control carrying STATE: collapsed into the overflow panel its unread count
+   * stops being visible, which is the whole of what it does.
+   */
+  notifications: 9,
   /** The same button while the chat panel is open. */
   aiAssistantChatOpen: 0.5,
   search: 7,
@@ -195,6 +201,12 @@ export interface HeaderSlotSpec {
 }
 
 export const HEADER_SLOTS: readonly HeaderSlotSpec[] = [
+  {
+    name: 'app.header.notifications',
+    priority: HEADER_PRIORITY.notifications,
+    panelOrder: 0,
+    panelFull: false,
+  },
   {
     name: 'app.header.search',
     priority: HEADER_PRIORITY.search,

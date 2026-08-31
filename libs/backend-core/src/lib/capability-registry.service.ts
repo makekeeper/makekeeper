@@ -36,6 +36,22 @@ export class CapabilityRegistryService {
     this.capabilities.delete(capabilityId);
   }
 
+  // Every live implementation whose id starts with `prefix`, paired with its
+  // owner. For the family capabilities — one registration per plugin under a
+  // shared prefix (`calendar-source.<pluginId>`) — where a consumer has to ask
+  // ALL of them and cannot know the plugin ids in advance (#309). Disabled
+  // owners are filtered exactly as in `getCapability`.
+  getCapabilities<T>(prefix: string): { pluginId: string; impl: T }[] {
+    const found: { pluginId: string; impl: T }[] = [];
+    for (const entry of this.capabilities.values()) {
+      if (!entry.capabilityId.startsWith(prefix)) continue;
+      if (!this.pluginConfig.isEnabled(entry.pluginId)) continue;
+      // Same narrowing as `getCapability`: the id prefix IS the type contract.
+      found.push({ pluginId: entry.pluginId, impl: entry.impl as T });
+    }
+    return found;
+  }
+
   // The registered implementation, or null when nothing registered it OR its
   // owning plugin is currently disabled. Resolve per call, never cache the
   // result — enablement can flip at runtime.

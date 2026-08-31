@@ -274,6 +274,51 @@ export const SCOPE_MODEL_MAP: Record<Prisma.ModelName, ModelScopeRule> = {
     kind: 'direct',
     parents: [{ model: 'Storage', foreignKeyField: 'storageId' }],
   },
+  // Whether a person uses a channel at all — their own setting, like the
+  // routing matrix beside it (#311).
+  NotifyChannelPref: { kind: 'direct', binding: 'user' },
+  // Where somebody's notifications go is their own setting (#311).
+  NotificationRoute: { kind: 'direct', binding: 'user' },
+  // One press of one button by one person: the token IS the authority, so the
+  // row is confined to whoever it was issued to.
+  NotificationActionToken: { kind: 'direct', binding: 'user' },
+  // A browser's push registration belongs to the person who granted it.
+  PushSubscription: { kind: 'direct', binding: 'user' },
+  PushSettings: {
+    kind: 'unscoped',
+    reason:
+      'instance credential: the VAPID pair the whole install pushes with (#311)',
+  },
+  // A shared schedule belongs to the scope; its personal twin belongs to the
+  // person. Two tables rather than a flag, because the overlay confines a model
+  // one way for all its rows — a `where` that keeps a personal reminder private
+  // is a `where` that can be forgotten (#308).
+  Schedule: { kind: 'direct' },
+  PersonalSchedule: { kind: 'direct', binding: 'user' },
+  // What somebody's schedules did is as personal as the schedules: a grantee
+  // sees a shared schedule and its `lastRunAt`, never its history.
+  ScheduleRun: { kind: 'direct', binding: 'user' },
+  // The inbox is private (#307). A notification is already addressed to ONE
+  // person — the bus fans an audience out at post time — so `scopeId` here
+  // names the RECIPIENT, and user binding is what stops a shared scope from
+  // turning a co-worker's inbox into shared data.
+  Notification: { kind: 'direct', binding: 'user' },
+  // Reachable only through the notification it belongs to, and inherits its
+  // privacy: whether a message reached someone's phone is as personal as the
+  // message.
+  NotificationDelivery: {
+    kind: 'child',
+    binding: 'user',
+    scopeWhere: (ownerId) => ({ notification: { scopeId: ownerId } }),
+    parents: [{ model: 'Notification', foreignKeyField: 'notificationId' }],
+  },
+  NotificationTypeConfig: {
+    kind: 'unscoped',
+    reason:
+      'instance configuration: the default routing of a declared notification type',
+  },
+  // The reader's own quiet window — their setting, not their scope's.
+  NotifyPreference: { kind: 'direct', binding: 'user' },
   MobileSettings: {
     kind: 'unscoped',
     reason: 'instance configuration: where the mobile surface is published',

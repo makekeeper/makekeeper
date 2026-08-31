@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module, OnApplicationBootstrap, OnModuleInit } from '@nestjs/common';
 import { logisticsManifest } from '../manifest';
 import {
   PluginRegistryService,
@@ -12,6 +12,9 @@ import {
 import {
   COMPONENT_ORDER_INFO_CAPABILITY,
   LOGISTICS_INCOMING_CAPABILITY,
+  NOTIFY_BUS_CAPABILITY,
+  calendarSourceCapability,
+  type NotifyBusCapability,
 } from '@makekeeper/plugin-contract';
 import en from '../i18n/en.json';
 import ru from '../i18n/ru.json';
@@ -23,6 +26,8 @@ import { LogisticsTrackingService } from './logistics-tracking.service';
 import { LogisticsImportService } from './logistics-import.service';
 import { getLogisticsTools } from './logistics.tools';
 import { createLogisticsExchangeProviders } from './logistics.exchange';
+import { createLogisticsCalendarSource } from './logistics.calendar';
+import { LOGISTICS_NOTIFICATION_TYPES } from './logistics.notifications';
 import { createTableDumpProvider } from '@makekeeper/backend-core';
 
 @Module({
@@ -39,7 +44,9 @@ import { createTableDumpProvider } from '@makekeeper/backend-core';
   ],
   exports: [LogisticsService],
 })
-export class LogisticsPluginModule implements OnModuleInit {
+export class LogisticsPluginModule
+  implements OnModuleInit, OnApplicationBootstrap
+{
   constructor(
     private readonly registry: PluginRegistryService,
     private readonly agentRegistry: AgentRegistryService,
@@ -55,6 +62,14 @@ export class LogisticsPluginModule implements OnModuleInit {
   onModuleInit() {
     this.registry.register(logisticsManifest);
     this.i18n.registerBundle({ en, ru });
+    // When a parcel is expected, on the calendar (#310). Read live from the
+    // order, so a courier's revised estimate reaches the calendar the moment
+    // tracking writes it — nothing to synchronise, nothing to forget to emit.
+    this.capabilities.registerCapability(
+      logisticsManifest.id,
+      calendarSourceCapability(logisticsManifest.id),
+      createLogisticsCalendarSource(this.prisma),
+    );
     // Exchange section provider (#62): the project root's orders.
     for (const provider of createLogisticsExchangeProviders(this.prisma)) {
       this.exchangeRegistry.registerSectionProvider('logistics', provider);
@@ -115,5 +130,14 @@ export class LogisticsPluginModule implements OnModuleInit {
           : null;
       },
     );
+  }
+
+  // Declared on bootstrap so the bus is certainly registered whatever order the
+  // modules initialise in. Seeds this type's default routing once; a person's
+  // later choice is never overwritten (#307).
+  onApplicationBootstrap(): void {
+    this.capabilities
+      .getCapability<NotifyBusCapability>(NOTIFY_BUS_CAPABILITY)
+      ?.declareTypes(logisticsManifest.id, LOGISTICS_NOTIFICATION_TYPES);
   }
 }

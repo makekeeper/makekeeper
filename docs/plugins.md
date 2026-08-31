@@ -622,6 +622,15 @@ visible? }`; logistics + chat), `projects.shopping-list.actions`,
    **`storages.cell.status`** (ctx `{ entityRef }`) — the cell header's home for
    a background process running against that cell (a live scan session).
    Storages names the cell and never writes another plugin's models.
+   Inbox action slot (#315, rendered by `notify` in the bell): 
+   **`notify.inbox.actions`** (no ctx) — what a person could set up so that
+   something reaches them, filled by `schedule` with "New reminder". Rendered
+   in the empty state's action area, and on a ruled-off footer line when the
+   list is not empty; the host asks `useSlotContributions` first, so the rule
+   never draws under nothing. The inbox names the slot and learns nothing about
+   reminders; a contributor here must NAVIGATE rather than open a dialog,
+   because the popover renders its content behind `v-if` and would destroy a
+   modal mounted inside it.
    Phone sign-in slot (#207, rendered by `mobile` on the phone's own sign-in
    screen `/m/login`): **`mobile.auth.password`** (ctx `MobileAuthSlotCtx` =
    `{ onAuthenticated }`), filled by `multiuser`. The phone shell owns the

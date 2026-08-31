@@ -35,6 +35,7 @@ export { default as Button } from './lib/components/Button.vue';
 export type { BadgeTone } from './lib/components/Badge.vue';
 export { default as Badge } from './lib/components/Badge.vue';
 export { default as Tooltip } from './lib/components/Tooltip.vue';
+export { default as ObjectRefLink } from './lib/components/ObjectRefLink.vue';
 export { default as TagInput } from './lib/components/TagInput.vue';
 export { default as Switch } from './lib/components/Switch.vue';
 export { default as TimePicker } from './lib/components/TimePicker.vue';
@@ -99,6 +100,7 @@ export {
   type InternalDragFile,
 } from './lib/internal-drag-store';
 export { asciiFilename } from './lib/filename';
+export { useDateFormat, type DateFormatters } from './lib/use-date-format';
 export { renderMarkdown } from './lib/components/markdown';
 export { readAsDataUrl } from './lib/image-file';
 export { previewUrl, prewarmPreviews } from './lib/preview-url';

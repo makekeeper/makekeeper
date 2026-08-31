@@ -77,6 +77,10 @@ export interface RealtimeRequestContext {
   enabledPluginIds?: ReadonlySet<string>;
   modelConstraints?: ModelConstraintMap[];
   locale?: string;
+  // IANA zone of the caller's clock, from the handshake. A socket carries no
+  // headers, so what an HTTP request states in `x-timezone` has to travel here
+  // — and the chat turn, which needs it most, has no other way in.
+  timezone?: string;
 }
 
 // ── Chat commands (client → server over the socket) ─────────────────────────

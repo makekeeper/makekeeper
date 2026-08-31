@@ -1,5 +1,6 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { projectsManifest } from '../manifest';
+import { calendarSourceCapability } from '@makekeeper/plugin-contract';
 import {
   PluginRegistryService,
   AgentRegistryService,
@@ -10,6 +11,7 @@ import {
   AttachmentStorageService,
   StatsRegistryService,
   ExchangeRegistryService,
+  CapabilityRegistryService,
 } from '@makekeeper/backend-core';
 import en from '../i18n/en.json';
 import ru from '../i18n/ru.json';
@@ -20,6 +22,7 @@ import { ProjectGroupsService } from './project-groups.service';
 import { getProjectsTools } from './projects.tools';
 import { createProjectsRestriction } from './projects.restrictions';
 import { createProjectsExchangeProviders } from './projects.exchange';
+import { createProjectsCalendarSource } from './projects.calendar';
 import { createTableDumpProvider } from '@makekeeper/backend-core';
 
 @Module({
@@ -40,11 +43,20 @@ export class ProjectsPluginModule implements OnModuleInit {
     private readonly statsRegistry: StatsRegistryService,
     private readonly exchangeRegistry: ExchangeRegistryService,
     private readonly attachments: AttachmentStorageService,
+    private readonly capabilities: CapabilityRegistryService,
   ) {}
 
   onModuleInit() {
     this.registry.register(projectsManifest);
     this.i18n.registerBundle({ en, ru });
+    // What this plugin puts on the calendar, and the answer a relative reminder
+    // needs on every tick (#310). A capability, so the calendar never reads
+    // these tables and this plugin never learns a calendar exists.
+    this.capabilities.registerCapability(
+      projectsManifest.id,
+      calendarSourceCapability(projectsManifest.id),
+      createProjectsCalendarSource(this.prisma),
+    );
     // Exchange section providers (#62): project root + tasks + activity.
     for (const provider of createProjectsExchangeProviders(
       this.prisma,

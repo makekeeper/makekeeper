@@ -9,6 +9,7 @@ import { IS_PUBLIC_KEY } from './public.decorator';
 import { DeviceAuthService } from './device-auth.service';
 import { PluginConfigService } from './plugin-config.service';
 import { PluginI18nService } from './plugin-i18n.service';
+import { RequestContextService } from './request-context.service';
 
 // Makes a paired device's credential mean something while the multiuser overlay
 // is OFF (#199).
@@ -46,6 +47,7 @@ export class DeviceTokenGuard implements CanActivate {
     private readonly pluginConfig: PluginConfigService,
     private readonly devices: DeviceAuthService,
     private readonly i18n: PluginI18nService,
+    private readonly context: RequestContextService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -83,6 +85,9 @@ export class DeviceTokenGuard implements CanActivate {
         ),
       );
     }
+    // Remember WHICH device this is, so anything created on its behalf can be
+    // torn down with it (#311 — a revoked device's push subscriptions).
+    this.context.assign({ deviceId: device.deviceId });
     return true;
   }
 }

@@ -46,7 +46,7 @@ accepted if you pass it explicitly; it is never chosen for you.
 | [**climate**](./mk-plugin-climate) | Temperature and humidity where materials are stored, against what those materials need. | Two ways for readings to arrive: pulled from Home Assistant, or **pushed** into the plugin's own unsigned route by anything at all (a sensor, a shell loop). Plus `storages:read` to know where things live, and a purge hook. |
 | [**bambu**](./mk-plugin-bambu) | A Bambu Lab printer's live state and print log. | Two interchangeable sources (the printer's own MQTT, or Home Assistant) chosen in the UI; a settings screen with masked credentials and fields that appear according to the source; a widget; a `READ` tool. Asks for **no permissions at all**. |
 | [**notes**](./mk-plugin-notes) | Private notes on any object — an item, a project, a shelf. | The opaque `userRef`: separating *my* notes from *everyone's* inside one shared workspace, without learning who anyone is. Also a slot contribution that receives the host's ORef, plugin-side paging and sorting, row actions with confirmation, and editing in place. |
-| [**telegram**](./mk-plugin-telegram) | Workshop events in your own chat. | Notifications that belong to a person: a public unsigned route a chat client calls (the unsubscribe link), a capability other plugins call (`telegram.notify`), and a `WRITE` tool the runtime gates behind the user's confirmation. |
+| [**telegram**](./mk-plugin-telegram) | The core's notifications in your own chat. | A **delivery channel** (`deliveryChannel` in the manifest): the core decides who hears what and hands over a message already written in the reader's language; this plugin formats and sends it, throwing when it cannot. Also a public unsigned route a chat client calls (the unsubscribe link) and a `WRITE` tool the runtime gates. |
 
 ## Mechanism → plugin
 
@@ -54,8 +54,9 @@ accepted if you pass it explicitly; it is never chosen for you.
 |---|---|
 | Own storage, screens, widget, tool, events, exchange, purge | shelf |
 | `scopeModel: 'per-scope'` and `core.scope-deleted` | loans, notes, telegram |
+| Being a delivery channel for notifications | telegram |
 | Instance-wide reads (`instance:*`) and a background scheduler | digest |
-| Offering a capability | rates (`rates.convert`), telegram (`telegram.notify`) |
+| Offering a capability | rates (`rates.convert`) |
 | Consuming one, and surviving its absence | budget |
 | Two plugins talking to each other | budget → rates |
 | Settings screens, masked secrets, fields that follow an earlier answer | bambu, telegram, rates |

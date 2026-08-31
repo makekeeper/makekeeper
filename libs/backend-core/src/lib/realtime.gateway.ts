@@ -53,6 +53,9 @@ interface RealtimeSocketData {
   userId: string | null;
   scopeId: string | null;
   locale: string | null;
+  // IANA zone of the caller's clock. A socket has no headers, so it arrives in
+  // the handshake beside the language.
+  timezone: string | null;
   // The ONLY room a guest socket (a paired phone — capability token, no user
   // account) may be in. Null for a normal socket. See RealtimeGuestAuthCapability.
   guestRoom?: string | null;
@@ -68,9 +71,22 @@ const socketData = (client: Socket): RealtimeSocketData => {
     userId: typeof record['userId'] === 'string' ? record['userId'] : null,
     scopeId: typeof record['scopeId'] === 'string' ? record['scopeId'] : null,
     locale: typeof record['locale'] === 'string' ? record['locale'] : null,
+    timezone:
+      typeof record['timezone'] === 'string' ? record['timezone'] : null,
     guestRoom:
       typeof record['guestRoom'] === 'string' ? record['guestRoom'] : null,
   };
+};
+
+// A zone name the runtime knows, or nothing at all.
+const knownTimezone = (value: string | null): string | null => {
+  if (!value) return null;
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: value });
+    return value;
+  } catch {
+    return null;
+  }
 };
 
 const authField = (client: Socket, key: string): string | null => {
@@ -124,10 +140,15 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection {
   async handleConnection(client: Socket): Promise<void> {
     try {
       const locale = authField(client, 'locale');
+      // Validated here rather than where a date is computed: the handshake is
+      // client data, and an unknown zone must fail at the door, not inside a
+      // calculation far from it.
+      const timezone = knownTimezone(authField(client, 'timezone'));
       client.data = {
         userId: null,
         scopeId: null,
         locale,
+        timezone,
       } satisfies RealtimeSocketData;
 
       const auth = this.capabilities.getCapability<RealtimeAuthCapability>(
@@ -150,6 +171,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection {
           userId: null,
           scopeId: null,
           locale,
+          timezone,
           guestRoom,
         } satisfies RealtimeSocketData;
         await client.join(guestRoom);
@@ -162,7 +184,12 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection {
         (await auth.canAccessScope(userId, requestedScope))
           ? requestedScope
           : userId;
-      client.data = { userId, scopeId, locale } satisfies RealtimeSocketData;
+      client.data = {
+        userId,
+        scopeId,
+        locale,
+        timezone,
+      } satisfies RealtimeSocketData;
       await client.join(userRoom(userId));
       await client.join(scopeRoom(scopeId));
     } catch (err) {
@@ -176,7 +203,7 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection {
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: RealtimeCommandDto,
   ): Promise<RealtimeAck> {
-    const { userId, scopeId, locale, guestRoom } = socketData(client);
+    const { userId, scopeId, locale, timezone, guestRoom } = socketData(client);
     try {
       // A guest device is a listener, never an actor: it holds a capability
       // token for one room, not a user identity to act as.
@@ -211,9 +238,14 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection {
             ),
           };
         }
-        ctx = resolved;
+        // The overlay resolves who is calling; where they are is the socket's
+        // to say, and it knows it whether or not the overlay is installed.
+        ctx = { ...resolved, ...(timezone ? { timezone } : {}) };
       } else {
-        ctx = locale ? { locale } : {};
+        ctx = {
+          ...(locale ? { locale } : {}),
+          ...(timezone ? { timezone } : {}),
+        };
       }
 
       const ack = await this.requestContext.run(ctx, () =>

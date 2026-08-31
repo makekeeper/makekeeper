@@ -21,6 +21,8 @@ export const ru = {
   unlinkConfirm: 'Перестать отправлять сообщения в ваш чат?',
   unlinked: 'Чат отвязан.',
   anonymous: 'Чат — личная вещь. Без входа в систему привязывать нечего.',
+  // The column heading in the core's notification matrix.
+  channelLabel: 'Telegram',
   testMessage: 'MakeKeeper на связи. Это тестовое сообщение.',
   orderReceived: 'Заказ из {store} получен.',
   orderReceivedNoStore: 'Заказ получен.',

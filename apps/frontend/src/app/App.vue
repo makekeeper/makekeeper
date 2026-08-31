@@ -12,6 +12,7 @@ import {
   ToastViewport,
   ConfirmDialog,
   useConfirm,
+  useNavBadges,
   useSidebarNav,
   isNavPathActive,
   resolvePluginIcon,
@@ -637,6 +638,11 @@ const isChatResizing = ref(false);
 // duplicated here. Hub tabs are not sidebar entries, and a hub with no visible
 // tab is dropped, so exactly one entry lights up on a hub sub-path.
 const sidebarNav = useSidebarNav();
+// Sidebar badges (#307): the shell asks the registered sources and renders a
+// number; it never learns that the number counts notifications. A collapsed
+// rail has no room for a count, so it shows the fact rather than the figure.
+const navBadges = useNavBadges();
+const navBadgeOf = (item: RegisteredNavItem): number => navBadges.value(item);
 const mainNav = computed<RegisteredNavItem[]>(() => [
   ...coreNav,
   ...sidebarNav.value.filter((n) => (n.section ?? 'main') === 'main'),
@@ -1505,7 +1511,7 @@ const retry = (msg: ChatMessage): void => {
               <RouterLink
                 :to="item.path"
                 :aria-label="isSidebarOpen ? undefined : $t(item.titleKey)"
-                class="flex flex-1 min-w-0 items-center gap-3 px-3 py-2.5 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
+                class="relative flex flex-1 min-w-0 items-center gap-3 px-3 py-2.5 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
                 :class="[
                   isNavActive(item.path)
                     ? 'text-brand-600 dark:text-brand-400'
@@ -1524,6 +1530,21 @@ const retry = (msg: ChatMessage): void => {
                 <span v-if="isSidebarOpen" class="text-sm whitespace-nowrap">
                   {{ $t(item.titleKey) }}
                 </span>
+                <Badge
+                  v-if="isSidebarOpen && navBadgeOf(item) > 0"
+                  tone="brand"
+                  class="ml-auto shrink-0"
+                  >{{ navBadgeOf(item) }}</Badge
+                >
+                <!-- `role="img"`, or the label is dropped: an `aria-label` on a
+                     generic with no role is ignored, and the one thing this dot
+                     exists to say goes only to people who can see it. -->
+                <span
+                  v-else-if="navBadgeOf(item) > 0"
+                  class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-500"
+                  role="img"
+                  :aria-label="$t('nav.hasNewItems')"
+                />
               </RouterLink>
             </Tooltip>
             <Button

@@ -386,7 +386,12 @@ describe('ExchangeService (hardening)', () => {
     capabilityRegistry.registerCapability<ScopeDirectoryCapability>(
       'inst',
       SCOPE_DIRECTORY_CAPABILITY,
-      { scopeExists: async () => scopeExists },
+      {
+        scopeExists: async () => scopeExists,
+        // Exchange only ever asks whether a scope exists; the audience half of
+        // the directory (#307) is the notification bus's business.
+        audienceUserIds: async () => [],
+      },
     );
 
     const prisma = {

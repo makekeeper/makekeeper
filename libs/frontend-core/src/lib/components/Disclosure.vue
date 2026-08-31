@@ -15,14 +15,21 @@ import { ChevronDown } from '@lucide/vue';
 // The content is hidden with `v-show`, not `v-if`: state inside a fold (a
 // picked tab, a typed field) has to survive being closed, and a block whose
 // height is measured while it is open must keep that height.
-const props = defineProps<{
-  open: boolean;
-  title: string;
-  description?: string;
-  // Ties the toggle to the region it controls; also the anchor an in-page link
-  // can point at.
-  contentId: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    title: string;
+    description?: string;
+    // Ties the toggle to the region it controls; also the anchor an in-page link
+    // can point at.
+    contentId: string;
+    // `card` is the page-level block. `inline` drops the card and its padding
+    // for a fold INSIDE something that already has both — a dialog, a panel —
+    // where a second card would read as a second surface.
+    variant?: 'card' | 'inline';
+  }>(),
+  { description: undefined, variant: 'card' },
+);
 
 const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>();
 
@@ -51,18 +58,25 @@ defineExpose({ reveal });
 </script>
 
 <template>
-  <section ref="root" class="glass-card rounded-2xl">
+  <section
+    ref="root"
+    :class="props.variant === 'card' ? 'glass-card rounded-2xl' : ''"
+  >
     <h3>
       <button
         ref="toggle"
         type="button"
-        class="flex w-full items-center gap-3 rounded-2xl p-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        class="flex w-full items-center gap-3 rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        :class="props.variant === 'card' ? 'p-6' : 'py-2'"
         :aria-expanded="props.open"
         :aria-controls="props.contentId"
         @click="emit('update:open', !props.open)"
       >
         <span class="min-w-0 flex-1">
-          <span class="block font-medium text-slate-900 dark:text-slate-100">
+          <span
+            class="block font-medium text-slate-900 dark:text-slate-100"
+            :class="props.variant === 'inline' ? 'text-sm' : ''"
+          >
             {{ props.title }}
           </span>
           <span
@@ -79,7 +93,12 @@ defineExpose({ reveal });
         />
       </button>
     </h3>
-    <div v-show="props.open" :id="props.contentId" class="space-y-4 px-6 pb-6">
+    <div
+      v-show="props.open"
+      :id="props.contentId"
+      class="space-y-4"
+      :class="props.variant === 'card' ? 'px-6 pb-6' : 'pb-2'"
+    >
       <slot />
     </div>
   </section>

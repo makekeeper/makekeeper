@@ -1,6 +1,7 @@
 import { computed, watch, type ComputedRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
+  getNavBadge,
   getHubTabs,
   getMobileNav,
   pluginRegistryVersion,
@@ -40,6 +41,20 @@ export function useSidebarNav(): ComputedRef<RegisteredNavItem[]> {
     // at runtime updates the sidebar without a page reload (#150).
     void pluginRegistryVersion.value;
     return getSidebarNav(visibility.value);
+  });
+}
+
+// Badge counts for sidebar entries (#307), as a function the template calls per
+// entry. Reactive on two axes: the registry version (a source registered late,
+// a plugin toggled) and whatever store the source itself reads.
+export function useNavBadges(): ComputedRef<
+  (item: RegisteredNavItem) => number
+> {
+  const plugins = usePluginsStore();
+  return computed(() => {
+    void pluginRegistryVersion.value;
+    return (item: RegisteredNavItem) =>
+      getNavBadge(item, (pluginId) => plugins.isEnabled(pluginId));
   });
 }
 

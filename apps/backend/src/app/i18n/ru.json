@@ -44,6 +44,9 @@
       "exchangeProviderMissing": "Для секции обмена «{key}» не зарегистрирован провайдер",
       "exchangeDeclarationMissing": "Провайдер обмена «{key}» не объявлен ни в одном манифесте",
       "exchangeRootSectionCount": "Корню обмена «{rootType}» нужна ровно одна корневая секция, объявлено {count}"
+    },
+    "refs": {
+      "resolve": "Resolve an mk:// reference to a name and location"
     }
   }
 }

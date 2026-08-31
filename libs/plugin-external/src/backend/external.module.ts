@@ -46,6 +46,7 @@ import {
   type ExternalEventsPublishCapability,
 } from '@makekeeper/plugin-contract';
 import { ExternalCapabilitiesService } from './external-capabilities.service';
+import { ExternalChannelsService } from './external-channels.service';
 import { ExternalPubService } from './external-pub.service';
 import { ExternalProvisioningService } from './external-provisioning.service';
 import { ExternalDiscoveryService } from './external-discovery.service';
@@ -81,6 +82,7 @@ import { ExternalDiscoveryService } from './external-discovery.service';
     ExternalToolsService,
     ExternalExchangeService,
     ExternalCapabilitiesService,
+    ExternalChannelsService,
     ExternalProvisioningService,
     ExternalDiscoveryService,
     ExternalPubService,
@@ -99,6 +101,7 @@ import { ExternalDiscoveryService } from './external-discovery.service';
     ExternalToolsService,
     ExternalExchangeService,
     ExternalCapabilitiesService,
+    ExternalChannelsService,
     ExternalProvisioningService,
     ExternalDiscoveryService,
   ],
@@ -113,6 +116,7 @@ export class ExternalPluginModule implements OnModuleInit {
     private readonly tools: ExternalToolsService,
     private readonly exchange: ExternalExchangeService,
     private readonly capabilities: ExternalCapabilitiesService,
+    private readonly channels: ExternalChannelsService,
     private readonly capabilityRegistry: CapabilityRegistryService,
     private readonly eventBus: PluginEventBusService,
     private readonly events: ExternalEventsService,
@@ -146,6 +150,9 @@ export class ExternalPluginModule implements OnModuleInit {
     // Exchange section providers and offered capabilities of active plugins.
     await this.exchange.syncProviders();
     await this.capabilities.syncOffered();
+    // Plugins that deliver notifications (#312): registered as channels so the
+    // bus can offer them in the matrix from the first boot after install.
+    await this.channels.syncAll();
     // Offered to the exchange plugin so an archive carrying data of an
     // UNINSTALLED external plugin is parked instead of silently dropped —
     // without either plugin importing the other (§5.10).

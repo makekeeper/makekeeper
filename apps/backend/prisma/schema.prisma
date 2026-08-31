@@ -1225,3 +1225,291 @@ model MobileSettings {
   customOrigin String?
   updatedAt    DateTime @updatedAt
 }
+
+// ── Notifications (#307) ────────────────────────────────────────────────────
+
+// One notification, already addressed to ONE person. The bus fans an audience
+// out at post time rather than storing a shared row plus a per-reader receipt:
+// read state, delivery attempts and quiet hours are all per recipient anyway,
+// so the shared row would need a child table per one of them, and "who could
+// see this" would become a question asked at read time — long after the grant
+// that answered it may have gone.
+//
+// `scopeId` therefore marks the RECIPIENT, not the emitter's data space, and
+// the row is user-bound in SCOPE_MODEL_MAP: an inbox is private, and a shared
+// scope does not make it readable by a co-worker. A notification for the
+// single-user instance carries NULL, like every other pre-overlay row.
+model Notification {
+  id           String    @id
+  // Recipient (== a user id) and the data space they read it in.
+  scopeId      String?
+  // Registered type, `<pluginId>.<what-happened>`; `pluginId` is denormalized
+  // from it so the sidebar badge can group without parsing strings in SQL.
+  type         String
+  pluginId     String
+  titleKey     String
+  bodyKey      String?
+  // JSON object of i18n parameters; resolved in the reader's locale, never here.
+  paramsJson   String?
+  // Canonical mk:// ref of the subject, when there is one.
+  ref          String?
+  importance   String    @default("normal")
+  // JSON array of NotificationAction.
+  actionsJson  String?
+  // Repeats with this key fold into this row instead of stacking beside it.
+  dedupKey     String?
+  occurrences  Int       @default(1)
+  readAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deliveries   NotificationDelivery[]
+
+  @@index([scopeId, readAt])
+  @@index([scopeId, pluginId, readAt])
+  // A dedup key folds only into the SAME recipient's unread row; the partial
+  // "unread only" half of that rule lives in the service, since Prisma cannot
+  // express a partial unique index.
+  @@index([scopeId, dedupKey])
+}
+
+// One attempt to put a notification in front of its recipient through one
+// channel. Modelled on ExternalEventDelivery for the same reason: "the app is
+// up, the channel is not" is the normal state, so attempts are persisted,
+// retried with backoff, and given up on visibly rather than lost in a log.
+// The in-app inbox is not a channel — it IS the notification row — so the
+// first rows here appear with the first real channel (#311).
+model NotificationDelivery {
+  id             String       @id
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  channelId      String
+  attempts       Int          @default(0)
+  nextAttemptAt  DateTime?
+  deliveredAt    DateTime?
+  // Set when retries are exhausted — visible to the person, redeliverable.
+  deadAt         DateTime?
+  lastError      String?
+  createdAt      DateTime     @default(now())
+
+  @@index([notificationId])
+  @@index([nextAttemptAt])
+}
+
+// Per-type routing, seeded from the plugin's declaration on FIRST registration
+// only (§5.7's rule for tool policy, for the same reason). Instance-level
+// today; the per-person overrides the settings matrix writes land with the
+// channels that need them (#311).
+model NotificationTypeConfig {
+  type             String   @id
+  pluginId         String
+  importance       String
+  // JSON array of channel ids; NULL means "every channel".
+  allowedJson      String?
+  enabled          Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// Quiet hours, per person. Minutes from local midnight, so the window survives
+// a timezone the person changes later. Unscoped-by-design would be wrong here:
+// it is the reader's own setting, so it is user-bound like the inbox.
+model NotifyPreference {
+  // The reader (== scope id). NULL is the single-user instance's one reader,
+  // which a primary key cannot express, so the row uses a fixed id then.
+  id               String   @id
+  scopeId          String?
+  quietFromMinutes Int?
+  quietToMinutes   Int?
+  timezone         String?
+  // Language the person reads in, written by their browser. There is no other
+  // per-user locale store (#211), and a channel message has to be built in the
+  // recipient's own language rather than whoever posted it (#311).
+  locale           String?
+  updatedAt        DateTime @updatedAt
+
+  @@index([scopeId])
+}
+
+// ── Schedules (#308) ────────────────────────────────────────────────────────
+
+// A shared schedule: the scope's, visible to everyone with access to it.
+//
+// Shared and personal schedules are SEPARATE TABLES rather than one table with
+// an "is private" column, because the multiuser overlay confines a model one
+// way for all its rows (`binding: 'scope'` or `binding: 'user'`). With one
+// table the privacy of a personal reminder would rest on every query
+// remembering a `where` — and the one that forgets is the one that leaks.
+model Schedule {
+  id            String    @id
+  scopeId       String?
+  // Who made it: whom a `notify` hook tells, and whose authority a WRITE hook
+  // runs under. NULL on a single-user instance.
+  ownerUserId   String?
+  // `<pluginId>.<hook>` — resolved at fire time, since the row outlives the
+  // process that created it.
+  hookId        String
+  // What the person called it. Plain text: user data has no translation.
+  title         String
+  // "absolute" | "relative".
+  triggerKind   String
+  // Absolute: the recurrence rule and the zone its wall clock is read in.
+  rrule         String?
+  timezone      String?
+  // Relative: the object whose date it follows, which field, and the offset.
+  ref           String?
+  refField      String?
+  offsetMinutes Int?
+  // JSON object handed to the hook (the notification to post, tool arguments).
+  paramsJson    String?
+  enabled       Boolean   @default(true)
+  // Computed UTC instant of the next firing; the tick reads exactly this.
+  nextRunAt     DateTime?
+  lastRunAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([scopeId])
+  @@index([enabled, nextRunAt])
+}
+
+// The same shape, bound to its creator instead of the scope: a personal
+// reminder stays invisible in a shared scope.
+model PersonalSchedule {
+  id            String    @id
+  scopeId       String?
+  ownerUserId   String?
+  hookId        String
+  title         String
+  triggerKind   String
+  rrule         String?
+  timezone      String?
+  ref           String?
+  refField      String?
+  offsetMinutes Int?
+  paramsJson    String?
+  enabled       Boolean   @default(true)
+  nextRunAt     DateTime?
+  lastRunAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([scopeId])
+  @@index([enabled, nextRunAt])
+}
+
+// One firing, recorded whatever the outcome. This is what answers "why did my
+// schedule not do anything" — including the runs that deliberately did nothing
+// because the app had been down too long.
+//
+// User-bound: a journal of what somebody's reminders did is as personal as the
+// reminders, so a grantee reading a shared scope sees the schedule and its
+// `lastRunAt`, not its history.
+model ScheduleRun {
+  id          String   @id
+  scopeId     String?
+  scheduleId  String
+  // Which table the schedule lives in; the two id spaces are separate.
+  personal    Boolean  @default(false)
+  hookId      String
+  // The moment the run was DUE, which is not the moment it ran.
+  dueAt       DateTime
+  ranAt       DateTime @default(now())
+  // How many due moments this run stood for (>1 after downtime).
+  occurrences Int      @default(1)
+  // "ok" | "error" | "skipped"
+  outcome     String
+  detail      String?
+
+  @@index([scopeId, ranAt])
+  @@index([scheduleId])
+}
+
+// ── Notification channels (#311) ────────────────────────────────────────────
+
+// Per-person routing: which types reach which channel. Absent means "the
+// type's default", so a matrix nobody has touched is empty rather than a row
+// per person per type per channel.
+model NotificationRoute {
+  id        String   @id
+  // The reader (== a user id); NULL on a single-user instance.
+  scopeId   String?
+  type      String
+  channelId String
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@unique([scopeId, type, channelId])
+  @@index([scopeId])
+}
+
+// Authorises exactly one press of one button of one notification, by one
+// person, in one channel. Short-lived and single-use: a button in somebody
+// else's chat client must not become a way into the API, and a forwarded
+// message must not still work tomorrow.
+model NotificationActionToken {
+  token          String    @id
+  notificationId String
+  scopeId        String?
+  // "snooze" | "dismiss" | "hook"
+  kind           String
+  hookId         String?
+  channelId      String
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([notificationId])
+  @@index([expiresAt])
+}
+
+// One browser's push subscription. Per device, not per person: a phone and a
+// laptop are two subscriptions, and revoking one must not silence the other.
+model PushSubscription {
+  id        String   @id
+  scopeId   String?
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  // What the browser called itself when subscribing, so a person can tell two
+  // devices apart when removing one.
+  label     String?
+  // The paired device this subscription was created from, when it was created
+  // from one (#311). Revoking that device deletes the subscription, so an
+  // unpaired phone stops receiving pushes instead of quietly carrying on.
+  // Null for a subscription made from an ordinary browser session, and for
+  // every subscription that predates this column — those have no device to be
+  // revoked from and can only be removed by hand.
+  deviceId  String?
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime?
+
+  @@index([scopeId])
+  @@index([deviceId])
+}
+
+// VAPID keys and other channel-level secrets that belong to the instance, not
+// to a person. One row, id "default".
+model PushSettings {
+  id             String   @id @default("default")
+  publicKey      String
+  // Encrypted at rest through SecretBoxService, like every other secret (#63).
+  privateKeyEnc  String
+  subject        String
+  updatedAt      DateTime @updatedAt
+}
+
+// Whether a person uses a channel at all — one row per reader per channel.
+// Distinct from `NotificationRoute`, which answers "does THIS type go there":
+// this is the master switch, and it is what the settings screen offers beside
+// the channel's connection state. Absent means on, so a channel somebody just
+// connected carries things without a second decision.
+model NotifyChannelPref {
+  id        String   @id
+  scopeId   String?
+  channelId String
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@unique([scopeId, channelId])
+  @@index([scopeId])
+}

@@ -109,10 +109,13 @@ export class MultiuserGuard implements CanActivate {
     // (they have their own revokedAt).
     const decoded = token ? this.tokens.verify(token) : null;
     let user = decoded ? await this.users.getByCurrentToken(decoded) : null;
+    // Which device answered, when one did — carried into the context below so a
+    // revoke can find what this device created (#311).
+    let deviceId: string | undefined;
     if (!decoded && token) {
-      const deviceUserId =
-        (await this.devices.resolveToken(token))?.userId ?? null;
-      user = deviceUserId ? await this.users.getById(deviceUserId) : null;
+      const device = await this.devices.resolveToken(token);
+      deviceId = device?.deviceId;
+      user = device?.userId ? await this.users.getById(device.userId) : null;
     }
     // A blocked account is rejected outright on protected routes and treated as
     // anonymous on public ones — severing a live session on its next request
@@ -189,6 +192,7 @@ export class MultiuserGuard implements CanActivate {
       enabledPluginIds,
       modelConstraints,
       locale,
+      deviceId,
     });
 
     if (isPublic) return true;

@@ -1,9 +1,11 @@
 import { defineAsyncComponent, type Component } from 'vue';
 import {
   ArrowLeftRight,
+  Bell,
   Blocks,
   Bot,
   Box,
+  CalendarClock,
   ChartColumn,
   DatabaseBackup,
   FolderGit,
@@ -37,9 +39,11 @@ import {
 // would defeat tree-shaking, so the guarded whitelist stays.
 const PLUGIN_ICONS: Record<string, Component> = {
   ArrowLeftRight,
+  Bell,
   Blocks,
   Bot,
   Box,
+  CalendarClock,
   ChartColumn,
   DatabaseBackup,
   FolderGit,

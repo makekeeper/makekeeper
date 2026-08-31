@@ -11,6 +11,7 @@ import {
   UpdateCheckStatus,
 } from '@makekeeper/plugin-contract';
 import { highestSemver, isNewerVersion } from './update-semver';
+import { SettingsNotificationsService } from './settings-notifications.service';
 
 const SETTINGS_ID = 'default';
 const FETCH_TIMEOUT_MS = 8_000;
@@ -29,6 +30,7 @@ export class UpdateService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: AppConfigService,
+    private readonly notifications: SettingsNotificationsService,
   ) {}
 
   async getState(): Promise<UpdateCheckState> {
@@ -113,7 +115,12 @@ export class UpdateService {
       create: { id: SETTINGS_ID, ...data },
       update: data,
     });
-    return this.getState();
+    const state = await this.getState();
+    // Told to whoever administers the instance, not to whoever happened to press
+    // the button: a scheduled check has no person in front of it at all. The
+    // dedup key is the version, so polling the same release keeps one row.
+    await this.notifications.announceUpdate(state);
+    return state;
   }
 
   // Called hourly by the cron. Runs a check only when auto-check is on, it's the

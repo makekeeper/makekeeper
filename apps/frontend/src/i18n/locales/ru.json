@@ -60,7 +60,8 @@
       "willBeRemoved": "Сохранённое значение будет удалено при сохранении",
       "keepsSaved": "Пустое поле оставит сохранённое значение — введите новое, чтобы заменить",
       "emptyRemoves": "Пустое поле удалит сохранённое значение при сохранении"
-    }
+    },
+    "linkedObject": "Связанный объект"
   },
   "routeTitles": {
     "home": "Дашборд"
@@ -68,7 +69,8 @@
   "nav": {
     "dashboard": "Дашборд",
     "expandSection": "Развернуть «{section}»",
-    "collapseSection": "Свернуть «{section}»"
+    "collapseSection": "Свернуть «{section}»",
+    "hasNewItems": "Есть новое"
   },
   "header": {
     "toggleTheme": "Тема",

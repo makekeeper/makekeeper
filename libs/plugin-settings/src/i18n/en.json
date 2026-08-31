@@ -358,6 +358,18 @@
         "open": "Open External plugins"
       },
       "uxFeature": "API access (base address, docs, token)"
+    },
+    "notifications": {
+      "updateAvailable": {
+        "label": "A new version is available",
+        "title": "MakeKeeper {version} is available",
+        "body": "You are running {current}."
+      },
+      "diskReclaimable": {
+        "label": "Disk space can be reclaimed",
+        "title": "{megabytes} MB can be freed",
+        "body": "Files nothing refers to are waiting to be swept in Settings → Disk."
+      }
     }
   },
   "nav": {

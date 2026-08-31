@@ -21,6 +21,8 @@ export const en = {
   unlinkConfirm: 'Stop sending messages to your chat?',
   unlinked: 'Chat unlinked.',
   anonymous: 'Chats are personal. Signed out, there is nothing to link.',
+  // The column heading in the core's notification matrix.
+  channelLabel: 'Telegram',
   testMessage: 'MakeKeeper is connected. This is a test message.',
   orderReceived: 'Order from {store} was received.',
   orderReceivedNoStore: 'An order was received.',

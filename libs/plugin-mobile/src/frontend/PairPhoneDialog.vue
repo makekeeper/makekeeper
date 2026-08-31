@@ -5,8 +5,9 @@ import {
   Modal,
   QrCode,
   Spinner,
-  apiJson,
   apiErrorMessage,
+  apiJson,
+  useDateFormat,
   useToastStore,
 } from '@makekeeper/frontend-core';
 import { useI18n } from 'vue-i18n';
@@ -37,6 +38,7 @@ type Phase = 'preparing' | 'warmup' | 'ready';
 const pairing = useMobilePairingStore();
 
 const { t } = useI18n();
+const dates = useDateFormat();
 const toast = useToastStore();
 
 const offer = ref<DevicePairingOffer | null>(null);
@@ -200,7 +202,7 @@ watch(
       <p class="text-xs text-slate-500 dark:text-slate-400">
         {{
           $t('common.validUntil', {
-            when: new Date(offer.expiresAt).toLocaleTimeString(),
+            when: dates.time(offer.expiresAt),
           })
         }}
       </p>

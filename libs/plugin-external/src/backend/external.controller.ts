@@ -48,6 +48,7 @@ import { ExternalEventsService } from './external-events.service';
 import { ExternalToolsService } from './external-tools.service';
 import { ExternalExchangeService } from './external-exchange.service';
 import { ExternalCapabilitiesService } from './external-capabilities.service';
+import { ExternalChannelsService } from './external-channels.service';
 import {
   ExternalProvisioningService,
   type ProvisionedTokens,
@@ -102,6 +103,7 @@ export class ExternalController {
     private readonly tools: ExternalToolsService,
     private readonly exchange: ExternalExchangeService,
     private readonly capabilities: ExternalCapabilitiesService,
+    private readonly channels: ExternalChannelsService,
     private readonly provisioning: ExternalProvisioningService,
     private readonly discovery: ExternalDiscoveryService,
     private readonly settings: ExternalSettingsService,
@@ -413,6 +415,7 @@ export class ExternalController {
     // Same for the capabilities it offers: boot-time registration alone would
     // leave a plugin approved later publishing nothing.
     await this.capabilities.syncPlugin(pluginId);
+    await this.channels.syncPlugin(pluginId);
     // A block that was waiting for this plugin can now be handed over — the
     // "import first, install later" order is the normal restore sequence.
     await this.exchange.applyDeferred(pluginId);
@@ -465,6 +468,7 @@ export class ExternalController {
     // A disabled plugin's tools and capability offers go with it immediately.
     await this.tools.syncPlugin(pluginId);
     await this.capabilities.syncPlugin(pluginId);
+    await this.channels.syncPlugin(pluginId);
     this.announceShellChange();
     return { ok: true };
   }
@@ -485,6 +489,7 @@ export class ExternalController {
     await this.events.forgetPlugin(pluginId);
     await this.tools.syncPlugin(pluginId);
     await this.capabilities.syncPlugin(pluginId);
+    await this.channels.syncPlugin(pluginId);
     this.announceShellChange();
     return { ok: true, purgeFailed: res.purgeFailed };
   }

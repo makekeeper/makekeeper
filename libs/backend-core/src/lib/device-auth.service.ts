@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
+import {
+  CORE_DEVICE_REVOKED_EVENT,
+  type CoreDeviceRevokedEvent,
+} from '@makekeeper/plugin-contract';
 import { PrismaService } from './prisma.service';
+import { PluginEventBusService } from './plugin-event-bus.service';
 import { generateUuid } from './uuid';
 
 // Long-lived credentials for paired phones (#199).
@@ -58,7 +63,10 @@ export class DeviceAuthService {
   private readonly logger = new Logger(DeviceAuthService.name);
   private readonly activityListeners: ((deviceId: string) => void)[] = [];
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly events: PluginEventBusService,
+  ) {}
 
   // Fired whenever a paired device is seen. The core deliberately holds no
   // opinion about what that means — the mobile plugin uses it to keep a tunnel
@@ -206,14 +214,32 @@ export class DeviceAuthService {
     userId: string | null,
     now: Date = new Date(),
   ): Promise<boolean> {
+    const where = {
+      id: deviceId,
+      revokedAt: null,
+      ...(userId === null ? {} : { userId }),
+    };
+    // Read the owner before the stamp: the announcement below carries it, and
+    // after the update the row no longer matches `revokedAt: null`.
+    const target = await this.prisma.pairedDevice.findFirst({ where });
+    if (!target) return false;
+
     const result = await this.prisma.pairedDevice.updateMany({
-      where: {
-        id: deviceId,
-        revokedAt: null,
-        ...(userId === null ? {} : { userId }),
-      },
+      where,
       data: { revokedAt: now },
     });
-    return result.count > 0;
+    // `revokedAt: null` in the filter makes this a compare-and-set: two revokes
+    // racing each other produce one winner, so the announcement fires once.
+    if (result.count === 0) return false;
+
+    // The credential is dead as of the line above. What follows is cleanup of
+    // what the device left elsewhere — notify drops its push subscriptions
+    // (#311) — and the bus swallows a listener's failure, so a plugin that is
+    // disabled or broken cannot make a revoke report failure.
+    await this.events.emit<CoreDeviceRevokedEvent>(CORE_DEVICE_REVOKED_EVENT, {
+      deviceId,
+      userId: target.userId,
+    });
+    return true;
   }
 }

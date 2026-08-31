@@ -1,0 +1,8 @@
+{
+  "name": "plugin-schedule",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-schedule/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:schedule"],
+  "targets": {}
+}

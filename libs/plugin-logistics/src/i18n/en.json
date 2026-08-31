@@ -376,6 +376,16 @@
     },
     "bench": {
       "newOrder": "New order"
+    },
+    "calendar": {
+      "orderExpected": "Order expected"
+    },
+    "notifications": {
+      "orderReceived": {
+        "label": "An order arrived",
+        "title": "An order arrived",
+        "body": "From {store}."
+      }
     }
   },
   "nav": {

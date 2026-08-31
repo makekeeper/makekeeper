@@ -9,13 +9,16 @@ import {
 } from '@makekeeper/backend-core';
 import {
   EXTERNAL_EVENTS_PUBLISH_CAPABILITY,
+  NOTIFY_BUS_CAPABILITY,
   LOGISTICS_ORDER_RECEIVED_EVENT,
   LOGISTICS_STOCK_ADJUST_EVENT,
   formatObjectRef,
   type ExternalEventsPublishCapability,
   type LogisticsStockAdjustEvent,
   type ComponentOrderSummary,
+  type NotifyBusCapability,
 } from '@makekeeper/plugin-contract';
+import { LOGISTICS_ORDER_RECEIVED_TYPE } from './logistics.notifications';
 import { OrderStatus } from './logistics.dto';
 
 // Order statuses that mean "stock is on the way" — placed but not yet received.
@@ -40,7 +43,13 @@ export class LogisticsService {
   private async announceOrderReceived(order: {
     id: string;
     scopeId: string | null;
+    storeName?: string;
   }): Promise<void> {
+    // Two announcements of one fact, deliberately: the domain event is
+    // machine-to-machine (a plugin may react to it), the bus is the only path
+    // to a PERSON (#306). Both leave from here, so the two can never disagree
+    // about when an order arrived.
+    await this.tellSomebody(order);
     const publisher =
       this.capabilities.getCapability<ExternalEventsPublishCapability>(
         EXTERNAL_EVENTS_PUBLISH_CAPABILITY,
@@ -60,6 +69,44 @@ export class LogisticsService {
     } catch (err) {
       this.logger.warn(
         `domain event ${LOGISTICS_ORDER_RECEIVED_EVENT} not published: ${getErrorMessage(err)}`,
+      );
+    }
+  }
+
+  // "Your order arrived" — the fact a person actually wants told. Everything
+  // about how it reaches them (which channels, quiet hours, whether they
+  // switched this type off) belongs to the bus, not here.
+  private async tellSomebody(order: {
+    id: string;
+    scopeId: string | null;
+    storeName?: string;
+  }): Promise<void> {
+    const bus = this.capabilities.getCapability<NotifyBusCapability>(
+      NOTIFY_BUS_CAPABILITY,
+    );
+    if (!bus) return;
+    try {
+      await bus.post({
+        type: LOGISTICS_ORDER_RECEIVED_TYPE,
+        target: { kind: 'audience', scopeId: order.scopeId, audience: 'scope' },
+        titleKey: 'logistics.notifications.orderReceived.title',
+        bodyKey: 'logistics.notifications.orderReceived.body',
+        params: { store: order.storeName ?? '' },
+        ref:
+          formatObjectRef({
+            pluginId: 'logistics',
+            entityType: 'order',
+            entityId: order.id,
+          }) ?? undefined,
+        // One arrival, one notification: receiving the rest of an order's lines
+        // updates the standing row instead of stacking another.
+        dedupKey: `logistics.order-received:${order.id}`,
+        actions: [{ kind: 'open' }, { kind: 'dismiss' }],
+      });
+    } catch (err) {
+      // Telling somebody must never fail the intake that was actually recorded.
+      this.logger.warn(
+        `order-received notification not posted: ${getErrorMessage(err)}`,
       );
     }
   }

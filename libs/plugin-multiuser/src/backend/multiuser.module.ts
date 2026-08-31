@@ -185,6 +185,55 @@ export class MultiuserPluginModule implements OnModuleInit {
       {
         scopeExists: async (scopeId) =>
           (await this.prisma.user.count({ where: { id: scopeId } })) > 0,
+        // Names for ids another plugin stored, so its screens can say who did
+        // something. Blocked accounts are named like any other: they did the
+        // thing, and hiding the name would leave a screen claiming nobody did.
+        displayNames: async (userIds) => {
+          if (userIds.length === 0) return {};
+          const users = await this.prisma.user.findMany({
+            where: { id: { in: [...new Set(userIds)] } },
+            select: { id: true, username: true, displayName: true },
+          });
+          return Object.fromEntries(
+            users.map((user) => [user.id, user.displayName ?? user.username]),
+          );
+        },
+        // Who is behind an audience (#307). Blocked accounts are left out of
+        // every answer: an account that cannot log in cannot read an inbox, and
+        // filling one is how a notification silently goes nowhere.
+        audienceUserIds: async (audience, scopeId) => {
+          if (audience === 'admins') {
+            const admins = await this.prisma.user.findMany({
+              where: { isAdmin: true, blockedAt: null },
+              select: { id: true },
+            });
+            return admins.map((user) => user.id);
+          }
+          if (!scopeId) return [];
+          const owner = await this.prisma.user.findFirst({
+            where: { id: scopeId, blockedAt: null },
+            select: { id: true },
+          });
+          const ids = owner ? [owner.id] : [];
+          if (audience === 'owner') return ids;
+          const grants = await this.prisma.scopeGrant.findMany({
+            where: { ownerUserId: scopeId },
+            select: { granteeUserId: true },
+          });
+          // ScopeGrant carries flat FKs, no relation (§5.8), so liveness is a
+          // second query rather than a nested filter.
+          const grantees = await this.prisma.user.findMany({
+            where: {
+              id: { in: grants.map((grant) => grant.granteeUserId) },
+              blockedAt: null,
+            },
+            select: { id: true },
+          });
+          for (const grantee of grantees) {
+            if (!ids.includes(grantee.id)) ids.push(grantee.id);
+          }
+          return ids;
+        },
       },
     );
 

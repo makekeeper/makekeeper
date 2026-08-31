@@ -268,6 +268,13 @@
       },
       "attention": "{count} waiting for you"
     },
-    "emptyTitle": "No external plugins yet"
+    "emptyTitle": "No external plugins yet",
+    "channel": {
+      "errors": {
+        "inactive": "The plugin “{plugin}” is not active right now.",
+        "backedOff": "The plugin “{plugin}” is being given time to recover.",
+        "refused": "The channel “{plugin}” refused the message."
+      }
+    }
   }
 }

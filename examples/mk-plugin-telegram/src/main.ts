@@ -5,13 +5,15 @@
 // `userRef` the core puts on every call (contract 1.4), so two people in one
 // workspace get their own messages and the plugin cannot tell who either is.
 //
-// It also carries messages for other plugins: `telegram.notify` is offered as
-// a capability, so a printer plugin can say "your print finished" without
-// knowing what Telegram is — and without this plugin installed, that call
-// resolves to nothing and the printer carries on.
+// It also carries messages for other plugins, but not by offering them
+// anything to call: it declares a DELIVERY CHANNEL (`deliveryChannel` in the
+// manifest) and the notification bus hands it what to say. A printer plugin
+// posts "your print finished" to the bus and never learns Telegram exists;
+// with this plugin uninstalled the same notification simply arrives elsewhere.
+// See manifest.ts for why the earlier `telegram.notify` capability was dropped.
 //
 // Wiring only:
-//   manifest.ts   — identity, the capability, the WRITE tool
+//   manifest.ts   — identity, the channel, the WRITE tool
 //   state.ts      — links, codes and unsubscribe tokens
 //   sources/bot.ts — long polling and sendMessage
 //   screens.ts    — the personal screen and the admin one
@@ -22,7 +24,6 @@ import { homeScreen, settingsScreen } from './screens.ts';
 import { en } from './i18n/en.ts';
 import { ru } from './i18n/ru.ts';
 import { poll, sendMessage, whoAmI } from './sources/bot.ts';
-import { announceOrderReceived } from './orders.ts';
 import {
   botName,
   botToken,
@@ -33,7 +34,6 @@ import {
   linkByChat,
   linkByToken,
   linkOf,
-  linksOfScope,
   loadState,
   markSeenEvent,
   publicUrl,
@@ -78,6 +78,12 @@ const deliver = async (
       : '';
   return sendMessage(token, chatId, `${text}${suffix}`);
 };
+
+// Where the core lives, for the action links a message carries. The same
+// conventional variable the SDK reads for its own client — a plugin that has to
+// be told twice where its core is is a plugin somebody will misconfigure.
+const coreBaseUrl = (): string =>
+  (process.env['MK_CORE_URL'] ?? '').replace(/\/+$/, '');
 
 // Set once startPlugin returns, and used only from the polling loop and the
 // public route — both of which run long after boot.
@@ -191,21 +197,47 @@ const plugin = await startPlugin({
       return commands();
     },
 
-    // What another plugin calls. It never learns whether a chat exists, only
-    // whether the message went — a capability that reports "this person has no
-    // Telegram" would leak a fact about that person to its caller.
-    capability: async ({ method, args }) => {
-      if (method !== 'send') return { sent: false };
-      const [input] = args as [
-        { scopeId?: string; userRef?: string; text?: string } | undefined,
-      ];
-      const scopeId = String(input?.scopeId ?? '');
-      const userRef = String(input?.userRef ?? '');
-      const text = String(input?.text ?? '').trim();
-      if (!scopeId || !userRef || !text) return { sent: false };
-      const link = linkOf(scopeId, userRef);
-      if (!link) return { sent: false };
-      return { sent: await deliver(link.chatId, text, botToken()) };
+    // The channel contract (#312). The core hands over a message it has
+    // already rendered in the reader's own language, together with the opaque
+    // ref of the person to reach — this plugin formats and sends, and decides
+    // nothing about who hears what.
+    capability: async ({ method, args, context }) => {
+      const [input] = args as [Record<string, unknown> | undefined];
+      const userRef = String(input?.['userRef'] ?? '');
+      const link = userRef ? linkOf(context.scopeId, userRef) : null;
+
+      // Asked before anything is queued, so the core never fills a delivery log
+      // with failures for a channel nobody connected.
+      if (method === 'isLinked') return link !== null;
+
+      if (method !== 'deliver') return null;
+      // THROWING is how a channel reports failure: the core retries with
+      // backoff and eventually shows the delivery as dead. Returning a quiet
+      // "false" would turn "Telegram is down" into "the person was told".
+      if (!link) throw new Error('no chat linked for this person');
+      const title = String(input?.['title'] ?? '');
+      const body = String(input?.['body'] ?? '');
+      const url = typeof input?.['url'] === 'string' ? input['url'] : '';
+      const actions = Array.isArray(input?.['actions'])
+        ? (input['actions'] as { label?: unknown; token?: unknown }[])
+        : [];
+      const lines = [title, body].filter((line) => line.length > 0);
+      if (url) lines.push(url);
+      // Each action carries a single-use token; pressing one is a POST back to
+      // the core, so this plugin never holds authority of its own. Rendered as
+      // links rather than inline keyboards to keep the example one file
+      // shorter than the point it is making.
+      for (const action of actions) {
+        const token = String(action.token ?? '');
+        const label = String(action.label ?? '');
+        const base = coreBaseUrl();
+        if (token && label && base) {
+          lines.push(`${label}: ${base}/api/notifications/action/${token}`);
+        }
+      }
+      const sent = await deliver(link.chatId, lines.join('\n'), botToken());
+      if (!sent) throw new Error('telegram refused the message');
+      return true;
     },
 
     tool: async ({ args, context }) => {
@@ -217,25 +249,11 @@ const plugin = await startPlugin({
       return { sent: await deliver(link.chatId, text, botToken()) };
     },
 
-    onEvent: async ({ event, core: eventCore }) => {
+    // Only housekeeping is left: when a workspace goes, its chat links go with
+    // it. What is worth telling a person is the bus's decision now.
+    onEvent: async ({ event }) => {
       if (event.type === 'core.scope-deleted' && event.scopeId) {
         await forgetScope(event.scopeId);
-      }
-      // No truthiness guard on scopeId: '' IS a scope — the implicit one of a
-      // single-user core — and links are filed under exactly that ''.
-      if (event.type === 'logistics.order.received') {
-        await announceOrderReceived(
-          eventCore,
-          event.scopeId,
-          event.ref,
-          linksOfScope(event.scopeId),
-          async (link, store) => {
-            const text = store
-              ? say(link.locale, 'orderReceived').replace('{store}', store)
-              : say(link.locale, 'orderReceivedNoStore');
-            await deliver(link.chatId, text, botToken());
-          },
-        );
       }
     },
 

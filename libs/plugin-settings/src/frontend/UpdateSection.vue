@@ -8,9 +8,10 @@ import {
   SegmentedControl,
   Spinner,
   secretPatch,
-  useConfirm,
-  useToastStore,
   type SecretAction,
+  useConfirm,
+  useDateFormat,
+  useToastStore,
 } from '@makekeeper/frontend-core';
 import { Rocket, Terminal, Copy, BookOpen } from '@lucide/vue';
 import {
@@ -44,6 +45,7 @@ import {
 // from an admin who had no way of knowing what was behind it; this one is
 // below everything it could displace and is announced at the top.
 const { t } = useI18n();
+const dates = useDateFormat();
 const toast = useToastStore();
 const confirm = useConfirm();
 const store = useUpdateStore();
@@ -162,7 +164,7 @@ const lastTriggeredLabel = computed<string | null>(() => {
   const hook = store.deployHook;
   if (!hook?.lastTriggeredAt) return null;
   return t('settings.updates.hook.lastTriggered', {
-    time: new Date(hook.lastTriggeredAt).toLocaleString(),
+    time: dates.dateTime(hook.lastTriggeredAt),
     outcome: t(`settings.updates.hook.outcomes.${hook.lastOutcome}`),
     detail:
       hook.lastStatusCode === null

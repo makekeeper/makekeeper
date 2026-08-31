@@ -44,6 +44,9 @@
       "exchangeProviderMissing": "Exchange section \"{key}\" has no registered provider",
       "exchangeDeclarationMissing": "Exchange provider \"{key}\" has no manifest declaration",
       "exchangeRootSectionCount": "Exchange root \"{rootType}\" needs exactly one root section, has {count}"
+    },
+    "refs": {
+      "resolve": "Resolve an mk:// reference to a name and location"
     }
   }
 }

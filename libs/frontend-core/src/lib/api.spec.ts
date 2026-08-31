@@ -116,6 +116,37 @@ describe('apiFetch', () => {
     });
   });
 
+  describe('apiJson with an empty successful body (#291)', () => {
+    it('resolves to undefined on a body-less 200 instead of a parse error', async () => {
+      fetchMock.mockResolvedValue(new Response('', { status: 200 }));
+      await expect(
+        apiJson('/api/projects/groups/reorder'),
+      ).resolves.toBeUndefined();
+    });
+
+    it('resolves to undefined on a 204 No Content', async () => {
+      fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+      await expect(
+        apiJson('/api/projects/groups/reorder'),
+      ).resolves.toBeUndefined();
+    });
+
+    it('still parses a present body', async () => {
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ ok: true }), { status: 200 }),
+      );
+      await expect(apiJson('/api/projects')).resolves.toEqual({ ok: true });
+    });
+
+    it('tolerates test doubles that expose only json()', async () => {
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: async () => ({ id: 'p1' }),
+      });
+      await expect(apiJson('/api/projects')).resolves.toEqual({ id: 'p1' });
+    });
+  });
+
   it('apiJson throws a typed ApiError carrying the backend message', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ message: 'nope' }), { status: 403 }),

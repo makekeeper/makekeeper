@@ -20,7 +20,9 @@ export type SystemBypassReason =
   | 'admin-cross-user' // multiuser: an admin acting across users' data
   | 'backfill' // multiuser: claim orphaned pre-overlay rows
   | 'restriction-descriptors' // multiuser: resolve the caller's own pick-lists
-  | 'stats-aggregation'; // stats/inventory: nightly all-scope rollup jobs
+  | 'stats-aggregation' // stats/inventory: nightly all-scope rollup jobs
+  | 'scheduler-tick' // schedule: the minute tick, which reads every scope's due rows before entering each owner's own
+  | 'device-revoked'; // notify: drop a revoked device's push rows — an admin may revoke a device that is not in their own scope
 
 export interface RequestContextData {
   userId?: string;
@@ -37,6 +39,14 @@ export interface RequestContextData {
   // deep-links, background rollups, the policy's own pre-checks).
   systemBypassReason?: SystemBypassReason;
   locale?: string;
+  // The paired device this request authenticated with, when it did (#311). Set
+  // by whichever guard resolved the device token; absent for a browser session,
+  // which is not a device anything can be revoked from.
+  deviceId?: string;
+  // IANA zone the caller's clock is in, as their browser reports it. Anything
+  // that turns a wall-clock time into an instant needs it, and the server's own
+  // zone is not an answer: it is wherever the instance happens to run.
+  timezone?: string;
 }
 
 @Injectable()

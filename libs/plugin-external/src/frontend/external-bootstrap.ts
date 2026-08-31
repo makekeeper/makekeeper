@@ -134,6 +134,10 @@ export function registerExternalPlugin(
 
   registerPlugin({
     id: plugin.pluginId,
+    // What it IS, not merely where it was registered: screens that hand a
+    // plugin something — a notification's text, a person's contact — say so
+    // differently for a container than for the app's own code (#312).
+    external: true,
     nameKey: `${namespace}.${plugin.nameKey}`,
     navigation: plugin.nav.map((item) => ({
       path: navPath(plugin, item.screen),

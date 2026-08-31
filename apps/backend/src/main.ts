@@ -10,6 +10,32 @@ import { MobileOriginService } from '@makekeeper/plugin-mobile/backend';
 import { AppModule } from './app/app.module';
 import { setupSwagger } from './app/swagger';
 
+// One header value, whatever Express hands over (a string, a list, nothing).
+function headerOf(req: unknown, name: string): string | undefined {
+  if (typeof req !== 'object' || req === null || !('headers' in req)) {
+    return undefined;
+  }
+  const headers = (req as { headers: Record<string, unknown> }).headers;
+  const value = headers[name];
+  if (typeof value === 'string') return value;
+  return Array.isArray(value) && typeof value[0] === 'string'
+    ? value[0]
+    : undefined;
+}
+
+// A zone name the runtime actually knows. The header comes from a browser, so
+// it is data, not fact: an unknown value must not reach a date calculation and
+// throw there, far from here.
+function knownTimezone(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: value });
+    return value;
+  } catch {
+    return undefined;
+  }
+}
+
 async function bootstrap() {
   // Disable Nest's built-in body parser (100 KB limit) — otherwise it runs
   // BEFORE our larger json() below and 413s any base64 image (chat attachments,
@@ -43,8 +69,18 @@ async function bootstrap() {
   // through every signature. Plain `app.use` on purpose: it avoids the
   // Express 5 wildcard route-matching quirks of MiddlewareConsumer.
   const requestContext = app.get(RequestContextService);
-  app.use((_req: unknown, _res: unknown, next: () => void) =>
-    requestContext.run({}, next),
+  // Locale and time zone come from the client on every request, so they are
+  // there whether or not the multiuser overlay is on (the overlay's guard fills
+  // in the rest). Without the zone, anything reading a wall clock falls back to
+  // the server's, which is wherever the instance happens to be hosted.
+  app.use((req: unknown, _res: unknown, next: () => void) =>
+    requestContext.run(
+      {
+        locale: headerOf(req, 'x-locale'),
+        timezone: knownTimezone(headerOf(req, 'x-timezone')),
+      },
+      next,
+    ),
   );
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
   // CORS exists for exactly one case: the mobile surface published on its own

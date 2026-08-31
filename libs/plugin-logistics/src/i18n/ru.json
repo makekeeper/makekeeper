@@ -376,6 +376,16 @@
     },
     "bench": {
       "newOrder": "Новый заказ"
+    },
+    "calendar": {
+      "orderExpected": "Ожидается заказ"
+    },
+    "notifications": {
+      "orderReceived": {
+        "label": "Приехал заказ",
+        "title": "Приехал заказ",
+        "body": "Из «{store}»."
+      }
     }
   },
   "nav": {

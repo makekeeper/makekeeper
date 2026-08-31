@@ -372,6 +372,11 @@
         "ongoing": "ещё идёт",
         "inferred": "даты выведены из истории проекта"
       }
+    },
+    "calendar": {
+      "taskDue": "Срок задачи",
+      "projectStart": "Старт проекта",
+      "projectDue": "Срок проекта"
     }
   },
   "projectForm": {

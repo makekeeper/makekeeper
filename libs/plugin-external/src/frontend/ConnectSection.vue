@@ -13,6 +13,7 @@ import {
   apiErrorMessage,
   apiJson,
   copyText,
+  useDateFormat,
   useToastStore,
 } from '@makekeeper/frontend-core';
 import { useExternalAdmin, type Candidate } from './external-admin';
@@ -24,6 +25,7 @@ import PluginCard from './PluginCard.vue';
 // what it asks for. The approval used to sit in the plugin list and the token
 // among the credentials, each a section away from the errand that needs it.
 const { t } = useI18n();
+const dates = useDateFormat();
 const toast = useToastStore();
 const admin = useExternalAdmin();
 
@@ -170,7 +172,7 @@ const copyInstallToken = async (): Promise<void> => {
       >
         {{
           t('external.discovery.openUntil', {
-            at: new Date(admin.pairing.value.openUntil).toLocaleTimeString(),
+            at: dates.time(admin.pairing.value.openUntil),
           })
         }}
       </p>

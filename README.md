@@ -36,6 +36,10 @@
 - **Logistics** — orders, suppliers, parcel tracking, and an auto-computed shopping list from shortages.
 - **AI assistant** — chat scoped to an object; the agent calls plugin tools (READ / WRITE / DESTRUCTIVE) with user confirmation gating destructive operations.
 - **AI provider settings** — Gemini, OpenAI, Anthropic, Ollama, and any OpenAI-compatible endpoint; keys are encrypted at rest.
+- **Notifications, reminders and a calendar** — one inbox in the header; every plugin posts facts to
+  it, and each person decides which of them also leave the app (web push built in, more as plugins).
+  Reminders are set on an object or on nothing at all, repeat by RFC 5545 rules in your own time
+  zone, and the calendar draws every date the plugins already hold — nothing is stored twice.
 - **Statistics** — daily activity aggregates from plugins, rendered as charts.
 - **Universal tags** — one tagging system with search across every object in the app.
 - **Phone capture** — shoot a part on your phone via a QR code (optionally over a Cloudflare tunnel).
@@ -67,9 +71,13 @@
    │   ├ storages            │   │   ├ storages            │
    │   ├ logistics           │   │   ├ logistics           │
    │   ├ settings · chat     │   │   ├ settings · chat     │
+   │   ├ notify · schedule   │   │   ├ notify · schedule   │
    │   ├ capture · stats     │   │   ├ capture · stats     │
+   │   ├ codes · mobile      │   │   ├ codes · mobile      │
    │   ├ tags · uxmode       │   │   ├ tags · uxmode       │
+   │   ├ phone-bridge        │   │   ├ phone-bridge        │
    │   └ exchange·multiuser  │   │   └ exchange·multiuser  │
+   │     · external          │   │     · external          │
    │        │                │   └─────────────────────────┘
    │   Prisma ORM            │
    └────────┬────────────────┘
@@ -154,12 +162,18 @@ never disabled; the rest can be toggled on and off (per user in multi-user mode)
 | `logistics` | Logistics | Purchase planning and parcel tracking. `CART → ORDERED → SHIPPED → DELIVERED` |
 | `settings` | Settings | AI provider connection and API-key configuration |
 | `chat` | AI Assistant | Conversational AI assistant panel |
+| `notify` | Notifications | The bus and the inbox: any plugin tells a person something; per-type routing to channels, quiet hours, a delivery log |
+| `schedule` | Reminders & calendar | Reminders on RFC 5545 rules with a time zone, plugin hooks fired at a moment, and the calendar as a live view over other plugins' dates |
 | `capture` | Phone photo | Shoot a part on your phone via a QR code (optional Cloudflare tunnel) |
+| `phone-bridge` | Phone bridge | The paired-phone session behind capture and scanning — QR pairing, tokenised access, optional tunnel |
+| `codes` | Labels & scanning | QR / Code 128 labels for anything the plugins own, and scanning them back |
+| `mobile` | Phone interface | The installable phone surface at `/m` — its own screens, not a shrunken desktop |
 | `stats` | Statistics | Daily aggregates of plugin activity, rendered as charts |
 | `tags` | Tags | Universal tagging and search across every object |
 | `uxmode` | Interface mode | Simple/advanced switch with per-feature overrides |
 | `multiuser` | Multi-user mode | Optional accounts, per-scope data isolation, and scope sharing |
 | `exchange` | Export / Import | Move projects, storages, and backups between instances (`.mkx`) |
+| `external` | External plugins | Third-party plugins in their own containers: discovery, pairing, permissions, signed calls |
 
 How to add or change a plugin — the canonical recipe is in [`docs/plugins.md`](docs/plugins.md).
 

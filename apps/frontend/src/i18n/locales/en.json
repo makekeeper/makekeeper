@@ -60,7 +60,8 @@
       "willBeRemoved": "The saved value will be removed when you save",
       "keepsSaved": "Empty leaves the saved value in place — type a new one to replace it",
       "emptyRemoves": "Leaving this empty removes the saved value when you save"
-    }
+    },
+    "linkedObject": "Linked object"
   },
   "routeTitles": {
     "home": "Dashboard"
@@ -68,7 +69,8 @@
   "nav": {
     "dashboard": "Dashboard",
     "expandSection": "Expand {section}",
-    "collapseSection": "Collapse {section}"
+    "collapseSection": "Collapse {section}",
+    "hasNewItems": "New items"
   },
   "header": {
     "toggleTheme": "Theme",

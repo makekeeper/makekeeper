@@ -17,7 +17,12 @@ import {
   REALTIME_UNSUBSCRIBE_MESSAGE,
   type RealtimeAck,
 } from '@makekeeper/plugin-contract';
-import { getStoredScopeId, getStoredToken } from './api';
+import {
+  browserTimezone,
+  currentLocale,
+  getStoredScopeId,
+  getStoredToken,
+} from './api';
 
 type RealtimeHandler = (payload: unknown) => void;
 
@@ -63,10 +68,18 @@ function ensureSocket(): Socket {
     auth: (cb) => {
       const token = getStoredToken();
       const scopeId = getStoredScopeId();
+      // Language and zone travel with the handshake because a socket has no
+      // headers to put them in — and the chat turn, which runs entirely over
+      // this connection, is exactly what needs to know what time it is where
+      // the person is.
+      const locale = currentLocale();
+      const timezone = browserTimezone();
       cb({
         ...(token ? { token } : {}),
         ...(scopeId ? { scopeId } : {}),
         ...(guestToken ? { guestToken } : {}),
+        ...(locale ? { locale } : {}),
+        ...(timezone ? { timezone } : {}),
       });
     },
   });

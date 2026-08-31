@@ -2,6 +2,8 @@ export * from './lib/agent-types';
 export * from './lib/define-tool';
 export * from './lib/capabilities';
 export * from './lib/manifest';
+export * from './lib/notifications';
+export * from './lib/schedule';
 export * from './lib/exchange';
 export * from './lib/page-context';
 export * from './lib/grid-address';

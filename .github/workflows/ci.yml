@@ -47,8 +47,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     # The whole monorepo — two apps, the shared libs, every first-party plugin
-    # and every example — takes ~3 min from a cold cache on four cores, so this
-    # is many times the real cost: generous enough never to cut a slow runner
+    # and every example — took 6m10s on a cold `ubuntu-latest` (#299), install
+    # included. Five times that: generous enough never to cut a slow runner
     # short, low enough that a hung task dies here instead of burning the job's
     # default six hours.
     timeout-minutes: 30

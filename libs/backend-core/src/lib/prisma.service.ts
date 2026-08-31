@@ -184,6 +184,42 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   get externalSettings(): ExtendedClient['externalSettings'] {
     return this.client.externalSettings;
   }
+  get notifyChannelPref(): ExtendedClient['notifyChannelPref'] {
+    return this.client.notifyChannelPref;
+  }
+  get notificationRoute(): ExtendedClient['notificationRoute'] {
+    return this.client.notificationRoute;
+  }
+  get notificationActionToken(): ExtendedClient['notificationActionToken'] {
+    return this.client.notificationActionToken;
+  }
+  get pushSubscription(): ExtendedClient['pushSubscription'] {
+    return this.client.pushSubscription;
+  }
+  get pushSettings(): ExtendedClient['pushSettings'] {
+    return this.client.pushSettings;
+  }
+  get schedule(): ExtendedClient['schedule'] {
+    return this.client.schedule;
+  }
+  get personalSchedule(): ExtendedClient['personalSchedule'] {
+    return this.client.personalSchedule;
+  }
+  get scheduleRun(): ExtendedClient['scheduleRun'] {
+    return this.client.scheduleRun;
+  }
+  get notification(): ExtendedClient['notification'] {
+    return this.client.notification;
+  }
+  get notificationDelivery(): ExtendedClient['notificationDelivery'] {
+    return this.client.notificationDelivery;
+  }
+  get notificationTypeConfig(): ExtendedClient['notificationTypeConfig'] {
+    return this.client.notificationTypeConfig;
+  }
+  get notifyPreference(): ExtendedClient['notifyPreference'] {
+    return this.client.notifyPreference;
+  }
   get mobileSettings(): ExtendedClient['mobileSettings'] {
     return this.client.mobileSettings;
   }

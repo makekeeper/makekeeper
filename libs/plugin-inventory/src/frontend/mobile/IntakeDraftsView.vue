@@ -2,21 +2,22 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import {
+  Badge,
   Button,
   EmptyState,
+  ImageLightbox,
   Select,
   Spinner,
-  Badge,
-  apiJson,
   apiErrorMessage,
+  apiJson,
   fieldNumber,
   fieldValue,
+  previewUrl,
+  type LightboxImage,
   useConfirm,
+  useDateFormat,
   usePluginsStore,
   useToastStore,
-  previewUrl,
-  ImageLightbox,
-  type LightboxImage,
 } from '@makekeeper/frontend-core';
 import { useI18n } from 'vue-i18n';
 import { Check, Trash2, Undo2, Sparkles, X } from '@lucide/vue';
@@ -43,6 +44,7 @@ interface StorageOption {
 }
 
 const { t } = useI18n();
+const dates = useDateFormat();
 const route = useRoute();
 const toast = useToastStore();
 const confirm = useConfirm();
@@ -312,8 +314,7 @@ const dropFrame = async (draft: IntakeDraft, url: string): Promise<void> => {
 };
 
 // Age is the honest thing to show for data nothing deletes on its own (#120).
-const age = (draft: IntakeDraft): string =>
-  new Date(draft.createdAt).toLocaleString();
+const age = (draft: IntakeDraft): string => dates.dateTime(draft.createdAt);
 </script>
 
 <template>

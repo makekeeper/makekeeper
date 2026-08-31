@@ -65,6 +65,12 @@ export interface FrontendPlugin {
   id: string;
   // i18n key for the plugin's display name.
   nameKey: string;
+  // Registered at runtime from an installed CONTAINER rather than bundled with
+  // the app (#131). Set only by the external host; every plugin shipped in the
+  // build leaves it alone. Surfaces that must state where a capability comes
+  // from read it — "this text leaves the instance" is a different promise from
+  // "this stays in the app", and only a screen that knows can say so.
+  external?: boolean;
   // Sidebar entries this plugin contributes (already carrying i18n keys).
   navigation: PluginNavItem[];
   routes: RouteRecordRaw[];
@@ -207,6 +213,47 @@ export function getPluginNavigation(): RegisteredNavItem[] {
   return activePlugins.flatMap((p) =>
     p.navigation.map((item) => ({ ...item, pluginId: p.id })),
   );
+}
+
+// A source of sidebar-entry badges (#307). Deliberately NOT a per-plugin
+// declaration: the counts belong to whoever aggregates them (notify), while the
+// entries belong to everyone else, and a plugin must not have to ask another
+// plugin for its own badge (§5.10). The shell asks every registered source and
+// sums what comes back, so a second source (a queue, a review inbox) needs no
+// change here.
+//
+// The function is called inside the sidebar's computed, so a reactive source (a
+// pinia store) repaints the badge on its own — the same contract nav children
+// have.
+export type NavBadgeSource = (item: RegisteredNavItem) => number;
+
+const navBadgeSources = new Map<string, NavBadgeSource>();
+
+export function registerNavBadgeSource(
+  pluginId: string,
+  source: NavBadgeSource,
+): void {
+  navBadgeSources.set(pluginId, source);
+  registryVersion.value += 1;
+}
+
+// The badge count for one nav entry: the sum over every source whose owning
+// plugin is enabled, or 0 when nothing has anything to say. A source that
+// throws costs its own number, never the sidebar.
+export function getNavBadge(
+  item: RegisteredNavItem,
+  isPluginEnabled: (pluginId: string) => boolean,
+): number {
+  let total = 0;
+  for (const [pluginId, source] of navBadgeSources) {
+    if (!isPluginEnabled(pluginId)) continue;
+    try {
+      total += source(item);
+    } catch {
+      // A broken source must not blank the sidebar it decorates.
+    }
+  }
+  return total;
 }
 
 // The runtime sub-items of a nav entry, or an empty list when the entry names
@@ -547,6 +594,13 @@ export function getManifestContributions(
         .map((c) => ({ ...c, pluginId })),
     )
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
+}
+
+// Whether a plugin came from an installed container rather than the build.
+// Unknown ids answer `false`: something not registered at all is not an
+// external plugin, it is nothing.
+export function isExternalPlugin(pluginId: string): boolean {
+  return activePlugins.find((p) => p.id === pluginId)?.external === true;
 }
 
 // Settings panels of every plugin that declares one, tagged with the owning

@@ -5,6 +5,7 @@ import {
   Badge,
   Button,
   Spinner,
+  useDateFormat,
   useToastStore,
 } from '@makekeeper/frontend-core';
 import { RefreshCw } from '@lucide/vue';
@@ -16,13 +17,14 @@ import { useUpdateStore } from './update-store';
 // page opened at any section — so this pane only reads the store and offers
 // the one action that is its own: check again, now.
 const { t } = useI18n();
+const dates = useDateFormat();
 const toast = useToastStore();
 const store = useUpdateStore();
 
 const lastCheckedLabel = computed<string>(() => {
   const iso = store.state?.lastCheckedAt;
   if (!iso) return t('settings.updates.neverChecked');
-  return new Date(iso).toLocaleString();
+  return dates.dateTime(iso);
 });
 
 async function onCheck(): Promise<void> {

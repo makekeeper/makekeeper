@@ -22,6 +22,10 @@ const controller = (): ExternalController =>
     { syncPlugin: noop } as never,
     { applyDeferred: noop } as never,
     { syncPlugin: noop } as never,
+    // Channels re-sync on the same lifecycle hooks as tools and capabilities
+    // (#312), so a plugin approved later becomes a usable channel without a
+    // restart.
+    { syncPlugin: noop } as never,
     { provision: noop } as never,
     {} as never,
     {} as never,

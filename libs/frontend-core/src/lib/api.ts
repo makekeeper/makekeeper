@@ -48,6 +48,19 @@ const SCOPE_STORAGE_KEY = 'auth.activeScope';
 const SESSION_KEY_STORAGE_KEY = 'auth.sessionKey';
 
 let localeProvider: (() => string) | null = null;
+
+// The zone this browser is in. One definition, because every path out of the
+// app has to state it: the header below, and the socket handshake, which
+// carries no headers at all.
+export function browserTimezone(): string | undefined {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+}
+
+// What the app currently says the language is, for callers that cannot reach
+// the i18n instance (the socket handshake runs outside a component).
+export function currentLocale(): string | undefined {
+  return localeProvider?.();
+}
 let unauthorizedHandler: (() => void) | null = null;
 
 // Wired once in main.ts from the i18n instance — api.ts cannot import the
@@ -109,6 +122,13 @@ export async function apiFetch(
   if (localeProvider && !headers['x-locale']) {
     headers['x-locale'] = localeProvider();
   }
+  // The browser is the only thing that knows where the person is sitting, and
+  // the server needs it wherever a wall-clock time becomes an instant — a
+  // reminder for "Monday 10:00" above all.
+  if (!headers['x-timezone']) {
+    const zone = browserTimezone();
+    if (zone) headers['x-timezone'] = zone;
+  }
   if (!options.public) {
     // A logged-in session wins over a paired device: on a desktop that has both
     // (a phone paired from this very browser during setup) the person is who
@@ -168,6 +188,10 @@ export async function apiFetch(
 
 // JSON convenience: throws a typed ApiError on any non-ok response. The error
 // message carries the backend's (already localized) `message` when present.
+// An empty successful body resolves to `undefined` rather than throwing (#291);
+// the declared `T` stays as it is, because a handler owes every caller a body —
+// a rule the backend's own guard enforces (controller-response-contract.spec.ts)
+// instead of pushing an `undefined` check into several hundred call sites.
 export async function apiJson<T>(
   path: string,
   options: ApiRequestOptions = {},
@@ -181,8 +205,24 @@ export async function apiJson<T>(
       extractMessage(errorPayload, response),
     );
   }
-  const payload: T = await response.json();
-  return payload;
+  return readJsonBody<T>(response);
+}
+
+// Reads a response body as JSON, treating an empty one as "no payload" instead
+// of a parse error (#291). A handler with nothing to say answers `{ ok: true }`
+// by convention, but a `204 No Content` — or a handler that forgot — sends no
+// bytes at all, and `JSON.parse('')` throws a message that names nothing the
+// user did ("Unexpected end of JSON input" in V8, "The string did not match the
+// expected pattern" in WebKit) for a write that in fact went through.
+// The `typeof` guard tolerates the many test doubles that stub fetch with a
+// bare `{ ok, json }` object, like the rotated-session-key read above.
+async function readJsonBody<T>(response: Response): Promise<T> {
+  if (typeof response.text !== 'function') return response.json();
+  const text = await response.text();
+  // Both branches hand back `any` (that is what `json()`/`JSON.parse` return),
+  // so the empty case needs no assertion to satisfy `T` — see apiJson's note
+  // on what a caller who declared a payload actually receives.
+  return text ? JSON.parse(text) : undefined;
 }
 
 // Blob download: run a request and hand the response body to the browser as a

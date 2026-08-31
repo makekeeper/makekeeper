@@ -6,6 +6,7 @@ import { HealthController } from './health.controller';
 import { AppService } from './app.service';
 import { UploadsController } from './uploads.controller';
 import { DiskUsageController } from './disk-usage.controller';
+import { RefsController } from './refs.controller';
 import {
   PrismaModule,
   PluginRegistryModule,
@@ -53,6 +54,8 @@ import { ExchangePluginModule } from '@makekeeper/plugin-exchange/backend';
 import { CodesPluginModule } from '@makekeeper/plugin-codes/backend';
 import { MobilePluginModule } from '@makekeeper/plugin-mobile/backend';
 import { ExternalPluginModule } from '@makekeeper/plugin-external/backend';
+import { NotifyPluginModule } from '@makekeeper/plugin-notify/backend';
+import { SchedulePluginModule } from '@makekeeper/plugin-schedule/backend';
 
 @Module({
   imports: [
@@ -74,6 +77,10 @@ import { ExternalPluginModule } from '@makekeeper/plugin-external/backend';
     KeyringModule,
     DeviceAuthModule,
     SecretAccessModule,
+    // Registered before the plugins that post to it, so their type
+    // declarations find the bus capability already in the registry.
+    NotifyPluginModule,
+    SchedulePluginModule,
     ProjectsPluginModule,
     InventoryPluginModule,
     LogisticsPluginModule,
@@ -101,6 +108,7 @@ import { ExternalPluginModule } from '@makekeeper/plugin-external/backend';
     HealthController,
     UploadsController,
     DiskUsageController,
+    RefsController,
   ],
   providers: [
     AppService,

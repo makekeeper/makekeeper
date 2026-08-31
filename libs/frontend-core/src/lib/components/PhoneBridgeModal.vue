@@ -11,6 +11,7 @@ import {
   isPhoneBridgeResultsResponse,
   isCreatePhoneBridgeSessionResponse,
 } from '@makekeeper/plugin-contract';
+import { useDateFormat } from '../use-date-format';
 import { apiFetch } from '../api';
 import { useRealtime } from '../realtime';
 import Button from './Button.vue';
@@ -34,6 +35,7 @@ const props = defineProps<{ context: PhoneBridgeContext }>();
 const emit = defineEmits<{ (e: 'message', data: unknown): void }>();
 
 const { t } = useI18n();
+const dates = useDateFormat();
 const router = useRouter();
 
 type Phase = 'creating' | 'warmup' | 'ready';
@@ -339,7 +341,7 @@ defineExpose({ open, isActive, end: cancel, updateContext });
           <p class="text-xs text-slate-500 dark:text-slate-400 text-center">
             {{
               t('common.validUntil', {
-                when: new Date(session.expiresAt).toLocaleTimeString(),
+                when: dates.time(session.expiresAt),
               })
             }}
           </p>

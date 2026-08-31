@@ -9,6 +9,7 @@
 // capability id string is the contract: the registry stores implementations
 // untyped, and this file is the single place binding an id to its interface.
 
+import type { NotificationAudience } from './notifications';
 import type { RealtimeRequestContext } from './realtime';
 import type { PhoneBridgeMessage } from './phone-bridge';
 import type { ExternalDomainEventType } from './external/external-events';
@@ -202,6 +203,22 @@ export const SCOPE_DIRECTORY_CAPABILITY = 'multiuser.scope-directory';
 
 export interface ScopeDirectoryCapability {
   scopeExists(scopeId: string): Promise<boolean>;
+  // Who is behind an audience (#307). The notification bus asks; it never
+  // learns what a grant is, and an instance with the overlay off resolves no
+  // capability at all and falls back to its single reader.
+  //   'owner'  — the scope's owner alone
+  //   'scope'  — the owner plus everyone holding an active grant on it
+  //   'admins' — the instance's administrators (scopeId is irrelevant)
+  audienceUserIds(
+    audience: NotificationAudience,
+    scopeId: string | null,
+  ): Promise<string[]>;
+  // Names for the ids a plugin has stored, so a screen can say who did
+  // something instead of printing a uuid at a person. Batched because the
+  // caller usually has a list; unknown ids are simply absent from the map, and
+  // an instance with no overlay resolves no capability at all — the caller
+  // then shows no name, which is the truth there.
+  displayNames(userIds: string[]): Promise<Record<string, string>>;
 }
 
 export const REALTIME_AUTH_CAPABILITY = 'multiuser.realtime-auth';
@@ -356,6 +373,24 @@ export const PROJECTS_COMPONENT_UNLINKED_EVENT = 'projects.component.unlinked';
 // which the announcement is lost; closing it needs the outbox row written in
 // the same transaction, which the inter-plugin bus cannot yet carry — see #189.
 export const CORE_SCOPE_DELETED_EVENT = 'core.scope-deleted';
+
+// Emitted by the core when a paired device is revoked (#311). The device stops
+// authenticating the moment its row is stamped; this announcement is for what
+// the device LEFT BEHIND elsewhere — notify deletes its push subscriptions, so
+// an unpaired phone falls silent instead of keeping a live push channel.
+//
+// Emitted after the stamp, and only when a row actually changed, so a repeated
+// revoke of an already-revoked device announces nothing. A listener that fails
+// leaves the device revoked either way: the credential is dead regardless of
+// who cleaned up after it.
+export const CORE_DEVICE_REVOKED_EVENT = 'core.device-revoked';
+
+export interface CoreDeviceRevokedEvent {
+  deviceId: string;
+  // The device's owner while the overlay is on, null with it off. Present so a
+  // listener can scope its cleanup without a second lookup.
+  userId: string | null;
+}
 
 // Emitted by inventory once a newly created item's category-property values are
 // stored (#205). Inventory announces WHAT the item was filled in with — with

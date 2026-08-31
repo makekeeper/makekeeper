@@ -28,7 +28,7 @@ import { PermissionLevel } from '../agent-types';
 // `destructive` scoped access class (#252); 1.12 added `publicHintKey`, the
 // setup line shown beside a public plugin's connection address (all additive →
 // minor, per §1 of the spec).
-export const EXTERNAL_CONTRACT_VERSION = { major: 1, minor: 12 } as const;
+export const EXTERNAL_CONTRACT_VERSION = { major: 1, minor: 13 } as const;
 
 // Majors the core accepts at registration. Grows to [N-1, N] whenever a new
 // major ships, shrinks back when the deprecation window closes.
@@ -237,7 +237,32 @@ export interface ExternalPluginManifest {
   // how to connect. Ignored when the plugin declares no `publicPaths`: there
   // is no address to explain.
   publicHintKey?: string;
+  // Declares the plugin as a DELIVERY CHANNEL for notifications (contract 1.13,
+  // #312). Deliberately its own field rather than an ordinary capability: it is
+  // the one thing an external plugin can be granted that hands it rendered TEXT
+  // and a person's contact, where every other surface deals in refs and field
+  // names. The admin has to see that plainly when they approve it, and the core
+  // shows this label beside it.
+  deliveryChannel?: ExternalDeliveryChannel;
 }
+
+export interface ExternalDeliveryChannel {
+  // Shown in the notification matrix as the column heading. An i18n key into
+  // this manifest's own bundles.
+  labelKey: string;
+}
+
+// The capability id the core relays channel calls to. Fixed rather than
+// declared, so a plugin cannot register one channel under another's name: the
+// plugin id IS the channel id.
+export const externalChannelCapabilityId = (pluginId: string): string =>
+  `${pluginId}.notify-channel`;
+
+// The two methods a channel plugin answers on that capability.
+export const EXTERNAL_CHANNEL_METHODS = {
+  isLinked: 'isLinked',
+  deliver: 'deliver',
+} as const;
 
 // Whether a declared public-path set covers one requested subpath (already
 // stripped of the leading slash and the query string). Lives here so the core
@@ -353,6 +378,17 @@ export function validateExternalManifest(
   }
 
   // Permissions.
+  const channel = value['deliveryChannel'];
+  if (channel !== undefined) {
+    if (typeof channel !== 'object' || channel === null) {
+      err('delivery-channel-invalid', '$.deliveryChannel');
+    } else if (
+      typeof (channel as { labelKey?: unknown }).labelKey !== 'string'
+    ) {
+      err('delivery-channel-label-invalid', '$.deliveryChannel.labelKey');
+    }
+  }
+
   const permissions = value['permissions'];
   if (!Array.isArray(permissions)) {
     err('permissions-invalid', '$.permissions');

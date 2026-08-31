@@ -255,6 +255,21 @@ deleting transaction, which needs a transaction handle the inter-plugin bus does
 not carry yet (#189). It is in either case the only way a third-party container
 can ever be told: the core cannot reach into its storage.
 
+### The rule about telling a person (#312)
+
+Domain events are **machine-to-machine**: their recipient is a plugin, they
+carry a ref and the names of changed fields and never their values, and nothing
+about them says who should be told. Telling a PERSON is the notification bus's
+job, and it is the only path there.
+
+> Want to say something? Put it on the bus. Want to deliver? Declare a channel.
+
+A plugin that subscribes to a domain event in order to message somebody builds
+a second, competing notification system: the person gets two messages about one
+fact and has two places to switch it off. The Telegram example did exactly that
+until #312 and is now the reference for the other side of the rule — see
+§11bis.
+
 ## 9. Realtime (plugin → client)
 
 Invalidation only: `POST /api/external/notify-changed { screen, scopeId? }`.
@@ -276,6 +291,39 @@ Any plugin may offer capabilities (manifest-declared, id prefixed with its own
 opaque JSON between plugins and does **not** validate third-party↔third-party
 contracts — that is the authors' responsibility. Calls into internal
 capabilities pass the permission matrix.
+
+## 11bis. Delivery channels (contract 1.13)
+
+A plugin declares `deliveryChannel: { labelKey }` to become a **channel of the
+core's notification bus**. The core then registers it as a channel and relays
+two calls to `/mk/capability` under the fixed id `<pluginId>.notify-channel`:
+
+| Method     | Args                                                            | Returns                                     |
+| ---------- | --------------------------------------------------------------- | ------------------------------------------- |
+| `isLinked` | `{ userRef }`                                                    | `true` when that person has connected it     |
+| `deliver`  | `{ userRef, title, body, url?, importance, actions[] }`          | anything; **throw** to report failure        |
+
+The channel id IS the plugin id, so two plugins cannot claim one channel.
+
+Three things make this different from an ordinary capability, and are the
+reason it is a manifest field of its own rather than one more entry in
+`capabilities`:
+
+- It is the only grant that hands a third-party container **rendered text** and
+  a person's contact. Everywhere else the contract carries refs and field
+  names. The admin sees it plainly when approving the plugin.
+- The core renders the message in the **recipient's** language, not the
+  poster's, and the plugin does no i18n of its own for it.
+- Failure is reported by **throwing**. The bus retries with backoff and shows
+  the delivery as dead in the person's own log; a quiet `false` would turn "the
+  channel is down" into "the person was told".
+
+Buttons arrive as `actions[]`, each with a label and a **single-use token**.
+Pressing one is a `POST /api/notifications/action/<token>` back to the core:
+short-lived, bound to that notification, action, recipient and channel, and
+burned on success. The plugin never holds authority of its own — and a
+DESTRUCTIVE act is never offered outside the app, whatever a channel would like
+to render.
 
 ## 12. Agent tools
 
@@ -459,7 +507,7 @@ demonstrates a different part of this document:
 | Example                                                                                               | Illustrates                                                                                                                                                                                                                                                                                                              |
 | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [`mk-plugin-notes`](../examples/mk-plugin-notes)                                                      | `userRef` (§ "Who is calling"): notes private to a person inside a shared workspace, and a slot contribution that receives the host's ORef as render params. Asks for no permissions at all.                                                                                                                             |
-| [`mk-plugin-telegram`](../examples/mk-plugin-telegram)                                                | Notifications that belong to a person: a public unsigned route a chat client calls (the unsubscribe link), a capability other plugins call, and a `WRITE` tool the runtime gates.                                                                                                                                        |
+| [`mk-plugin-telegram`](../examples/mk-plugin-telegram)                                                | A **delivery channel** for the notification bus (§11bis): it formats and sends what the core hands it, and decides nothing about who hears what. Also a public unsigned route a chat client calls (the unsubscribe link) and a `WRITE` tool the runtime gates.                                                            |
 | [`mk-plugin-shelf`](../examples/mk-plugin-shelf)                                                      | The whole shape end to end: own storage, a screen with a form, a dashboard widget, an agent tool (§12), an event subscription (§8), `.mkx` participation (§10), the purge hook (§13).                                                                                                                                    |
 | [`mk-plugin-loans`](../examples/mk-plugin-loans)                                                      | `scopeModel: 'per-scope'` (§2/§5): partitioning the plugin's OWN storage by the opaque `scopeId`, one background token per scope, and cleaning up on `core.scope-deleted`.                                                                                                                                               |
 | [`mk-plugin-digest`](../examples/mk-plugin-digest)                                                    | The instance surface (§6) driven by the plugin's own scheduler with a `background-instance` token — and rendering from a stored snapshot to stay inside the budgets (§7).                                                                                                                                                |

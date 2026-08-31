@@ -1,0 +1,168 @@
+{
+  "plugins": {
+    "schedule": {
+      "name": "Schedule",
+      "description": "Reminders and repeating work — what should happen, and when."
+    }
+  },
+  "schedule": {
+    "errors": {
+      "unknownHook": "Nothing here can do that on a schedule.",
+      "destructiveHook": "Actions that delete data cannot be put on a schedule.",
+      "unknownTimezone": "That time zone is not one this server knows.",
+      "invalidRule": "That repeat rule could not be read.",
+      "badRange": "That date range could not be read.",
+      "nothingAhead": "That rule has no firing left ahead of it. Give a start date and time that is still in the future.",
+      "notFound": "That schedule no longer exists."
+    },
+    "run": {
+      "noHook": "The plugin that does this is not available.",
+      "missedWrite": "Missed while the app was down; not repeated, because it changes data.",
+      "tooLate": "Missed while the app was down for too long to still be useful."
+    },
+    "api": {
+      "list": "List the caller's schedules",
+      "hooks": "List what can be put on a schedule",
+      "create": "Create a schedule",
+      "snooze": "Push one schedule's next run back",
+      "setEnabled": "Switch one schedule on or off",
+      "cancel": "Delete a schedule",
+      "hookId": "Which registered hook fires",
+      "title": "What the person called this schedule",
+      "triggerKind": "absolute (a repeat rule) or relative (an object's date)",
+      "rrule": "RFC 5545 recurrence rule",
+      "timezone": "IANA time zone the rule's wall clock is read in",
+      "ref": "Canonical object reference the schedule is about",
+      "refField": "Which date of that object to follow",
+      "offsetMinutes": "Minutes before (negative) or after the object's date",
+      "params": "What is handed to the hook when it fires",
+      "personal": "Only the creator sees it, even in a shared scope",
+      "snoozeMinutes": "How long to push the next run back",
+      "enabled": "Whether the schedule runs at all",
+      "calendar": "Everything dated in a window",
+      "find": "One schedule, with who created it and when it last ran"
+    },
+    "reminder": {
+      "action": "Remind me",
+      "modalTitle": "Reminders",
+      "titleLabel": "What to remind you about",
+      "titlePlaceholder": "Put the part on the printer",
+      "repeatLabel": "Repeat",
+      "repeat": {
+        "once": "Once",
+        "daily": "Every day",
+        "weekdays": "Every weekday",
+        "weekly": "Weekly"
+      },
+      "weekday": {
+        "MO": "Mon",
+        "TU": "Tue",
+        "WE": "Wed",
+        "TH": "Thu",
+        "FR": "Fri",
+        "SA": "Sat",
+        "SU": "Sun"
+      },
+      "dateLabel": "Starting",
+      "timeLabel": "At",
+      "personal": "Only for me",
+      "personalHint": "Off means everyone with access to this workspace sees it.",
+      "existing": "Already set",
+      "delete": "Delete reminder",
+      "confirmDelete": "Delete the reminder “{title}”?",
+      "noNextRun": "Not scheduled to run",
+      "create": "Create",
+      "close": "Close",
+      "created": "Reminder set",
+      "createFailed": "Could not set the reminder",
+      "title": "{title}",
+      "body": "Reminder you set.",
+      "typeLabel": "A reminder you set",
+      "listFailed": "Could not load the reminders already set",
+      "deleteFailed": "Could not delete the reminder",
+      "shared": "Everyone"
+    },
+    "calendar": {
+      "title": "Calendar",
+      "view": {
+        "month": "Month",
+        "week": "Week",
+        "agenda": "Agenda"
+      },
+      "viewLabel": "Calendar view",
+      "previous": "Previous",
+      "next": "Next",
+      "today": "Today",
+      "more": "{count} more",
+      "nothing": "Nothing",
+      "nothingAhead": "Nothing coming up",
+      "kind": "Reminder",
+      "loadFailed": "Could not load the calendar",
+      "retry": "Try again",
+      "newReminder": "New reminder",
+      "addOn": "New reminder on {day}",
+      "monthLabel": "Month",
+      "yearLabel": "Year",
+      "badYear": "That is not a year the calendar can show",
+      "entry": "Calendar entry",
+      "when": "When",
+      "state": "State",
+      "doneAlready": "Already dealt with",
+      "openObject": "Open",
+      "repeats": "Repeats",
+      "lastRun": "Last fired",
+      "neverRan": "Has not fired yet",
+      "nextRun": "Fires next",
+      "createdBy": "Set by",
+      "creatorUnknown": "Unknown",
+      "rule": "Rule",
+      "reference": "References",
+      "detailFailed": "Could not load the details",
+      "kindLabel": "What",
+      "advanced": "Details",
+      "about": "About",
+      "onlyYou": "Only you"
+    },
+    "agentTools": {
+      "list_agenda": {
+        "description": "List everything dated in a window — task due dates, order ETAs and reminders.",
+        "params": {
+          "from": "Start of the window, ISO 8601. Defaults to now.",
+          "to": "End of the window, ISO 8601. Defaults to a week after the start."
+        }
+      },
+      "list_reminders": {
+        "description": "List the reminders the caller has set."
+      },
+      "create_reminder": {
+        "description": "Set a reminder that notifies the caller at a time or on a repeating schedule.",
+        "params": {
+          "title": "What the person should be reminded about, in their own words.",
+          "rrule": "RFC 5545 rule, which MUST carry its own DTSTART: e.g. DTSTART;TZID=Europe/Moscow:20260105T100000 then RRULE:FREQ=WEEKLY;BYDAY=MO. A rule without DTSTART starts counting from the moment it is created, so \"in two minutes\" written as an interval has nothing ahead of it and is refused.",
+          "timezone": "IANA zone the rule's wall clock is read in, e.g. Europe/Moscow. Omit it and the caller's own zone is used — say one only when the person asked for a different one.",
+          "ref": "Canonical object reference the reminder is about, if any.",
+          "personal": "False to show it to everyone with access to the workspace. Omit it for a reminder meant for the caller alone — which is what \"remind me\" means."
+        }
+      },
+      "reschedule_reminder": {
+        "description": "Push a reminder's next run back by a number of minutes.",
+        "params": {
+          "id": "The reminder's id.",
+          "minutes": "How many minutes to push it back."
+        }
+      },
+      "cancel_reminder": {
+        "description": "Delete a reminder.",
+        "params": {
+          "id": "The reminder's id."
+        }
+      }
+    }
+  },
+  "nav": {
+    "calendar": "Calendar"
+  },
+  "routeTitles": {
+    "calendar": "Calendar"
+  }
+}

@@ -12,6 +12,7 @@ import {
   Switch,
   apiErrorMessage,
   resolveObjectRefRoute,
+  useDateFormat,
   useSessionStore,
   useToastStore,
 } from '@makekeeper/frontend-core';
@@ -32,6 +33,7 @@ import ExportModal from './ExportModal.vue';
 // plugins' entities.
 
 const { t } = useI18n();
+const dates = useDateFormat();
 const toast = useToastStore();
 const session = useSessionStore();
 const router = useRouter();
@@ -212,7 +214,7 @@ function openResult(): void {
         <p class="text-sm text-slate-500 dark:text-slate-400">
           {{
             t('exchange.import.previewHint', {
-              date: new Date(preview.exportedAt).toLocaleString(),
+              date: dates.dateTime(preview.exportedAt),
             })
           }}
         </p>

@@ -4,10 +4,11 @@ import {
   Button,
   EmptyState,
   Spinner,
-  apiJson,
   apiErrorMessage,
+  apiJson,
   onReactivated,
   useConfirm,
+  useDateFormat,
   useToastStore,
 } from '@makekeeper/frontend-core';
 import { Smartphone, QrCode, Trash2 } from '@lucide/vue';
@@ -30,6 +31,7 @@ import { useMobilePairingStore } from './pairing-store';
 // every user pairs and revokes their own phones.
 
 const { t } = useI18n();
+const dates = useDateFormat();
 const toast = useToastStore();
 const confirm = useConfirm();
 
@@ -93,7 +95,7 @@ const revoke = async (device: PairedDevice): Promise<void> => {
 };
 
 const formatDate = (value: string | null): string =>
-  value === null ? t('mobile.devices.never') : new Date(value).toLocaleString();
+  value === null ? t('mobile.devices.never') : dates.dateTime(value);
 </script>
 
 <template>

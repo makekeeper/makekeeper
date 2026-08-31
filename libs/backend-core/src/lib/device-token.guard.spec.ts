@@ -5,6 +5,7 @@ import { DeviceTokenGuard } from './device-token.guard';
 import type { DeviceAuthService } from './device-auth.service';
 import type { PluginConfigService } from './plugin-config.service';
 import type { PluginI18nService } from './plugin-i18n.service';
+import type { RequestContextService } from './request-context.service';
 
 // Revoking a phone has to bite even in single-user mode (#199), where nothing
 // else looks at credentials at all.
@@ -21,6 +22,7 @@ const build = (options: {
   resolves?: boolean;
   isPublicRoute?: boolean;
 }) => {
+  const assign = jest.fn();
   const resolveToken = jest
     .fn()
     .mockResolvedValue(
@@ -35,8 +37,9 @@ const build = (options: {
     } as unknown as PluginConfigService,
     { resolveToken } as unknown as DeviceAuthService,
     { t: (key: string) => key } as unknown as PluginI18nService,
+    { assign } as unknown as RequestContextService,
   );
-  return { guard, resolveToken };
+  return { guard, resolveToken, assign };
 };
 
 describe('DeviceTokenGuard', () => {

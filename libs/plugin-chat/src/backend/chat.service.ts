@@ -57,6 +57,7 @@ import { ProviderService } from './providers.service';
 import { AttachmentSettingsService } from './attachment-settings.service';
 import { LlmClient } from './llm-client';
 import { deriveSessionTitle, parseMessagePayload } from './chat-message.util';
+import { stampInZone } from './clock';
 
 // A session as the client loads it: the messages plus a verdict for every
 // attachment they reference. `AttachmentPresence` is the shared shape — the
@@ -1123,18 +1124,22 @@ export class ChatService implements OnModuleInit {
     });
     const enabledNames = new Set(toolConfigs.map((c) => c.toolName));
     const allTools = this.agentRegistry.getEnabledTools();
-    // A tool the user just rejected is withheld for this whole continuation turn
-    // (see cancelTool) so the model literally cannot re-offer it and must answer
-    // in text instead of re-triggering the confirmation card.
-    const activeTools = allTools.filter(
-      (t) => enabledNames.has(t.name) && t.name !== declinedToolName,
-    );
+    // A refusal ends the turn's DOING. Withholding only the rejected tool left
+    // the model holding every other one and a note saying its plan was refused
+    // — and it reached for the next tool it could see: a person who declined a
+    // reminder was offered an empty purchase order (#326). "No" is not an
+    // invitation to try something else, so the continuation turn has no tools
+    // at all and can only answer in words. Whatever should happen next, the
+    // person will say so, and the turn after that has its tools back.
+    const activeTools = declinedToolName
+      ? []
+      : allTools.filter((t) => enabledNames.has(t.name));
 
     // A registered tool with no config row is silently invisible to the model,
     // which is indistinguishable from "the plugin does not work" (#164). Say it
     // out loud: this filter was the whole defect and left no trace anywhere.
     const unconfigured = allTools
-      .filter((t) => !enabledNames.has(t.name) && t.name !== declinedToolName)
+      .filter((t) => !enabledNames.has(t.name))
       .map((t) => t.name);
     if (unconfigured.length > 0) {
       this.logger.warn(
@@ -1176,6 +1181,18 @@ export class ChatService implements OnModuleInit {
     // language the user is chatting in.
     let systemPrompt =
       this.i18n.t('chat.prompt.systemIntro', undefined, locale) + '\n';
+    // A model with no clock cannot answer "in two minutes", and one with no
+    // location cannot name a zone: left to guess, it wrote a repeat rule with
+    // no start at all and called the zone UTC (#318/#319). Both facts are the
+    // caller's, and both are stated once, here.
+    const zone = this.requestContext.get()?.timezone ?? 'UTC';
+    const now = stampInZone(new Date(), zone);
+    systemPrompt +=
+      this.i18n.t(
+        'chat.prompt.now',
+        { now: now.readable, zone, stamp: now.stamp },
+        locale,
+      ) + '\n';
     // The ORef is what makes the name actionable: with the project's contents
     // no longer inlined, this is the handle the agent passes to the tools that
     // fetch them.

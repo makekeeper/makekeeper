@@ -218,6 +218,20 @@ After the container starts, pair it once in **Settings → External plugins**
 a headless install), then issue per-client `mkt_…` connection tokens on the
 same page. Full guide: [`docs/mcp.md`](docs/mcp.md).
 
+### Browser notifications (web push)
+
+Nothing to install and nothing to configure: the signing keys are generated on
+first use and stored encrypted with `APP_SECRET`. One condition, though, is the
+browser's and cannot be worked around — **push needs a secure context**. Served
+over plain `http://` from another machine, the browser removes the API
+altogether, and **Settings → General → Notifications → Connect this device**
+will say so instead of connecting. Put the instance behind HTTPS (a reverse
+proxy with a certificate, or a tunnel) and it works; `http://localhost` counts
+as secure, which is why it works in local testing and not on the LAN address.
+
+The in-app inbox — the bell, its badge, reminders and the calendar — does not
+depend on any of this and works over plain HTTP.
+
 ---
 
 ## Environment variables

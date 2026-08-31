@@ -1,0 +1,146 @@
+{
+  "plugins": {
+    "notify": {
+      "name": "Notifications",
+      "description": "Tells you what happened — in the app now, and through the channels you connect."
+    }
+  },
+  "notify": {
+    "bell": {
+      "label": "Notifications",
+      "title": "Notifications",
+      "empty": "Nothing to report",
+      "markAllRead": "Mark all read",
+      "markRead": "Mark as read",
+      "remove": "Remove",
+      "repeats": "{count} times",
+      "snooze": "Snooze for an hour",
+      "snoozed": "Snoozed for an hour",
+      "details": "Notification",
+      "unread": "Unread",
+      "arrived": "Arrived",
+      "repeated": "Repeated",
+      "readAt": "Read",
+      "kind": "Type",
+      "reference": "Reference",
+      "openObject": "Open",
+      "close": "Close",
+      "advanced": "Details",
+      "about": "About",
+      "from": "From",
+      "countOverflow": "{max}+"
+    },
+    "settings": {
+      "quietHours": "Quiet hours",
+      "quietHoursHint": "Messages to your channels wait until the window ends. The bell fills in immediately either way.",
+      "from": "From",
+      "to": "Until",
+      "saveFailed": "Could not save",
+      "devicesHint": "Push notifications go to the browsers you connect here.",
+      "connectPush": "Connect this device",
+      "pushConnected": "This device will now receive notifications",
+      "unnamedDevice": "Unnamed device",
+      "forgetDevice": "Forget this device",
+      "notConnected": "Not connected",
+      "log": "Recent deliveries",
+      "attempts": "{count} attempts",
+      "status": {
+        "delivered": "Delivered",
+        "dead": "Gave up",
+        "pending": "Waiting"
+      },
+      "push": {
+        "unsupported": "This browser cannot receive push notifications",
+        "denied": "Notifications are blocked in this browser",
+        "insecure": "Push needs a secure address — open the app over https, or on localhost",
+        "failed": "Could not connect this device"
+      },
+      "loadFailed": "Could not load your notification settings",
+      "retry": "Try again",
+      "forgetFailed": "Could not forget that device",
+      "connectedAt": "connected {when}",
+      "externalPlugin": "External",
+      "externalChannel": "External",
+      "externalHint": "This plugin runs in its own container: what goes here leaves the instance, with its text and your contact.",
+      "where": "Where notifications reach you",
+      "inboxAlways": "The bell in the header always shows everything. These settings decide only what else leaves the app.",
+      "carries": "What goes here",
+      "connected": "Connected",
+      "logHint": "What was sent, what failed, and how many attempts it took.",
+      "channels": "Channels",
+      "matrix": "Notifications",
+      "all": "All",
+      "none": "None",
+      "ofTotal": "{on} of {total}",
+      "channelOff": "Not in use",
+      "whyNotConnected": "— not connected",
+      "whyOff": "— switched off",
+      "inApp": "In the app — always",
+      "devicesOn": "{count} connected",
+      "noDevices": "No devices",
+      "thisDevice": "this device",
+      "connectHere": "Notifications go to the browser you press this in.",
+      "connectElsewhere": "Another device connects on itself: open MakeKeeper in its browser and press \"Connect this device\" there.",
+      "forgetConfirm": "Forget “{name}”? Notifications stop reaching it immediately, and only that browser can subscribe again."
+    },
+    "api": {
+      "list": "List the caller's notifications",
+      "counts": "Unread counts, in total and per plugin",
+      "markRead": "Mark one notification as read",
+      "markAllRead": "Mark every notification as read",
+      "remove": "Delete one notification",
+      "preferences": "Read the caller's notification preferences",
+      "setPreferences": "Write the caller's notification preferences",
+      "quietFrom": "Start of the quiet window, in minutes from local midnight",
+      "quietTo": "End of the quiet window, in minutes from local midnight",
+      "timezone": "IANA timezone the quiet window is read in",
+      "snooze": "Put one notification off",
+      "snoozeMinutes": "How long to put it off, in minutes",
+      "locale": "Language a channel message is written in",
+      "channels": "List the delivery channels installed",
+      "types": "List the notification types plugins declared",
+      "routes": "Read the caller's type-by-channel matrix",
+      "setRoute": "Write one cell of the matrix",
+      "deliveries": "Recent delivery attempts",
+      "action": "Redeem a single-use action token",
+      "pushKey": "The instance's VAPID public key",
+      "pushList": "Browsers subscribed to push",
+      "pushSubscribe": "Subscribe this browser to push",
+      "pushRemove": "Forget one push subscription",
+      "routeType": "Notification type the rule is about",
+      "routeChannel": "Channel the rule is about",
+      "routeEnabled": "Whether that type may use that channel",
+      "pushEndpoint": "Push service endpoint the browser issued",
+      "pushP256dh": "Subscription public key",
+      "pushAuth": "Subscription auth secret",
+      "pushLabel": "Name to tell this device apart by",
+      "setChannelEnabled": "Switch one channel on or off for the caller",
+      "channelEnabled": "Whether the caller uses that channel at all"
+    },
+    "hook": {
+      "say": "Send a notification"
+    },
+    "channels": {
+      "webPush": "Browsers and devices"
+    },
+    "actions": {
+      "snooze": "Snooze",
+      "dismiss": "Dismiss",
+      "nothingToSnooze": "There is nothing to postpone here.",
+      "unknownHook": "Whatever this button did is no longer available.",
+      "destructive": "Actions that delete data can only be confirmed in the app.",
+      "failed": "That did not work. Try it in the app."
+    },
+    "push": {
+      "errors": {
+        "noSubscription": "This person has no device connected for push.",
+        "everyDeviceFailed": "Push failed for every connected device: {detail}"
+      }
+    },
+    "importance": {
+      "low": "Quiet",
+      "normal": "Normal",
+      "high": "Important"
+    }
+  }
+}
