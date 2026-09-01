@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { describe, expect, it, afterEach, beforeEach, vi } from 'vitest';
 import { nextTick } from 'vue';
 import { createPinia, setActivePinia } from 'pinia';
 import { mount, type VueWrapper } from '@vue/test-utils';
@@ -68,6 +68,13 @@ async function mountGantt(
 beforeEach(() => {
   setActivePinia(createPinia());
   localStorage.clear();
+  // The canvas fits its window around TODAY, so every geometry assertion below
+  // silently depends on the calendar: written against a live clock, this suite
+  // passed in August and failed CI in September without a line changing. Only
+  // `Date` is faked — the wheel's idle lock needs real timers, and one test
+  // fakes them itself.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-08-15T12:00:00.000Z'));
   vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
     x: 0,
     y: 0,
@@ -82,6 +89,10 @@ beforeEach(() => {
   // Pointer capture is not implemented in jsdom; the drag only needs it not to throw.
   Element.prototype.setPointerCapture = vi.fn();
   Element.prototype.releasePointerCapture = vi.fn();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 // Dispatched as real DOM events rather than through `trigger`: test-utils
@@ -101,20 +112,22 @@ async function fire(
   await nextTick();
 }
 
-const axisText = (wrapper: VueWrapper): string =>
-  wrapper.find('[role="group"]').text();
-
 const barStyle = (wrapper: VueWrapper): string =>
   wrapper.find('a[aria-label]').attributes('style') ?? '';
 
 describe('the timeline canvas', () => {
+  // Read from the bar and not from the axis: the axis labels only move when a
+  // notch happens to cross a tick boundary, and the window is fitted around
+  // TODAY — so the same one-notch zoom changed the labels when this was written
+  // and stopped changing them weeks later, failing CI on a calendar date rather
+  // than on a code change. The bar's geometry follows the window continuously.
   it('zooms on the wheel and remembers the scale it landed on', async () => {
     const wrapper = await mountGantt();
-    const before = axisText(wrapper);
+    const before = barStyle(wrapper);
 
     await fire(wrapper, 'wheel', { deltaY: -600, clientX: 500 });
 
-    expect(axisText(wrapper)).not.toBe(before);
+    expect(barStyle(wrapper)).not.toBe(before);
     expect(localStorage.getItem('projects.gantt.scale')).not.toBeNull();
   });
 
@@ -268,13 +281,15 @@ describe('the timeline canvas', () => {
     const wrapper = await mountGantt();
     const canvas = wrapper.find('[role="group"]');
 
+    // Zoom first: a pan pushes the bar against the window's edge, where it is
+    // clamped and a zoom has nothing left to move it by.
     const start = barStyle(wrapper);
-    await canvas.trigger('keydown', { key: 'ArrowRight' });
+    await canvas.trigger('keydown', { key: '-' });
     expect(barStyle(wrapper)).not.toBe(start);
 
-    const panned = axisText(wrapper);
-    await canvas.trigger('keydown', { key: '-' });
-    expect(axisText(wrapper)).not.toBe(panned);
+    const zoomed = barStyle(wrapper);
+    await canvas.trigger('keydown', { key: 'ArrowRight' });
+    expect(barStyle(wrapper)).not.toBe(zoomed);
   });
 
   it('leaves keys it does not handle to the page', async () => {

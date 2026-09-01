@@ -389,8 +389,10 @@ describe('ExchangeService (hardening)', () => {
       {
         scopeExists: async () => scopeExists,
         // Exchange only ever asks whether a scope exists; the audience half of
-        // the directory (#307) is the notification bus's business.
+        // the directory (#307) and the names half (#322) are the notification
+        // bus's and the screens' business.
         audienceUserIds: async () => [],
+        displayNames: async () => ({}),
       },
     );
 
