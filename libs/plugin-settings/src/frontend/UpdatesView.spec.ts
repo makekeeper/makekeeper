@@ -41,11 +41,21 @@ const CHECK_STATE = {
   checkHourUtc: 3,
 };
 
-const render = async (path = '/settings/updates') => {
+const render = async (path = '/settings/about/updates') => {
   setActivePinia(createPinia());
   const router = createRouter({
     history: createWebHistory(),
-    routes: [{ path: '/:rest(.*)', component: UpdatesView }],
+    routes: [
+      // About is a page of its own (#342) and the picker links to it by name:
+      // an unresolvable name throws out of `RouterLink`, so the stub is part
+      // of the fixture, not decoration.
+      {
+        path: '/settings/about',
+        name: 'settings-about',
+        component: UpdatesView,
+      },
+      { path: '/:rest(.*)', name: 'settings-updates', component: UpdatesView },
+    ],
   });
   await router.push(path);
   await router.isReady();
@@ -81,34 +91,39 @@ describe('UpdatesView (#267)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('opens Version by default and lists all four sections', async () => {
+  it('opens Version by default and lists every section', async () => {
     const wrapper = await render();
     const nav = wrapper.findComponent(SectionNav);
+    // About leads the picker (#342) but is a route of its own, so the page
+    // still opens on Version.
     expect(nav.props('items').map((item) => item.key)).toEqual([
+      'about',
       'version',
       'auto',
       'update',
       'install',
+      'counting',
     ]);
     expect(wrapper.text()).toContain('0.14.0');
   });
 
   it('flags an available update on the picker, from any section', async () => {
-    const wrapper = await render('/settings/updates?section=install');
+    const wrapper = await render('/settings/about/updates?section=install');
     const items = wrapper.findComponent(SectionNav).props('items');
-    expect(items[0].badge).toBe(1);
-    expect(items[0].badgeLabel).toBe('An update is available');
+    const version = items.find((item) => item.key === 'version');
+    expect(version?.badge).toBe(1);
+    expect(version?.badgeLabel).toBe('An update is available');
     // …and the diagnostics pane is the one on screen.
     expect(wrapper.text()).toContain('Dokploy');
   });
 
   it('renders the schedule section', async () => {
-    const wrapper = await render('/settings/updates?section=auto');
+    const wrapper = await render('/settings/about/updates?section=auto');
     expect(wrapper.find('#update-hour').exists()).toBe(true);
   });
 
   it('renders the update section with the form open and the reference folded', async () => {
-    const wrapper = await render('/settings/updates?section=update');
+    const wrapper = await render('/settings/about/updates?section=update');
     // The thing an admin came to do is on screen, unfolded.
     expect(wrapper.find('#deploy-hook-url').exists()).toBe(true);
     expect(wrapper.find('#deploy-hook-token').exists()).toBe(true);
@@ -127,7 +142,7 @@ describe('UpdatesView (#267)', () => {
   });
 
   it('opens the reference from the link by the heading', async () => {
-    const wrapper = await render('/settings/updates?section=update');
+    const wrapper = await render('/settings/about/updates?section=update');
     const link = wrapper
       .findAll('[aria-controls="updates-reference"]')
       .find((el) => el.text() === en.settings.updates.reference.link);
@@ -141,7 +156,7 @@ describe('UpdatesView (#267)', () => {
   });
 
   it('falls back to the default section for an unknown one', async () => {
-    const wrapper = await render('/settings/updates?section=nope');
+    const wrapper = await render('/settings/about/updates?section=nope');
     expect(wrapper.findComponent(SectionNav).props('activeKey')).toBe(
       'version',
     );

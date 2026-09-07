@@ -11,6 +11,10 @@
       "deleteSummary": "Delete an explicit selection of stored files or directories; claimed and plugin-reserved paths are refused",
       "pathsDescription": "Root-relative paths to delete. A directory expands to the deletable files it contains."
     },
+    "demo": {
+      "statusSummary": "Whether this instance is showing the seeded demo dataset",
+      "clearSummary": "Delete the seeded demo dataset and everything in it"
+    },
     "uploads": {
       "prewarmSummary": "Queue preview variants for the given attachments, so opening one does not wait on a resize. Returns once the batch is accepted, not once it is rendered",
       "prewarmIdsDescription": "Attachment ids to warm. Non-images and renditions that already exist are skipped.",
@@ -47,6 +51,12 @@
     },
     "refs": {
       "resolve": "Resolve an mk:// reference to a name and location"
+    },
+    "telemetry": {
+      "stateSummary": "Install-counting state for this instance",
+      "previewSummary": "Exactly what an install report would carry",
+      "consentSummary": "Agree to, or refuse, install counting",
+      "promptedSummary": "Record that a human has been asked"
     }
   }
 }

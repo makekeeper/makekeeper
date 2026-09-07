@@ -22,7 +22,8 @@ export type SystemBypassReason =
   | 'restriction-descriptors' // multiuser: resolve the caller's own pick-lists
   | 'stats-aggregation' // stats/inventory: nightly all-scope rollup jobs
   | 'scheduler-tick' // schedule: the minute tick, which reads every scope's due rows before entering each owner's own
-  | 'device-revoked'; // notify: drop a revoked device's push rows — an admin may revoke a device that is not in their own scope
+  | 'device-revoked' // notify: drop a revoked device's push rows — an admin may revoke a device that is not in their own scope
+  | 'demo-clear'; // core: remove the shipped demo dataset, which is instance-wide and seeded before any scope existed
 
 export interface RequestContextData {
   userId?: string;

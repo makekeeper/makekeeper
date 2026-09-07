@@ -47,7 +47,7 @@ services:
       # Empty: derived per request from X-Forwarded-*. Set only behind a FURTHER
       # TLS-terminating proxy — see ../../docs/tls-public-access.md.
       - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-}
-      - RUN_SEED=${RUN_SEED:-0}
+      - DEMO_SEED=${DEMO_SEED:-1}
       # Two proxies front the API here — Coolify's Traefik, then the `web`
       # nginx — so Express must trust two X-Forwarded-For hops to see the real
       # client IP (the login throttle keys on it, #237). Raise only behind a

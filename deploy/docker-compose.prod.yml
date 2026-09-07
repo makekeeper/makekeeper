@@ -54,8 +54,9 @@ services:
       # Set to a fixed origin (no trailing slash) for stable phone-capture links;
       # leave empty to derive per-request from X-Forwarded-* headers.
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
-      # Opt-in first-time demo seed (0/1). The app self-seeds plugin defaults anyway.
-      RUN_SEED: ${RUN_SEED:-0}
+      # Demo workshop on a FIRST install (1/0, default 1). Only ever fires on a
+      # database that holds no data; set 0 to bring up an empty instance.
+      DEMO_SEED: ${DEMO_SEED:-1}
       # X-Forwarded-For hops Express trusts for the real client IP (the login
       # throttle keys on it, #237). 1 = the `web` nginx alone; set 2 when the
       # recommended TLS-terminating proxy fronts `web`.

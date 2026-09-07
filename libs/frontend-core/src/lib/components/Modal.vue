@@ -136,7 +136,7 @@ onBeforeUnmount(() => {
         >
           <!-- Header -->
           <div
-            v-if="title || $slots.header || dismissible"
+            v-if="title || $slots.header || $slots.headerActions || dismissible"
             class="flex items-start justify-between gap-4 p-6 pb-0"
           >
             <slot name="header">
@@ -147,6 +147,16 @@ onBeforeUnmount(() => {
                 {{ title }}
               </h3>
             </slot>
+            <!-- Controls that belong to the dialog itself rather than to its
+                 content, sitting where a window's controls sit: at the end of
+                 the title row, before the close button. Separate from `header`
+                 so a caller can add one without also re-rendering the title. -->
+            <div
+              v-if="$slots.headerActions"
+              class="ml-auto flex shrink-0 items-center gap-2"
+            >
+              <slot name="headerActions" />
+            </div>
             <button
               v-if="dismissible"
               type="button"
@@ -161,7 +171,10 @@ onBeforeUnmount(() => {
           <!-- Body -->
           <div
             class="p-6"
-            :class="{ 'pt-4': title || $slots.header || dismissible }"
+            :class="{
+              'pt-4':
+                title || $slots.header || $slots.headerActions || dismissible,
+            }"
           >
             <slot />
           </div>

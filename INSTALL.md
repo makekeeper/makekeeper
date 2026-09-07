@@ -1,18 +1,22 @@
 # Installing & updating MakeKeeper (self-host)
 
-MakeKeeper ships as two container images published to the GitHub Container
-Registry (ghcr.io):
+MakeKeeper ships as two container images, published to the GitHub Container
+Registry (ghcr.io) and mirrored to Docker Hub. Both registries carry the same
+image under the same tags — pull whichever you prefer:
 
-| Image                    | Role                                                                  |
-| ------------------------ | --------------------------------------------------------------------- |
-| `ghcr.io/makekeeper/app` | Node backend (REST API + agent runtime). Runs DB migrations on start. |
-| `ghcr.io/makekeeper/web` | nginx: serves the SPA and reverse-proxies `/api` to the app.          |
+| Image                    | Docker Hub mirror          | Role                                                                  |
+| ------------------------ | -------------------------- | --------------------------------------------------------------------- |
+| `ghcr.io/makekeeper/app` | `docker.io/makekeeper/app` | Node backend (REST API + agent runtime). Runs DB migrations on start. |
+| `ghcr.io/makekeeper/web` | `docker.io/makekeeper/web` | nginx: serves the SPA and reverse-proxies `/api` to the app.          |
 
 The stack also runs a bundled **PostgreSQL 16** and persists two named volumes
 (`pgdata`, `uploads`).
 
-> Packages are published under the `makekeeper` GitHub organization. Override the image
-> references via `IMAGE_APP` / `IMAGE_WEB` (or `MK_GH_OWNER`) if you fork them.
+> Packages are published under the `makekeeper` GitHub organization, and mirrored under
+> the `makekeeper` Docker Hub namespace. ghcr.io is the default everywhere and the one a
+> release publishes first; the mirror is a copy of the very same manifest. Override the
+> image references via `IMAGE_APP` / `IMAGE_WEB` (or `MK_GH_OWNER`) to pull from Docker
+> Hub instead, or if you fork them.
 
 ---
 
@@ -234,6 +238,49 @@ depend on any of this and works over plain HTTP.
 
 ---
 
+## Counting installs (opt-in, off by default)
+
+MakeKeeper sends **nothing** to us unless someone at this instance says yes. On
+the first login after installing — or after updating to the release that added
+this — an admin is asked once. Closing that dialog is not a yes; it is not a no
+either, and the question is not repeated. The switch lives in
+**Settings → About → Counting this instance** and turns it off again at any
+time.
+
+If it is on, the instance sends one small report a day. That ping carries exactly
+this, and the same list is rendered in the consent dialog by the code that
+builds the request:
+
+<!-- telemetry-fields:start -->
+
+| Field           | What it is                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------- |
+| `instanceId`    | A random identifier this instance made up for itself. Tied to nothing else — not a domain, account or content. |
+| `version`       | The MakeKeeper release running here.                                                                          |
+| `installMethod` | How this instance was deployed (`compose`, `coolify`, `dokploy`, …), or `unknown`.                             |
+| `plugins`       | Ids of the plugins that are switched on. Identifiers only, never their contents.                              |
+| `locale`        | The interface language of whoever agreed.                                                                     |
+
+<!-- telemetry-fields:end -->
+
+Nothing else leaves the instance: no project or item names, no files, no
+accounts, no counts of your data. The receiver stores **one row per instance** —
+first contact and last contact, plus the fields above — and no history of reports;
+it keeps no IP addresses, though Cloudflare, which fronts it, necessarily sees
+them in transit.
+
+It answers one question: how many instances are alive a week and a month after
+they are installed. The `instanceId` is what makes that computable, and it is
+also what makes this data pseudonymous rather than anonymous — the reports of one
+instance are linked to each other. The id is shown beside that switch; quote it
+if you ever want your row deleted.
+
+`MK_TELEMETRY_ENDPOINT` overrides where a ping goes, and **an empty value
+disables sending at the build level** regardless of consent. The receiver's own
+source is in [`deploy/telemetry/`](deploy/telemetry/).
+
+---
+
 ## Environment variables
 
 | Variable                                | Required            | Default                                                            | Purpose                                                                                                                                                                                       |
@@ -243,12 +290,13 @@ depend on any of this and works over plain HTTP.
 | `POSTGRES_PASSWORD`                     | **yes**             | —                                                                  | Bundled Postgres password (used to build `DATABASE_URL`).                                                                                                                                     |
 | `PUBLIC_WEB_PORT`                       | no                  | `8080`                                                             | **Host** port the web UI is published on (plain-compose/Portainer path only) — free to be any port. The container always listens on `80`, and that port never appears in a public URL (#208). |
 | `TAG`                                   | no                  | `latest`                                                           | Image version. **Pin to a `vX.Y.Z` in production.**                                                                                                                                           |
-| `IMAGE_APP` / `IMAGE_WEB` / `IMAGE_MCP` | no                  | `ghcr.io/makekeeper/{app,web}`, `ghcr.io/makekeeper/mk-plugin-mcp` | Image references.                                                                                                                                                                             |
+| `IMAGE_APP` / `IMAGE_WEB` / `IMAGE_MCP` | no                  | `ghcr.io/makekeeper/{app,web}`, `ghcr.io/makekeeper/mk-plugin-mcp` | Image references. Set to `docker.io/makekeeper/{app,web}` to pull the Docker Hub mirror instead.                                                                                                                                                                            |
+| `MK_TELEMETRY_ENDPOINT`                 | no                  | `https://ping.makekeeper.app/v1/ping`                              | Where the opt-in install report goes. Empty disables sending entirely, whatever the consent says.                                                                                              |
 | `MCP_INSTALL_TOKEN`                     | no                  | —                                                                  | One-time install token for a headless install of the optional `mcp` service (see **Optional services**).                                                                                      |
 | `MCP_TAG`                               | no                  | `latest`                                                           | Version of the optional `mcp` service — the MCP plugin is a separate product with its own version line, so it is **not** pinned by `TAG`.                                                     |
 | `POSTGRES_USER` / `POSTGRES_DB`         | no                  | `makekeeper` / `makekeeper`                                        | Bundled DB identity.                                                                                                                                                                          |
 | `PUBLIC_BASE_URL`                       | no                  | derived from `X-Forwarded-*`                                       | Fixed public origin (no trailing slash) for phone-capture QR links. Leave empty behind an ephemeral tunnel.                                                                                   |
-| `RUN_SEED`                              | no                  | `0`                                                                | `1` = run the optional demo seed once (the app self-seeds plugin defaults regardless).                                                                                                        |
+| `DEMO_SEED`                             | no                  | `1`                                                                | `0` = do not seed the demo workshop on a first install. The seed only ever runs on a database that holds no data; the banner in the app removes it again.                                      |
 | `MK_INSTALL_METHOD`                     | no                  | `compose` (prod file)                                              | How this instance was installed — diagnostics only, shown in **Settings → Version & Updates**. See below.                                                                                     |
 | `DATABASE_URL`                          | auto                | built from the Postgres vars                                       | Only set manually if you use an **external** database instead of the bundled `db` service.                                                                                                    |
 

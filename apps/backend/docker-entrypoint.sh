@@ -27,19 +27,6 @@ until npx prisma migrate deploy --schema=./prisma/schema.prisma; do
 done
 log "migrations up to date."
 
-# ── 2. Optional seed (opt-in, first-time convenience) ───────────────────────
-# The app self-seeds plugin defaults at bootstrap; this only covers the optional
-# demo catalog. A compiled seed (prisma/seed.js) is used if present; the TS seed
-# is a dev-only tool and is intentionally not shipped runnable in the image.
-if [ "${RUN_SEED:-0}" = "1" ]; then
-  if [ -f "./prisma/seed.js" ]; then
-    log "RUN_SEED=1 — running prisma/seed.js…"
-    node ./prisma/seed.js || log "seed failed (non-fatal); continuing."
-  else
-    log "RUN_SEED=1 but no runnable prisma/seed.js in image — skipping."
-  fi
-fi
-
-# ── 3. Start the app ────────────────────────────────────────────────────────
+# ── 2. Start the app ────────────────────────────────────────────────────────
 log "starting application…"
 exec "$@"

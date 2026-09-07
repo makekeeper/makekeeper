@@ -392,6 +392,14 @@ export const SCOPE_MODEL_MAP: Record<Prisma.ModelName, ModelScopeRule> = {
     kind: 'unscoped',
     reason: 'singleton instance update-checker settings',
   },
+  DemoDataSettings: {
+    kind: 'unscoped',
+    reason: 'singleton instance demo-dataset state (#339)',
+  },
+  TelemetrySettings: {
+    kind: 'unscoped',
+    reason: 'singleton instance liveness-telemetry consent (#343)',
+  },
   // External plugins (#131/#133): instance-administration rows, admin-only
   // surfaces. ExternalPlugin.scopeId is the plugin's own scope BINDING (which
   // scope an `instance`-model plugin belongs to), not a data-space marker —

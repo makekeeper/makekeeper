@@ -47,7 +47,9 @@ export { secretPatch, type SecretAction } from './lib/secret-field';
 export { default as Spinner } from './lib/components/Spinner.vue';
 export { default as Refreshable } from './lib/components/Refreshable.vue';
 export { default as Modal } from './lib/components/Modal.vue';
+export { default as LanguageSelect } from './lib/components/LanguageSelect.vue';
 export { default as Disclosure } from './lib/components/Disclosure.vue';
+export { default as TelemetryPayloadList } from './lib/components/TelemetryPayloadList.vue';
 export { default as ResizeHandle } from './lib/components/ResizeHandle.vue';
 // Moved out of plugin-projects in #213: inventory items carry a set of
 // photographs now, and a plugin may not import another plugin's component.
@@ -95,6 +97,7 @@ export {
   type ConfirmOptions,
 } from './lib/confirm-store';
 export { useVersionStore } from './lib/version-store';
+export { useTelemetryStore } from './lib/telemetry-store';
 export {
   useInternalDragStore,
   type InternalDragFile,

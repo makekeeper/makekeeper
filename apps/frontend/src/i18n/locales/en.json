@@ -95,7 +95,12 @@
     "moreCount": "More ({count} hidden)",
     "language": "Language",
     "overflowHint": "Buttons that no longer fit are kept here, in the profile menu.",
-    "duplicateItemId": "Duplicate header item id"
+    "duplicateItemId": "Duplicate header item id",
+    "feedback": {
+      "title": "Feedback",
+      "report": "Report a problem",
+      "suggest": "Suggest an improvement"
+    }
   },
   "offline": {
     "startingTitle": "Starting up",
@@ -121,6 +126,23 @@
     },
     "emptyLensHint": "Your plugins publish blocks here, but the simple interface is hiding them. Bring any of them back in Settings → Interface mode."
   },
+  "demo": {
+    "banner": {
+      "title": "This is demo data",
+      "body": "The projects, items and orders you see were created for you so nothing starts empty. Rename them, or remove the whole set and start from scratch.",
+      "clear": "Remove demo data",
+      "dismiss": "Hide this notice"
+    },
+    "clear": {
+      "title": "Remove the demo data?",
+      "message": "Every project, item, storage, order and tag from the demo set is deleted. Anything you created yourself stays.",
+      "confirm": "Remove",
+      "done": "Demo data removed ({count} records)",
+      "failed": "Could not remove the demo data",
+      "progress": "Removing the demo data…",
+      "incomplete": "The demo data is still there — nothing was removed."
+    }
+  },
   "secretAccess": {
     "genericPurpose": "an action",
     "usedByGuest": "A workspace guest just used one of your saved credentials for {purpose}.",
@@ -130,5 +152,41 @@
     "errors": {
       "reservedRoutePrefix": "Route prefix /plugins/ is reserved for the external-plugin public proxy"
     }
+  },
+  "telemetry": {
+    "consent": {
+      "title": "Help us make MakeKeeper better",
+      "body": "Once a day, this instance can send us a short note saying it is running. Together those notes show how many installs are alive, which plugins people switch on and which versions are still in use — and that is what we go by when we decide what to build next.",
+      "payloadTitle": "Exactly what would be sent",
+      "accept": "Send the daily report",
+      "decline": "Don't send anything",
+      "saveFailed": "Could not save your answer. Please try again.",
+      "control": "Off by default, and turning it on or off is yours alone: Settings → About → Counting this instance."
+    },
+    "fields": {
+      "instanceId": {
+        "label": "Instance id",
+        "description": "A random identifier this instance made up for itself. Tied to nothing else — not a domain, not an account, not your data."
+      },
+      "version": {
+        "label": "Version",
+        "description": "The MakeKeeper release running here."
+      },
+      "installMethod": {
+        "label": "Install method",
+        "description": "How this instance was deployed: compose, Coolify, Dokploy, and so on."
+      },
+      "plugins": {
+        "label": "Enabled plugins",
+        "description": "Which parts of the app are switched on. Identifiers only, never their contents."
+      },
+      "locale": {
+        "label": "Language",
+        "description": "The interface language you work in."
+      }
+    },
+    "frequency": "Once a day, while it is switched on. If the instance is off or offline, nothing is queued and nothing is sent later.",
+    "limits": "Nothing else leaves this instance: no project or item names, no files, no accounts, no counts of your data. We store no IP addresses — though Cloudflare, which fronts the receiver, necessarily sees them in transit. The instance id is random and tied to nothing, but it does link this instance's reports to each other, which is what makes counting possible at all.",
+    "pendingId": "Created when you turn this on — there is none yet."
   }
 }

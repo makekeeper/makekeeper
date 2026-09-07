@@ -51,9 +51,8 @@ cd "$WORKSPACE"
 npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -5
 echo "   ✓ npm deps ready"
 
-# ─── 3. Prisma: push schema + seed ────────────────────────────────────────────
+# ─── 3. Prisma: apply migrations ──────────────────────────────────────────────
 PRISMA_DIR="$WORKSPACE/apps/backend"
-SEED_SCRIPT="$WORKSPACE/apps/backend/prisma/seed.ts"
 
 # Load DATABASE_URL from .env (prisma.config.ts reads this; localhost:5432 is the port
 # postgres publishes — the daemon runs inside this devcontainer, so it binds here)
@@ -71,18 +70,9 @@ npx prisma migrate deploy 2>&1 \
   || npx prisma db push --accept-data-loss 2>&1
 echo "   ✓ Schema up to date"
 
-echo "   Running database seed (if needed)..."
-# Check if the Component table is empty via psql (idempotent — only seeds once)
-COMPONENT_COUNT=$(docker exec makekeeper-db \
-  psql -U postgres -d diy_inspector -t -c 'SELECT COUNT(*) FROM "Component";' 2>/dev/null \
-  | tr -d ' \n' || echo "0")
-
-if [ "${COMPONENT_COUNT:-0}" = "0" ]; then
-  npx ts-node --compiler-options '{"module":"commonjs"}' "$SEED_SCRIPT" 2>&1 | tail -10
-  echo "   ✓ Seed data loaded"
-else
-  echo "   ✓ Database already seeded (${COMPONENT_COUNT} components), skipping"
-fi
+# No seed step: the backend seeds the demo workshop itself on an empty database
+# (#339, DEMO_SEED=0 to opt out), so a dev container and a real first install
+# come up with exactly the same data.
 
 cd "$WORKSPACE"
 

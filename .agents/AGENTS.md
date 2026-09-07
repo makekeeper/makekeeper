@@ -39,13 +39,14 @@ A plugin never imports another plugin's code — only `plugin-contract`, `backen
 - **Before declaring done**, scan the diff for any text literal (Cyrillic or prose) outside `i18n/*.json`.
 
 
-## Standalone third-party-style code (`libs/plugin-sdk`, `examples/*`)
+## Standalone third-party-style code (`libs/plugin-sdk`, `examples/*`, `deploy/*`)
 > Canonical here (mirrored in CLAUDE.md §5.11) — keep both in sync when this changes.
 
-`libs/plugin-sdk` and every plugin under `examples/*` are deliberately **standalone code written
-the way a third-party author would write it**: plain Node processes with no NestJS, no
-`PluginI18nService`, no `AppConfigService` and no access to the app's Vue layer. For these paths
-only, the repo conventions that assume that infrastructure do **not** apply:
+`libs/plugin-sdk`, every plugin under `examples/*`, and the deployable services under `deploy/*`
+that run OUTSIDE the app (the Cloudflare telemetry receiver, #343) are deliberately **standalone
+code written the way a third-party author would write it**: plain Node/worker processes with no
+NestJS, no `PluginI18nService`, no `AppConfigService` and no access to the app's Vue layer. For
+these paths only, the repo conventions that assume that infrastructure do **not** apply:
 
 - `console.*` logging is allowed (there is no Nest `Logger`).
 - Raw `process.env` reads are allowed (there is no settings/config service).

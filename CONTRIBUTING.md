@@ -3,6 +3,19 @@
 Thanks for your interest in improving MakeKeeper. Please read this before opening a pull request —
 contributing means agreeing to the terms below.
 
+## Where a message goes
+
+Three doors, and picking the right one is the whole of the triage we can afford:
+
+| You want to… | Go to |
+|---|---|
+| report something broken | [Issues](https://github.com/makekeeper/makekeeper/issues/new/choose) — or **Settings → About → Report a problem** in the app, which fills in your version and install method |
+| suggest an improvement | [Discussions → Ideas](https://github.com/makekeeper/makekeeper/discussions/new?category=ideas) |
+| ask how something works | [Discussions → Q&A](https://github.com/makekeeper/makekeeper/discussions/new?category=q-a) |
+| propose a change in code | a pull request — but read the mirror note in [`README.md`](README.md#contributing) first |
+
+An idea that turns out to be a defect gets moved; a bug report is never the wrong place to start.
+
 ## Licensing of contributions
 
 MakeKeeper is multi-licensed (see [`LICENSING.md`](LICENSING.md)). Contributions follow the license

@@ -1,0 +1,19 @@
+# The liveness-telemetry receiver (#343). Deployed by hand from this directory;
+# it is not part of any CI pipeline, and nothing in the product depends on it
+# being up.
+name = "makekeeper-telemetry"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "makekeeper-telemetry"
+# Created with `npx wrangler d1 create makekeeper-telemetry`. Not a secret —
+# an identifier, useless without this account's credentials, which live in
+# `~/.config/.wrangler` (or a gitignored .env), never here.
+database_id = "f9cf2f1e-9395-4218-a94f-0a6604f5d74e"
+
+# Observability off: request logs would carry the IP addresses this receiver
+# exists NOT to keep.
+[observability]
+enabled = false

@@ -7,6 +7,7 @@ import SettingsView from './SettingsView.vue';
 import AgentCapabilitiesView from './AgentCapabilitiesView.vue';
 import PluginsAdminView from './PluginsAdminView.vue';
 import UpdatesView from './UpdatesView.vue';
+import AboutView from './AboutView.vue';
 import DiskUsageView from './DiskUsageView.vue';
 import SettingsHubView from './SettingsHubView.vue';
 
@@ -43,9 +44,19 @@ registerPlugin({
           component: PluginsAdminView,
           meta: { adminOnly: true },
         },
-        // Instance version + update checker — admin territory in multi-user mode.
+        // What the product is and how to write to us (#342). Deliberately NOT
+        // adminOnly: it is the app's route back to us, and a regular user in
+        // multi-user mode is exactly the reporter we are missing today.
         {
-          path: 'updates',
+          path: 'about',
+          name: 'settings-about',
+          component: AboutView,
+        },
+        // Instance version + update checker — admin territory in multi-user
+        // mode, and a sub-path of About so the tab bar keeps About lit while an
+        // admin is inside it (#342): the two are one family with one tab.
+        {
+          path: 'about/updates',
           name: 'settings-updates',
           component: UpdatesView,
           meta: { adminOnly: true },

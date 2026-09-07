@@ -67,3 +67,5 @@ vitest.config.*.timestamp*
 examples/*/notes.json
 examples/*/telegram.json
 examples/*/bambu.json
+
+deploy/telemetry/.wrangler/

@@ -5,6 +5,7 @@ import {
   bindDashboardWidgets,
   getConfigurableFeatures,
   getNavChildren,
+  getActivePlugins,
   getPluginDashboardWidgets,
   registerPlugin,
   type RegisteredNavItem,
@@ -180,5 +181,28 @@ describe('getNavChildren', () => {
       },
     });
     expect(getNavChildren(navItem('children-boom', 'tree'))).toEqual([]);
+  });
+});
+
+describe('registerPlugin', () => {
+  // A duplicate registration used to append, and everything derived from the
+  // list doubled with it — the symptom seen in dev was two "Settings" entries
+  // in the sidebar after HMR re-ran the plugin loader. Nothing threw, which is
+  // what made it puzzling rather than obvious.
+  it('replaces a plugin registered again under the same id', () => {
+    const id = 'registry-spec-duplicate';
+    registerPlugin({ id, nameKey: `plugins.${id}.name`, messages: {} });
+    registerPlugin({
+      id,
+      nameKey: `plugins.${id}.name`,
+      messages: {},
+      routes: [{ path: `/${id}`, name: id, component: Stub }],
+    });
+
+    const mine = getActivePlugins().filter((plugin) => plugin.id === id);
+    expect(mine).toHaveLength(1);
+    // The LATER registration is the one that survives: a re-announcing external
+    // plugin (#150) is telling us what it looks like now.
+    expect(mine[0].routes).toHaveLength(1);
   });
 });

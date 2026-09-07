@@ -42,31 +42,31 @@ model ProjectGroup {
 }
 
 model Project {
-  id             String             @id
-  title          String
-  description    String?
-  status         String             // e.g., IDEA, PLANNING, IN_PROGRESS, TESTING, COMPLETED
-  startDate      DateTime?
-  dueDate        DateTime?
+  id                String             @id
+  title             String
+  description       String?
+  status            String // e.g., IDEA, PLANNING, IN_PROGRESS, TESTING, COMPLETED
+  startDate         DateTime?
+  dueDate           DateTime?
   // When the project actually reached the closed status (#294). Stamped by the
   // service on the transition into PROJECT_CLOSED_STATUS and cleared on the way
   // back out — status stays the single write path, so a row can never claim to
   // be finished while sitting in IDEA. NULL on rows that closed before this
   // column existed; the timeline falls back to dueDate, then updatedAt, and
   // marks such an edge as inferred rather than backfilling a guess.
-  completedAt    DateTime?
-  position       Int                @default(0) // manual order within a kanban status column
-  coverAttachmentId String?         // chosen cover image (Attachment id); flat FK, no constraint
-  groupId        String             // owning ProjectGroup (#285); flat FK, required — every project sits in exactly one group
-  budgetPlanned  Float?
-  budgetCurrency String?            @default("USD")
-  scopeId        String?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  tasks          Task[]
-  components     ProjectComponent[]
-  orders         Order[]
-  activityEvents ActivityEvent[]
+  completedAt       DateTime?
+  position          Int                @default(0) // manual order within a kanban status column
+  coverAttachmentId String? // chosen cover image (Attachment id); flat FK, no constraint
+  groupId           String // owning ProjectGroup (#285); flat FK, required — every project sits in exactly one group
+  budgetPlanned     Float?
+  budgetCurrency    String?            @default("USD")
+  scopeId           String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  tasks             Task[]
+  components        ProjectComponent[]
+  orders            Order[]
+  activityEvents    ActivityEvent[]
 
   @@index([scopeId])
   @@index([groupId])
@@ -82,7 +82,7 @@ model ActivityEvent {
   id        String   @id
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  kind      String   // "task_completed" | "status_changed" | "board_moved"
+  kind      String // "task_completed" | "status_changed" | "board_moved"
   scopeId   String?
   createdAt DateTime @default(now())
 
@@ -92,42 +92,42 @@ model ActivityEvent {
 }
 
 model Task {
-  id          String    @id
+  id          String                @id
   projectId   String
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
   title       String
   description String?
-  isCompleted Boolean   @default(false)
+  isCompleted Boolean               @default(false)
   dueDate     DateTime?
-  priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH
-  createdAt   DateTime  @default(now())
+  priority    String                @default("MEDIUM") // LOW, MEDIUM, HIGH
+  createdAt   DateTime              @default(now())
   components  TaskComponent[]
   orders      TaskOrderDependency[]
 }
 
 model Component {
-  id           String             @id
-  name         String
-  sku          String?
-  description  String?
+  id                String                   @id
+  name              String
+  sku               String?
+  description       String?
   // The item's kind, and with it the set of typed properties it carries (#205).
   // Replaces the free-text `category` column: a string invented per row could
   // never anchor a property set (recognition alone produced "Резисторы",
   // "resistors" and "Electronic components" for one box).
-  categoryId   String?
-  categoryRef  ItemCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId        String?
+  categoryRef       ItemCategory?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   // NOTE: `datasheetUrl` intentionally removed (#71) — a datasheet is not
   // intrinsic to every craft's inventory (yarn, timber have none); it is now a
   // regular entry in `links`. Existing values were backfilled into `links`.
   // NOTE: free-text `location` intentionally removed (#53) — placement is the
   // structured storage link (storageId + storageRow/storageCol) only.
-  quantity     Float              @default(0)
-  minQuantity  Float              @default(0)
-  unit         String?            @default("pcs") // measurement unit code (pcs, m, g, ml, roll, …)
+  quantity          Float                    @default(0)
+  minQuantity       Float                    @default(0)
+  unit              String?                  @default("pcs") // measurement unit code (pcs, m, g, ml, roll, …)
   // NOTE: price/currency intentionally removed (#50) — a component's cost is not
   // intrinsic; it varies by supplier/order. The "last paid" price is derived
   // from OrderComponent history instead.
-  links        String?            // JSON string with array of links
+  links             String? // JSON string with array of links
   // The photograph pinned as this item's cover (#212). Flat FK, no constraint,
   // exactly like `Project.coverAttachmentId`: an item's pictures are plain
   // `Attachment` rows keyed by `componentId`, ordered by `createdAt`, and the
@@ -143,19 +143,19 @@ model Component {
   // category properties live in their own table, and this stays the place for a
   // one-off note about THIS item — and the landing spot for any value that
   // loses its definition (category changed, property or category deleted).
-  customFields String?
-  scopeId      String?
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  propertyValues ComponentPropertyValue[]
-  projects     ProjectComponent[]
-  orderItems   OrderComponent[]
-  taskItems    TaskComponent[]
-  movements    StockMovement[]
-  storageId    String?
-  storage      Storage?           @relation(fields: [storageId], references: [id], onDelete: SetNull)
-  storageRow   Int?               // Индекс ряда (0-indexed)
-  storageCol   Int?               // Индекс колонки (0-indexed)
+  customFields      String?
+  scopeId           String?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  propertyValues    ComponentPropertyValue[]
+  projects          ProjectComponent[]
+  orderItems        OrderComponent[]
+  taskItems         TaskComponent[]
+  movements         StockMovement[]
+  storageId         String?
+  storage           Storage?                 @relation(fields: [storageId], references: [id], onDelete: SetNull)
+  storageRow        Int? // Индекс ряда (0-indexed)
+  storageCol        Int? // Индекс колонки (0-indexed)
 
   @@index([scopeId])
   @@index([categoryId])
@@ -169,20 +169,20 @@ model Component {
 // their common ancestor and is inherited, which is why there is no global
 // property library either.
 model ItemCategory {
-  id       String @id
-  name     String
-  parentId String?
-  parent   ItemCategory?  @relation("ItemCategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children ItemCategory[] @relation("ItemCategoryTree")
+  id                String             @id
+  name              String
+  parentId          String?
+  parent            ItemCategory?      @relation("ItemCategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children          ItemCategory[]     @relation("ItemCategoryTree")
   // Whether the ancestors' properties apply here too. On by default; turning it
   // off cuts the whole chain above, not one property of it.
-  inheritProperties Boolean @default(true)
-  order      Int      @default(0)
-  scopeId    String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  properties CategoryProperty[]
-  components Component[]
+  inheritProperties Boolean            @default(true)
+  order             Int                @default(0)
+  scopeId           String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  properties        CategoryProperty[]
+  components        Component[]
 
   @@index([parentId])
   @@index([scopeId])
@@ -192,29 +192,29 @@ model ItemCategory {
 // inheritance chain — the collision is refused when the property is created or
 // the category re-parented, so nothing has to be resolved at read time.
 model CategoryProperty {
-  id         String       @id
+  id         String                   @id
   categoryId String
-  category   ItemCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category   ItemCategory             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   name       String
   // 'text' | 'number' | 'select' — the union lives in plugin-contract.
-  type String
+  type       String
   // Display-only suffix for `number` ("Ohm"), never converted: Ohm and kOhm are
   // two properties, not one property in two units.
-  unit String?
+  unit       String?
   // Soft everywhere (#205): it marks a card incomplete, it never blocks a save.
   // A hard rule would stall the phone intake conveyor at the shelf, which is
   // the one place this data is actually captured.
-  required Boolean @default(false)
+  required   Boolean                  @default(false)
   // JSON array of allowed values, for `type = 'select'`.
-  options String?
+  options    String?
   // NOTE: whether a property's value also becomes a tag is NOT stored here.
   // That is the tags plugin's business and lives in its own `TagSource` table,
   // keyed by this property's ORef — inventory must keep working, unchanged,
   // with the tags plugin disabled or absent (§5.10).
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  values    ComponentPropertyValue[]
+  order      Int                      @default(0)
+  createdAt  DateTime                 @default(now())
+  updatedAt  DateTime                 @updatedAt
+  values     ComponentPropertyValue[]
 
   @@index([categoryId])
 }
@@ -249,24 +249,24 @@ model ProjectComponent {
 }
 
 model Order {
-  id                String           @id
+  id                String                @id
   storeName         String
-  orderDate         DateTime         @default(now())
-  status            String           // e.g., CART, ORDERED, SHIPPED, DELIVERED
+  orderDate         DateTime              @default(now())
+  status            String // e.g., CART, ORDERED, SHIPPED, DELIVERED
   trackingNumber    String?
   trackingUrl       String?
   estimatedDelivery DateTime?
   totalCost         Float?
-  currency          String?          @default("USD")
+  currency          String?               @default("USD")
   supplierId        String?
-  supplier          Supplier?        @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplier          Supplier?             @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   projectId         String?
-  project           Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project           Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
   // Destination: the ROOT storage the parcel is headed to (#51). Root-only by
   // convention (enforced in the service); exact cell placement stays a
   // per-component action.
   storageId         String?
-  storage           Storage?         @relation(fields: [storageId], references: [id], onDelete: SetNull)
+  storage           Storage?              @relation(fields: [storageId], references: [id], onDelete: SetNull)
   lastTrackedAt     DateTime?
   scopeId           String?
   items             OrderComponent[]
@@ -286,7 +286,7 @@ model TrackingEvent {
   status    String
   location  String?
   eventTime DateTime
-  raw       String?  // JSON blob of the provider event
+  raw       String? // JSON blob of the provider event
   createdAt DateTime @default(now())
 
   @@index([orderId])
@@ -304,7 +304,7 @@ model LogisticsSettings {
   authMode          String   @default("apikey") // apikey | credentials
   trackingApiKey    String?
   trackingLogin     String?
-  trackingPassword  String?  // AES-GCM encrypted at rest (secret-box); never returned raw
+  trackingPassword  String? // AES-GCM encrypted at rest (secret-box); never returned raw
   autoTrackEnabled  Boolean  @default(false)
   pollIntervalHours Int      @default(6)
   updatedAt         DateTime @updatedAt
@@ -356,36 +356,36 @@ model ReturnRequest {
 }
 
 model AIProviderConfig {
-  id             String   @id
-  name           String
-  provider       String   // "gemini" | "openai" | "anthropic" | "ollama" | "custom"
+  id                 String   @id
+  name               String
+  provider           String // "gemini" | "openai" | "anthropic" | "ollama" | "custom"
   // NULL = instance connection (admin-managed); else the owning user's id
   // (personal connection, multiuser mode). No FK — mirrors scopeId columns.
-  ownerUserId    String?
+  ownerUserId        String?
   // Who besides the owner may use these credentials: "none" |
   // "workspace-guests" (personal connections — guests of the owner's
   // workspace) | "everyone" (instance connections — the admin decides).
-  sharedWith     String   @default("none")
-  apiKey         String?
-  baseUrl        String?
-  modelName      String
-  organizationId String?  // OpenAI: optional organization id (OpenAI-Organization header)
-  apiVersion     String?  // Anthropic: optional API version (anthropic-version header)
-  imageDetail    String?  // OpenAI vision: "auto" | "high" — image_url.detail (null = auto)
-  reasoningEffort String? // OpenAI reasoning: "low" | "medium" | "high" — reasoning_effort (null = omit)
+  sharedWith         String   @default("none")
+  apiKey             String?
+  baseUrl            String?
+  modelName          String
+  organizationId     String? // OpenAI: optional organization id (OpenAI-Organization header)
+  apiVersion         String? // Anthropic: optional API version (anthropic-version header)
+  imageDetail        String? // OpenAI vision: "auto" | "high" — image_url.detail (null = auto)
+  reasoningEffort    String? // OpenAI reasoning: "low" | "medium" | "high" — reasoning_effort (null = omit)
   // Proxy request labelling (#230). The label rides in request HEADERS only, and
   // only when `baseUrl` differs from the provider's default — that difference IS
   // the proxy detection. NULL/blank label = the connection sends no label.
-  proxyLabel     String?
+  proxyLabel         String?
   // Ordered, comma-separated subset of "label,user,project": membership AND order
   // in one value, because the form's row order IS the segment order (#226) and a
   // second column would be a second source of truth. NULL is read as "label".
   proxyLabelSegments String?
   // Optional extra header name for a proxy that reads something of its own —
   // Aperture's is named by the tailnet admin, so it cannot be guessed (#224).
-  proxyHeaderName String?
-  isDefault      Boolean  @default(false)
-  createdAt      DateTime @default(now())
+  proxyHeaderName    String?
+  isDefault          Boolean  @default(false)
+  createdAt          DateTime @default(now())
 
   @@index([ownerUserId])
 }
@@ -438,9 +438,9 @@ model AIChatMessage {
   // lifetime must not delete a conversation, and the scope policy proves the
   // project is in scope on create (§5.8).
   projectId String?
-  role      String        // "user" or "assistant"
+  role      String // "user" or "assistant"
   content   String
-  imageData String?       // optional attachment reference — a "/api/uploads/:id" URL
+  imageData String? // optional attachment reference — a "/api/uploads/:id" URL
   createdAt DateTime      @default(now())
 
   @@index([projectId])
@@ -488,9 +488,9 @@ model Attachment {
   // written before the declaration existed; those are backfilled from the id
   // columns where possible and reported as undetermined otherwise.
   ownerPluginId    String?
-  storagePath      String   // path relative to the uploads root
+  storagePath      String // path relative to the uploads root
   mimeType         String
-  filename         String?  // original upload filename (for non-image files)
+  filename         String? // original upload filename (for non-image files)
   sizeBytes        Int
   scopeId          String?
   createdAt        DateTime @default(now())
@@ -508,7 +508,7 @@ model Attachment {
   // quality, format) would leave existing rows on their old previews forever:
   // a row behind the current revision has its renditions dropped on next use
   // and rebuilt by the same on-demand path that fills in a missing one.
-  previewsRevision Int     @default(1)
+  previewsRevision Int      @default(1)
   // Whether the bytes actually decode as an image, decided by probing on
   // upload instead of trusting the mime prefix — an image/heic upload is a
   // plain file to us, not a broken <img>. Null on rows predating #113, where
@@ -585,6 +585,37 @@ model UpdateCheckSettings {
   updatedAt        DateTime  @updatedAt
 }
 
+// Instance-level state of the shipped demo dataset (#339). A singleton, like
+// every other settings row here. `seededAt` is what makes the first-install
+// seed a one-time event: once stamped it is never re-seeded, so clearing the
+// demo data does not bring it back on the next boot.
+model DemoDataSettings {
+  id        String    @id @default("default")
+  seededAt  DateTime? // when the demo rows were written; null = never seeded
+  clearedAt DateTime? // when an admin removed them
+  updatedAt DateTime  @updatedAt
+}
+
+// Opt-in liveness telemetry (#343). A singleton, like every other settings row
+// here. `consent` starts at "unasked", which sends exactly as much as "denied"
+// — nothing; `promptedAt` is what keeps the question a one-time event, so an
+// instance that was asked and answered nothing is never asked again.
+//
+// `instanceId` is minted by the first "yes" and never before: an instance that
+// declines has nothing to identify it with, not even locally.
+model TelemetrySettings {
+  id            String    @id @default("default")
+  consent       String    @default("unasked") // unasked | granted | denied
+  instanceId    String? // random uuid, minted on the first grant
+  locale        String? // interface language of whoever agreed, captured then
+  promptedAt    DateTime? // when a human was asked; null = never asked
+  decidedAt     DateTime? // when the current consent value was chosen
+  lastSentAt    DateTime? // last SUCCESSFUL ping
+  lastAttemptAt DateTime? // last attempt, successful or not — what paces retries
+  lastStatus    String    @default("never") // never | ok | unreachable
+  updatedAt     DateTime  @updatedAt
+}
+
 model TaskComponent {
   id          String    @id
   taskId      String
@@ -596,12 +627,12 @@ model TaskComponent {
 }
 
 model TaskOrderDependency {
-  id       String  @id
-  taskId   String
-  orderId  String
-  task     Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  order    Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  isDone   Boolean @default(false)
+  id      String  @id
+  taskId  String
+  orderId String
+  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  isDone  Boolean @default(false)
 }
 
 model StockMovement {
@@ -609,7 +640,7 @@ model StockMovement {
   componentId String
   component   Component @relation(fields: [componentId], references: [id], onDelete: Cascade)
   delta       Float
-  type        String    // "PURCHASE", "RESERVED", "USED", "ADJUSTMENT", "RETURN"
+  type        String // "PURCHASE", "RESERVED", "USED", "ADJUSTMENT", "RETURN"
   orderId     String?
   projectId   String?
   note        String?
@@ -632,8 +663,8 @@ model StockMovement {
 // the chat.usage.* metrics (dimensioned by provider+model).
 model AIUsageEvent {
   id               String   @id
-  provider         String   // provider type: "gemini" | "openai" | "ollama" | ...
-  providerName     String?  // connection display name, for a friendlier label
+  provider         String // provider type: "gemini" | "openai" | "ollama" | ...
+  providerName     String? // connection display name, for a friendlier label
   modelName        String
   promptTokens     Int?
   completionTokens Int?
@@ -666,7 +697,7 @@ model AIUsageEvent {
 // (scopeId is the owning scope, not a user).
 model StockSnapshot {
   id        String   @id
-  date      String   // 'yyyy-mm-dd', day precision
+  date      String // 'yyyy-mm-dd', day precision
   stock     Float
   reserved  Float
   scopeId   String?
@@ -683,10 +714,10 @@ model StockSnapshot {
 // stable JSON encoding of the metric's breakdown values, or NULL when none.
 model StatsDaily {
   id         String   @id
-  date       String   // 'yyyy-mm-dd', day precision
+  date       String // 'yyyy-mm-dd', day precision
   pluginId   String
   metricKey  String
-  dimensions String?  // JSON of the dimension map, NULL when the metric has none
+  dimensions String? // JSON of the dimension map, NULL when the metric has none
   value      Float
   scopeId    String?
   createdAt  DateTime @default(now())
@@ -697,22 +728,22 @@ model StatsDaily {
 }
 
 model Storage {
-  id          String      @id
-  name        String
-  parentId    String?
-  parent      Storage?    @relation("StorageHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children    Storage[]   @relation("StorageHierarchy")
-  location    String?     // Физическое местоположение (комната, гараж, мастерская)
-  components  Component[]
-  orders      Order[]     // orders arriving at this storage (#51)
-  gridRows    Int?        // Количество рядов (если этот склад является сеткой)
-  gridCols    Int?        // Количество колонок (если этот склад является сеткой)
-  parentRow   Int?        // Координата ряда в родительской сетке (если родитель - сетка, 0-indexed)
-  parentCol   Int?        // Координата колонки в родительской сетке (если родитель - сетка, 0-indexed)
-  gridSpans   String?     // JSON string of merged areas: { startRow: number, startCol: number, rowSpan: number, colSpan: number }[]
-  scopeId     String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id         String      @id
+  name       String
+  parentId   String?
+  parent     Storage?    @relation("StorageHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children   Storage[]   @relation("StorageHierarchy")
+  location   String? // Физическое местоположение (комната, гараж, мастерская)
+  components Component[]
+  orders     Order[] // orders arriving at this storage (#51)
+  gridRows   Int? // Количество рядов (если этот склад является сеткой)
+  gridCols   Int? // Количество колонок (если этот склад является сеткой)
+  parentRow  Int? // Координата ряда в родительской сетке (если родитель - сетка, 0-indexed)
+  parentCol  Int? // Координата колонки в родительской сетке (если родитель - сетка, 0-indexed)
+  gridSpans  String? // JSON string of merged areas: { startRow: number, startCol: number, rowSpan: number, colSpan: number }[]
+  scopeId    String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   @@index([scopeId])
 }
@@ -720,7 +751,7 @@ model Storage {
 model AgentToolConfig {
   toolName           String   @id
   isEnabled          Boolean  @default(true)
-  confirmationPolicy String   // "AUTO" | "CONFIRM"
+  confirmationPolicy String // "AUTO" | "CONFIRM"
   updatedAt          DateTime @updatedAt
 }
 
@@ -737,19 +768,19 @@ model PluginConfig {
 // An account of the multiuser overlay. A user's id doubles as their scope id.
 // `username` is an opaque login name (may be an email; not interpreted).
 model User {
-  id           String   @id
-  username     String   @unique
+  id           String    @id
+  username     String    @unique
   passwordHash String
   displayName  String?
-  isAdmin      Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  isAdmin      Boolean   @default(false)
+  createdAt    DateTime  @default(now())
   // Set when an admin blocks the account: login is refused and any live
   // session is rejected on the next request. Null ⇒ active.
   blockedAt    DateTime?
   // Bumped to invalidate every JWT already issued for this user (logout,
   // admin password reset). The value is embedded in the token at sign time and
   // compared to this row on every request; a stale token is rejected (#241).
-  tokenVersion Int      @default(0)
+  tokenVersion Int       @default(0)
 }
 
 // One user sharing their scope with another. `allowedPluginIds` is a JSON
@@ -760,7 +791,7 @@ model ScopeGrant {
   id                   String   @id
   ownerUserId          String
   granteeUserId        String
-  accessLevel          String   // "READ" | "WRITE"
+  accessLevel          String // "READ" | "WRITE"
   allowedPluginIds     String
   resourceRestrictions String
   createdAt            DateTime @default(now())
@@ -772,7 +803,7 @@ model ScopeGrant {
 
 // Singleton settings of the multiuser overlay (one row, id "default").
 model MultiuserSettings {
-  id                     String   @id @default("default")
+  id                String   @id @default("default")
   // Open self-registration. When off, only the very first account (the admin
   // bootstrap) can register; further accounts need this flipped back on.
   allowRegistration Boolean  @default(true)
@@ -797,11 +828,11 @@ model UserPluginConfig {
 // password. Unwrapped at login into the in-memory KeyringService; an operator
 // with DB access alone cannot recover it. One row per user (userId is the @id).
 model UserKeyring {
-  userId            String   @id
+  userId             String   @id
   // crypto-box ciphertext of the DEK, passphrase = the user's login password.
   wrappedDekPassword String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 // A login session's re-arm token: the same DEK wrapped under a random secret
@@ -840,8 +871,6 @@ model SecretAccessLog {
 
   @@index([ownerUserId, createdAt])
 }
-
-
 
 // ── Tags plugin (#60) ───────────────────────────────────────────────────────
 // Universal tagging: a managed tag vocabulary attachable to ANY entity across
@@ -924,40 +953,40 @@ model Label {
 // status. Instance-administration data — deliberately NOT scope-mapped, like
 // PluginConfig (admin-only surfaces guard access).
 model ExternalPlugin {
-  pluginId      String   @id
+  pluginId         String   @id
   // "pending" (awaiting install consent) | "active" | "disabled" | "error".
-  status        String
-  baseUrl       String
+  status           String
+  baseUrl          String
   // Author's plugin version (opaque display string).
-  version       String
-  contractMajor Int
-  contractMinor Int
+  version          String
+  contractMajor    Int
+  contractMinor    Int
   // Validated ExternalPluginManifest as a JSON string (String, not Json —
   // matches the ScopeGrant/allowedPluginIds convention).
-  manifestJson  String
+  manifestJson     String
   // Granted permission strings (JSON string[]). The live grant set — an
   // update's expansions never touch it until the admin confirms.
-  grantsJson    String
+  grantsJson       String
   // A manifest update awaiting consent (JSON: the full new manifest + its
   // baseUrl/version). The plugin keeps running on manifestJson/grantsJson.
-  pendingJson   String?
+  pendingJson      String?
   // HMAC/auth secret issued at first registration, encrypted at rest.
-  secretEnc     String
+  secretEnc        String
   // Machine error code when status == "error" (mapped to i18n in the UI).
-  errorCode     String?
+  errorCode        String?
   // The single scope an `instance`-scope-model plugin is bound to (multiuser).
   // Named boundScopeId, not scopeId: this is a BINDING, not a data-space
   // marker — the scope-model-map drift guard keys on `scopeId` columns.
-  boundScopeId  String?
+  boundScopeId     String?
   // Separate per-plugin consent for joining the product assistant (#137).
-  assistantEnabled Boolean @default(false)
+  assistantEnabled Boolean  @default(false)
   // Per-plugin salt behind the opaque `userRef` a call context carries. It is
   // per PLUGIN on purpose: two plugins seeing the same person must not be able
   // to compare notes, and neither may work back to a user id. Generated on
   // first use, never rotated — the ref is an identity the plugin stores.
-  userRefSalt   String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  userRefSalt      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 // CORE-SIDE configuration of the external-plugins host — how long the CORE
@@ -976,9 +1005,9 @@ model ExternalSettings {
 // One-time install token the admin generates for the self-registration flow.
 // Only a hash rests in the DB; the clear token is shown once in the UI.
 model ExternalInstallToken {
-  id             String    @id
-  tokenHash      String    @unique
-  createdAt      DateTime  @default(now())
+  id             String   @id
+  tokenHash      String   @unique
+  createdAt      DateTime @default(now())
   expiresAt      DateTime
   usedByPluginId String?
 }
@@ -988,18 +1017,18 @@ model ExternalInstallToken {
 // hashes rest in the DB; revocation is a timestamp so uninstall can kill every
 // outstanding token in one update.
 model ExternalAccessToken {
-  id        String    @id
-  tokenHash String    @unique
-  pluginId  String
+  id           String    @id
+  tokenHash    String    @unique
+  pluginId     String
   // "delegated" | "background-scoped" | "background-instance".
-  class     String
-  userId    String?
+  class        String
+  userId       String?
   // The scope the token acts in (binding, not a data-space marker — see
   // ExternalPlugin.boundScopeId).
   grantScopeId String?
-  expiresAt DateTime?
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
 
   @@index([pluginId])
 }
@@ -1011,17 +1040,17 @@ model ExternalAccessToken {
 // reach) and acts as the issuing user. Only hashes rest in the DB; the clear
 // value exists once, in the issuing response.
 model ExternalConnectionToken {
-  id        String    @id
-  tokenHash String    @unique
-  label     String
+  id           String    @id
+  tokenHash    String    @unique
+  label        String
   // "read-only" | "read-write" | "destructive".
-  ceiling   String
-  userId    String?
+  ceiling      String
+  userId       String?
   // The scope the token acts in (binding, not a data-space marker — see
   // ExternalPlugin.boundScopeId).
   grantScopeId String?
-  createdAt DateTime  @default(now())
-  revokedAt DateTime?
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
 }
 
 // Outbox of webhook deliveries to external plugins (#131/#136). Persisted so a
@@ -1030,30 +1059,30 @@ model ExternalConnectionToken {
 // window. One row per (event, subscriber) — each plugin retries on its own
 // clock. Instance administration, like the other External* models.
 model ExternalEventDelivery {
-  id           String    @id
-  pluginId     String
+  id            String    @id
+  pluginId      String
   // Stable id the plugin de-duplicates on (SDK rule: idempotent by eventId).
-  eventId      String
-  type         String
+  eventId       String
+  type          String
   // Named eventScopeId, not scopeId: this marks WHICH scope the event happened
   // in (a destination marker relayed to the plugin), not the data space of the
   // delivery row — the scope-map drift guard rightly demands `direct` mapping
   // for any real scopeId column.
-  eventScopeId String?
+  eventScopeId  String?
   // Canonical mk:// ref of the affected entity, when one exists.
-  ref          String?
+  ref           String?
   // Names of the changed fields as a JSON string array — never values; the
   // plugin re-reads current state through the API surfaces with its own token.
-  changedJson  String?
-  occurredAt   DateTime
-  attempts     Int       @default(0)
+  changedJson   String?
+  occurredAt    DateTime
+  attempts      Int       @default(0)
   // Next attempt time (exponential backoff); null once terminal.
   nextAttemptAt DateTime?
-  deliveredAt  DateTime?
+  deliveredAt   DateTime?
   // Set when retries are exhausted — visible to the admin, redeliverable.
-  deadAt       DateTime?
-  lastError    String?
-  createdAt    DateTime  @default(now())
+  deadAt        DateTime?
+  lastError     String?
+  createdAt     DateTime  @default(now())
 
   @@index([pluginId, deliveredAt])
   @@index([nextAttemptAt])
@@ -1065,15 +1094,15 @@ model ExternalEventDelivery {
 // registers, then is handed to it. Instance administration, like the other
 // External* models.
 model ExternalDeferredBlob {
-  id         String   @id
-  pluginId   String
+  id            String    @id
+  pluginId      String
   // Opaque, plugin-versioned payload — the core never inspects it.
-  blob       Bytes
+  blob          Bytes
   // Scope the archive was imported into, when any.
   targetScopeId String?
-  createdAt  DateTime @default(now())
+  createdAt     DateTime  @default(now())
   // Set once handed to the plugin; kept briefly for admin visibility.
-  appliedAt  DateTime?
+  appliedAt     DateTime?
 
   @@index([pluginId])
 }
@@ -1084,7 +1113,7 @@ model ExternalDeferredBlob {
 // container printed to its own log, which is what turns a row of text into
 // proof of ownership. Instance administration, like the other External* models.
 model ExternalCandidate {
-  id              String   @id
+  id              String    @id
   pluginId        String
   baseUrl         String
   manifestJson    String
@@ -1103,7 +1132,7 @@ model ExternalCandidate {
   ignoredAt       DateTime?
   // The secret issued at pairing, held until the plugin claims it (encrypted).
   issuedSecretEnc String?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
   expiresAt       DateTime
 
   @@index([pluginId])
@@ -1116,10 +1145,10 @@ model ExternalCandidate {
 // credential. Only the hash rests here; revocation is a timestamp, so killing a
 // lost phone is one update and takes effect on its very next request.
 model PairedDevice {
-  id        String @id
-  tokenHash String @unique
+  id         String    @id
+  tokenHash  String    @unique
   // Human label in the device list, chosen at pairing ("workshop phone").
-  name      String
+  name       String
   // The user this device acts as while the multiuser overlay is on. Null in
   // single-user mode: there is no identity to bind to, and the token itself is
   // what stands between a published instance and the internet.
@@ -1135,8 +1164,8 @@ model PairedDevice {
 // construction (`usedAt` is set in the same transaction that mints the device),
 // so a screenshot of yesterday's QR is worth nothing.
 model DevicePairingCode {
-  id       String @id
-  codeHash String @unique
+  id        String    @id
+  codeHash  String    @unique
   // Whose identity a device redeeming this code inherits (see PairedDevice).
   userId    String?
   createdAt DateTime  @default(now())
@@ -1156,8 +1185,8 @@ model DevicePairingCode {
 // export and agent tool would then have to remember to exclude it, and one that
 // forgot would leak half-finished cards through the whole product.
 model InventoryIntakeDraft {
-  id      String  @id
-  scopeId String?
+  id             String   @id
+  scopeId        String?
   // NOTE: the single `imageUrl` column is gone (#216). A draft holds a SET of
   // photographs now — `Attachment` rows carrying `intakeDraftId` — because one
   // frame rarely identifies a part. They are kept when the draft is committed
@@ -1165,43 +1194,43 @@ model InventoryIntakeDraft {
   // "recognizing" — the model has not answered yet; "ready" — fields are filled
   // in (by the model or by hand); "failed" — recognition gave nothing usable,
   // which is a normal outcome the human resolves by typing.
-  status String
+  status         String
   // What recognition proposed; every one is editable before commit.
-  name String?
-  sku  String?
+  name           String?
+  sku            String?
   // The category the model PICKED from the tree (#206) — never one it invented.
   // A plain column, not a relation: a draft is a scratchpad, and a category
   // deleted while a batch waits should leave the draft uncategorised rather
   // than block the delete or take the draft with it.
-  categoryId String?
+  categoryId     String?
   // The model's detailed description of the photographed part. It is what the
   // second, text-only call reads to guess the property values, and it lands on
   // the item as its description when the draft is committed.
-  description String?
+  description    String?
   // Guessed values for the category's properties, JSON `{propertyId: value}`.
   // JSON rather than rows because the Component does not exist yet — there is
   // nothing to hang a ComponentPropertyValue off.
   propertyValues String?
   unit           String?
-  quantity       Int     @default(1)
+  quantity       Int      @default(1)
   // Placement captured at shooting time, while the phone is still at the shelf.
-  storageId  String?
-  storageRow Int?
-  storageCol Int?
+  storageId      String?
+  storageRow     Int?
+  storageCol     Int?
   // i18n KEY of why recognition failed — never assembled prose (§5.5).
-  errorKey  String?
+  errorKey       String?
   // Idempotency key for a shot that was queued while offline (#202): replaying
   // the drain must not turn one photograph into two drafts.
-  clientOpId String? @unique
+  clientOpId     String?  @unique
   // The phone's own identity for the ITEM being shot (#216), as opposed to
   // `clientOpId`, which identifies one frame. Several frames of one part carry
   // the same key, and the server appends to the draft holding it or creates it —
   // which is what makes multi-frame capture work offline: a queued frame cannot
   // learn a server id, and a client-minted key needs no answer. Nullable for
   // drafts written before the column existed.
-  clientDraftId String? @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  clientDraftId  String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([scopeId])
   @@index([status])
@@ -1240,29 +1269,29 @@ model MobileSettings {
 // scope does not make it readable by a co-worker. A notification for the
 // single-user instance carries NULL, like every other pre-overlay row.
 model Notification {
-  id           String    @id
+  id          String                 @id
   // Recipient (== a user id) and the data space they read it in.
-  scopeId      String?
+  scopeId     String?
   // Registered type, `<pluginId>.<what-happened>`; `pluginId` is denormalized
   // from it so the sidebar badge can group without parsing strings in SQL.
-  type         String
-  pluginId     String
-  titleKey     String
-  bodyKey      String?
+  type        String
+  pluginId    String
+  titleKey    String
+  bodyKey     String?
   // JSON object of i18n parameters; resolved in the reader's locale, never here.
-  paramsJson   String?
+  paramsJson  String?
   // Canonical mk:// ref of the subject, when there is one.
-  ref          String?
-  importance   String    @default("normal")
+  ref         String?
+  importance  String                 @default("normal")
   // JSON array of NotificationAction.
-  actionsJson  String?
+  actionsJson String?
   // Repeats with this key fold into this row instead of stacking beside it.
-  dedupKey     String?
-  occurrences  Int       @default(1)
-  readAt       DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deliveries   NotificationDelivery[]
+  dedupKey    String?
+  occurrences Int                    @default(1)
+  readAt      DateTime?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  deliveries  NotificationDelivery[]
 
   @@index([scopeId, readAt])
   @@index([scopeId, pluginId, readAt])
@@ -1300,14 +1329,14 @@ model NotificationDelivery {
 // today; the per-person overrides the settings matrix writes land with the
 // channels that need them (#311).
 model NotificationTypeConfig {
-  type             String   @id
-  pluginId         String
-  importance       String
+  type        String   @id
+  pluginId    String
+  importance  String
   // JSON array of channel ids; NULL means "every channel".
-  allowedJson      String?
-  enabled          Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  allowedJson String?
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // Quiet hours, per person. Minutes from local midnight, so the window survives
@@ -1465,22 +1494,22 @@ model NotificationActionToken {
 // One browser's push subscription. Per device, not per person: a phone and a
 // laptop are two subscriptions, and revoking one must not silence the other.
 model PushSubscription {
-  id        String   @id
-  scopeId   String?
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
+  id         String    @id
+  scopeId    String?
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
   // What the browser called itself when subscribing, so a person can tell two
   // devices apart when removing one.
-  label     String?
+  label      String?
   // The paired device this subscription was created from, when it was created
   // from one (#311). Revoking that device deletes the subscription, so an
   // unpaired phone stops receiving pushes instead of quietly carrying on.
   // Null for a subscription made from an ordinary browser session, and for
   // every subscription that predates this column — those have no device to be
   // revoked from and can only be removed by hand.
-  deviceId  String?
-  createdAt DateTime @default(now())
+  deviceId   String?
+  createdAt  DateTime  @default(now())
   lastUsedAt DateTime?
 
   @@index([scopeId])
@@ -1490,12 +1519,12 @@ model PushSubscription {
 // VAPID keys and other channel-level secrets that belong to the instance, not
 // to a person. One row, id "default".
 model PushSettings {
-  id             String   @id @default("default")
-  publicKey      String
+  id            String   @id @default("default")
+  publicKey     String
   // Encrypted at rest through SecretBoxService, like every other secret (#63).
-  privateKeyEnc  String
-  subject        String
-  updatedAt      DateTime @updatedAt
+  privateKeyEnc String
+  subject       String
+  updatedAt     DateTime @updatedAt
 }
 
 // Whether a person uses a channel at all — one row per reader per channel.

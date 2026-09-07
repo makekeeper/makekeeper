@@ -232,7 +232,13 @@ not: an inline box splits its background and border into one fragment per line);
     on its path (persisted notes, shared guard errors) resolves at the default locale.
   - **Core (non-plugin) backend text** lives in `apps/backend/src/app/i18n/{en,ru}.json` under `core.*`,
     registered by `AppModule`. Follow the `plugin-capture` pattern: throw i18n keys, don't build prose.
-  - **Swagger/OpenAPI doc text — the one sanctioned exception.** Endpoint/DTO doc strings
+  - **Seeded content is data, not text.** The demo workshop a first install lands on
+    (`apps/backend/src/app/demo/demo-dataset.ts`, #339) is made of **rows** — item names, project
+    titles, supplier names, which the owner renames the moment the instance is theirs. Rows are
+    content, and content carries no locale key; that file is exempt, and so is any later dataset of
+    the same kind. The exemption covers the seeded **values** only: everything the UI says *about*
+    them (the banner, its action, its confirmation) is ordinary UI text with keys like anything else.
+  - **Swagger/OpenAPI doc text — the other sanctioned exception.** Endpoint/DTO doc strings
     (`@ApiOperation` summaries, `@ApiProperty` descriptions) are a developer-facing surface that
     never reaches an end user through `t()`/`$t()`. Prefer the `i18n:<key>` marker that
     `apps/backend/src/app/swagger.ts` resolves to English; where no key fits, a plain **English**
@@ -361,14 +367,15 @@ the slot/capability/event catalogue: [`docs/plugins.md`](docs/plugins.md) §8.
   `libs/plugin-contract/src/lib/capabilities.ts`. Data always survives disable; `projects` and
   `settings` are core (never disabled), so depending on their data/API is safe.
 
-### 5.11 Standalone third-party-style code (`libs/plugin-sdk`, `examples/*`)
+### 5.11 Standalone third-party-style code (`libs/plugin-sdk`, `examples/*`, `deploy/*`)
 > Mirrored from [`.agents/AGENTS.md`](.agents/AGENTS.md) (Antigravity). That file is canonical for
 > this rule — keep both in sync when it changes.
 
-`libs/plugin-sdk` and every plugin under `examples/*` are deliberately **standalone code written
-the way a third-party author would write it**: plain Node processes with no NestJS, no
-`PluginI18nService`, no `AppConfigService` and no access to the app's Vue layer. For these paths
-only, the repo conventions that assume that infrastructure do **not** apply:
+`libs/plugin-sdk`, every plugin under `examples/*`, and the deployable services under `deploy/*`
+that run OUTSIDE the app (the Cloudflare telemetry receiver, #343) are deliberately **standalone
+code written the way a third-party author would write it**: plain Node/worker processes with no
+NestJS, no `PluginI18nService`, no `AppConfigService` and no access to the app's Vue layer. For
+these paths only, the repo conventions that assume that infrastructure do **not** apply:
 
 - `console.*` logging is allowed (there is no Nest `Logger`) — the §5.2 ban targets app code.
 - Raw `process.env` reads are allowed (there is no settings/config service).

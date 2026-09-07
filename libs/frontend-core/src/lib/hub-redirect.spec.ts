@@ -82,6 +82,16 @@ describe('useHubRedirect', () => {
     expect(router.currentRoute.value.path).toBe('/access');
   });
 
+  // The regression #342 found: Settings put About ahead of General, and the
+  // hub root — a perfectly good tab — started forwarding itself away.
+  it('leaves it alone even when the root tab is not the first one', async () => {
+    const router = makeRouter();
+    await router.push('/access');
+    await mountHub(router, [tab('/access/users'), tab('/access')]);
+
+    expect(router.currentRoute.value.path).toBe('/access');
+  });
+
   it('sends a user who may see no tab away from the empty hub', async () => {
     // The sidebar already hides such a hub, but the route stays reachable by
     // deep link — without this it renders an empty tab bar over an empty view.

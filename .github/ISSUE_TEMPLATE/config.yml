@@ -1,0 +1,11 @@
+# Bugs are issues; everything else is a conversation (#342). The blank issue is
+# off on purpose: an untriaged "how do I…" in the tracker helps neither side,
+# and both links below land in a category that already exists.
+blank_issues_enabled: false
+contact_links:
+  - name: Suggest an improvement
+    url: https://github.com/makekeeper/makekeeper/discussions/new?category=ideas
+    about: Something missing, or something that should work differently. Others can see it and back it.
+  - name: Ask a question
+    url: https://github.com/makekeeper/makekeeper/discussions/new?category=q-a
+    about: Stuck on a setting, or unsure how something works.

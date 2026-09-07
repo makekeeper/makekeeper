@@ -118,6 +118,12 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   get updateCheckSettings(): ExtendedClient['updateCheckSettings'] {
     return this.client.updateCheckSettings;
   }
+  get demoDataSettings(): ExtendedClient['demoDataSettings'] {
+    return this.client.demoDataSettings;
+  }
+  get telemetrySettings(): ExtendedClient['telemetrySettings'] {
+    return this.client.telemetrySettings;
+  }
   get taskComponent(): ExtendedClient['taskComponent'] {
     return this.client.taskComponent;
   }

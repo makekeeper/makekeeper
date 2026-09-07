@@ -1,0 +1,46 @@
+# Planted into the published mirror by .forgejo/publish/snapshot.sh (#342).
+#
+# The `environment` field id is a contract: the app's About page prefills this
+# form through `?template=bug_report.yml&environment=…`
+# (libs/plugin-settings/src/frontend/feedback.ts). Rename the field and the
+# prefill stops arriving, silently.
+name: Bug report
+description: Something in MakeKeeper works the wrong way
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. If you opened this from inside the app, the
+        environment box below is already filled in.
+
+        Have an idea or a question instead? Those live in
+        [Discussions](https://github.com/makekeeper/makekeeper/discussions).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+      placeholder: |
+        1. Opened a project
+        2. Pressed …
+        3. Expected …, got …
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: >-
+        Filled in for you when you open this from Settings → About inside the
+        app. Otherwise: version, how you installed it, and which plugins are on.
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Logs, a screenshot, or the shape of the data it happened on.
+    validations:
+      required: false

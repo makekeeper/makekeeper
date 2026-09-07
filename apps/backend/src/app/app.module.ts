@@ -57,6 +57,9 @@ import { ExternalPluginModule } from '@makekeeper/plugin-external/backend';
 import { NotifyPluginModule } from '@makekeeper/plugin-notify/backend';
 import { SchedulePluginModule } from '@makekeeper/plugin-schedule/backend';
 
+import { DemoModule } from './demo/demo.module';
+import { TelemetryModule } from './telemetry/telemetry.module';
+
 @Module({
   imports: [
     // Enables @Cron scheduling app-wide (the stats aggregation job). forRoot is
@@ -102,6 +105,10 @@ import { SchedulePluginModule } from '@makekeeper/plugin-schedule/backend';
     ExchangeRegistryModule,
     CapabilityRegistryModule,
     PluginEventBusModule,
+    // Last: its bootstrap seed reads the projects plugin's i18n bundle and
+    // writes into every plugin's models, so it wants them all registered.
+    DemoModule,
+    TelemetryModule,
   ],
   controllers: [
     AppController,

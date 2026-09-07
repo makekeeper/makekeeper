@@ -8,8 +8,13 @@ export const settingsManifest: PluginManifest = {
   descriptionKey: 'plugins.settings.description',
   version: '1.0.0',
   icon: 'Settings',
-  // One sidebar entry (the hub) plus its tabs (#110). The hub's own main tab
-  // takes order 0; guest plugins contributing a tab here use order >= 100.
+  // One sidebar entry (the hub) plus its tabs (#110). Guest plugins
+  // contributing a tab here use order >= 100.
+  //
+  // About leads the bar (#342). There is no separate Updates tab: version,
+  // schedule, update and install diagnostics are sections of the About page —
+  // two tabs into one family of sections was one tab too many, and About is
+  // the half every user may open.
   navigation: [
     {
       path: '/settings',
@@ -19,32 +24,31 @@ export const settingsManifest: PluginManifest = {
       hubId: 'settings',
     },
     {
+      path: '/settings/about',
+      titleKey: 'nav.about',
+      icon: 'Info',
+      hub: 'settings',
+      order: 0,
+    },
+    {
       path: '/settings',
       titleKey: 'nav.general',
       icon: 'SlidersHorizontal',
       hub: 'settings',
-      order: 0,
+      order: 10,
     },
     {
       path: '/settings/agent',
       titleKey: 'nav.agentCapabilities',
       icon: 'Bot',
       hub: 'settings',
-      order: 10,
+      order: 20,
       adminOnly: true,
     },
     {
       path: '/settings/plugins',
       titleKey: 'nav.plugins',
       icon: 'Blocks',
-      hub: 'settings',
-      order: 20,
-      adminOnly: true,
-    },
-    {
-      path: '/settings/updates',
-      titleKey: 'nav.updates',
-      icon: 'RefreshCw',
       hub: 'settings',
       order: 30,
       adminOnly: true,

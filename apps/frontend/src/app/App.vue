@@ -47,7 +47,7 @@ import {
   CHAT_WIDTH_DEFAULT,
   CHAT_WIDTH_MIN,
   readAsDataUrl,
-  writeStoredLocale,
+  LanguageSelect,
   COLOR_SCHEMES,
   isColorScheme,
   type ColorScheme,
@@ -56,11 +56,11 @@ import {
   type ThemeMode,
 } from '@makekeeper/frontend-core';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
+import DemoBanner from './DemoBanner.vue';
+import TelemetryConsent from './TelemetryConsent.vue';
 import { useI18n } from 'vue-i18n';
 import { storeToRefs } from 'pinia';
 import {
-  APP_LOCALES,
-  parseAppLocale,
   parseObjectRef,
   attachmentRejectionParams,
   formatByteSize,
@@ -89,6 +89,7 @@ import HeaderOverflowRow from './HeaderOverflowRow.vue';
 import HeaderItem from './HeaderItem.vue';
 import HeaderOverflowSection from './HeaderOverflowSection.vue';
 import HeaderAvatarMenu from './HeaderAvatarMenu.vue';
+import FeedbackLinks from './FeedbackLinks.vue';
 import HeaderOverflowBadge from './HeaderOverflowBadge.vue';
 import {
   HEADER_PRIORITY,
@@ -216,24 +217,6 @@ const aiButtonPriority = computed<number>(() =>
     ? HEADER_PRIORITY.aiAssistantChatOpen
     : HEADER_PRIORITY.aiAssistant,
 );
-
-const currentLanguage = ref(locale.value);
-// Built from the contract's list rather than kept alongside it (#211): the
-// bundles, the QR parameter and this switcher have to agree on what we ship, and
-// a second list is how they stop agreeing. The label is the tag itself.
-const languageOptions = APP_LOCALES.map((value) => ({
-  value,
-  label: value.toUpperCase(),
-}));
-
-// Persisted through the same helper the bootstrap resolver reads (#211) — a
-// phone inherits this very value through the pairing QR.
-const handleLanguageChange = (lang: string) => {
-  const chosen = parseAppLocale(lang);
-  if (!chosen) return;
-  locale.value = chosen;
-  writeStoredLocale(chosen);
-};
 
 const getHeaderTitle = computed(() => {
   if (route.name) {
@@ -1628,37 +1611,47 @@ const retry = (msg: ChatMessage): void => {
         </Tooltip>
       </div>
 
-      <!-- Version + update badge — the last thing in the sidebar. Collapsed, the
+      <!-- The sidebar's footer: what the app says about ITSELF — which version
+           this is, and how to tell us it is wrong (#342). One border above the
+           block, not one per row: the version and the two feedback links are
+           one group, not three neighbours. -->
+      <div class="border-t border-slate-200/50 dark:border-white/5">
+        <!-- Version + update badge — the last thing in the sidebar. Collapsed, the
            new-version number is `sr-only` and only the amber dot remains, so the
            same tooltip that names the nav entries says what the dot means. -->
-      <Tooltip
-        v-if="versionStore.version"
-        display="contents"
-        placement="right"
-        size="sm"
-        :text="versionStore.updateAvailable ? t('common.updateAvailable') : ''"
-      >
-        <RouterLink
-          :to="{ name: 'settings-updates' }"
-          class="flex items-center justify-center gap-1.5 py-2.5 border-t border-slate-200/50 dark:border-white/5 px-3 text-xxs whitespace-nowrap overflow-hidden transition-colors hover:bg-slate-100 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
+        <Tooltip
+          v-if="versionStore.version"
+          display="contents"
+          placement="right"
+          size="sm"
+          :text="
+            versionStore.updateAvailable ? t('common.updateAvailable') : ''
+          "
         >
-          <span class="text-slate-400 dark:text-slate-500">
-            v{{ versionStore.version }}
-          </span>
-          <span
-            v-if="versionStore.updateAvailable"
-            class="font-bold text-amber-500 text-glow-amber"
-            :class="[isSidebarOpen ? '' : 'sr-only']"
+          <RouterLink
+            :to="{ name: 'settings-updates' }"
+            class="flex items-center justify-center gap-1.5 py-2.5 px-3 text-xxs whitespace-nowrap overflow-hidden transition-colors hover:bg-slate-100 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
           >
-            ({{ versionStore.latestVersion }})
-          </span>
-          <span
-            v-if="versionStore.updateAvailable && !isSidebarOpen"
-            aria-hidden="true"
-            class="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-lg shadow-amber-500/40"
-          ></span>
-        </RouterLink>
-      </Tooltip>
+            <span class="text-slate-400 dark:text-slate-500">
+              v{{ versionStore.version }}
+            </span>
+            <span
+              v-if="versionStore.updateAvailable"
+              class="font-bold text-amber-500 text-glow-amber"
+              :class="[isSidebarOpen ? '' : 'sr-only']"
+            >
+              ({{ versionStore.latestVersion }})
+            </span>
+            <span
+              v-if="versionStore.updateAvailable && !isSidebarOpen"
+              aria-hidden="true"
+              class="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-lg shadow-amber-500/40"
+            ></span>
+          </RouterLink>
+        </Tooltip>
+
+        <FeedbackLinks variant="sidebar" :collapsed="!isSidebarOpen" />
+      </div>
     </aside>
 
     <!-- Main Container -->
@@ -1781,14 +1774,7 @@ const retry = (msg: ChatMessage): void => {
             :label="$t('header.language')"
             :panel-order="panelOrderFor(4, 0)"
           >
-            <div class="w-20">
-              <Select
-                v-model="currentLanguage"
-                :options="languageOptions"
-                @change="handleLanguageChange"
-                triggerClass="px-2 py-1.5 h-9 bg-slate-100/60 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 !rounded-xl text-xs font-semibold"
-              />
-            </div>
+            <LanguageSelect />
           </HeaderItem>
 
           <!-- Colour scheme picker (#236): between language and theme, since it
@@ -1904,6 +1890,7 @@ const retry = (msg: ChatMessage): void => {
                 >
                   <template #extra>
                     <HeaderOverflowSection />
+                    <FeedbackLinks variant="menu" />
                   </template>
                 </UserMenu>
                 <HeaderAvatarMenu v-else />
@@ -1920,6 +1907,15 @@ const retry = (msg: ChatMessage): void => {
            across any later outage, so a mid-session reconnect never remounts it
            and never discards in-progress edits. -->
       <main class="flex-1 min-w-0 p-6 md:p-8 overflow-y-auto w-full mx-auto">
+        <!-- "What you are looking at is a demo" (#339). Inside the content
+             column, above the view: it describes the page, it does not
+             interrupt it. Renders nothing once cleared or dismissed. -->
+        <DemoBanner v-if="contentReady" />
+
+        <!-- Asked once per instance, wherever the admin happens to be (#343).
+             Same gate as the banner: nothing about the instance is fetched
+             before there is a session to fetch it with. -->
+        <TelemetryConsent v-if="contentReady" />
         <RouterView v-if="contentReady" />
       </main>
     </div>

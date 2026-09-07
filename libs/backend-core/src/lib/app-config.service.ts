@@ -52,6 +52,10 @@ const hasExplicitPort = (host: string): boolean =>
 // happily reports the newest of *those* as the core's version.
 const RELEASE_TAG_GLOB = 'v[0-9]*';
 
+// The project's own receiver (#343). Overridable, and blankable, by
+// MK_TELEMETRY_ENDPOINT.
+const DEFAULT_TELEMETRY_ENDPOINT = 'https://ping.makekeeper.app/v1/ping';
+
 // `git describe --tags --dirty --long` output → the version shown in the UI.
 // The `--long` form is always "<tag>-<commits>-g<sha>[-dirty]", so the released
 // tag is recoverable even when HEAD sits exactly on it; "+" marks anything
@@ -96,6 +100,23 @@ export class AppConfigService {
   // when the working tree carries work beyond that tag — so the UI shows a real
   // version ("0.4.0+") instead of an opaque "dev". "dev" remains the last resort
   // when there is no git repo/tag to derive from.
+  // Where opt-in liveness telemetry reports to (#343). A default so the feature
+  // works out of the box for anyone who agrees to it, an override for anyone
+  // running their own receiver, and an EMPTY value as the way to disable the
+  // feature at the build level — a fork must be able to guarantee that nothing
+  // can phone home to us, and deleting the code is not a reasonable ask.
+  //
+  // Consent is still what decides whether anything is sent; this only decides
+  // where. Returns null when there is nowhere to send.
+  getTelemetryEndpoint(): string | null {
+    const raw = process.env.MK_TELEMETRY_ENDPOINT;
+    if (raw !== undefined) {
+      const trimmed = raw.trim();
+      return trimmed === '' ? null : trimmed;
+    }
+    return DEFAULT_TELEMETRY_ENDPOINT;
+  }
+
   getAppVersion(): string {
     const pinned = process.env.APP_VERSION?.trim();
     if (pinned) return pinned;
@@ -143,6 +164,16 @@ export class AppConfigService {
   // install even when the marker is missing. Null outside Kubernetes.
   getKubernetesServiceHost(): string | null {
     return process.env.KUBERNETES_SERVICE_HOST?.trim() || null;
+  }
+
+  // Whether a first install seeds the demo workshop (#339). ON by default: an
+  // empty instance is the single biggest cause of an uninstall in the first ten
+  // minutes, and the seed only ever fires on a database that holds no data. Set
+  // DEMO_SEED=0 to bring up a deliberately empty instance.
+  isDemoSeedEnabled(): boolean {
+    const raw = process.env.DEMO_SEED?.trim().toLowerCase();
+    if (!raw) return true;
+    return !['0', 'false', 'no', 'off'].includes(raw);
   }
 
   // GitHub "owner/repo" the update checker queries for the latest release tag.

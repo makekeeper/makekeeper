@@ -196,12 +196,31 @@
         "install": {
           "title": "Install method",
           "description": "How this instance was deployed. Diagnostics only."
+        },
+        "counting": {
+          "title": "Counting this instance",
+          "description": "Whether this instance reports that it is running."
         }
       },
       "reference": {
         "title": "Setup reference",
         "description": "Where to copy the deploy hook from, and how to update by hand. Read once while setting this up.",
         "link": "Setup reference"
+      },
+      "counting": {
+        "description": "One small report a day, so we know how many instances are out there. Off unless you turn it on.",
+        "on": "This instance reports once a day that it is running.",
+        "off": "This instance sends nothing.",
+        "details": "What is sent, and how often",
+        "detailsHint": "The report below is the real one, built by this instance.",
+        "instanceId": "Instance id",
+        "instanceIdHint": "Quote this if you ever want your row deleted.",
+        "lastSent": "Last sent",
+        "never": "Never",
+        "unreachable": "The last attempt did not get through.",
+        "noEndpoint": "This build has no receiver configured, so nothing can be sent.",
+        "saveFailed": "Couldn't save the setting.",
+        "loadFailed": "Could not read the current setting."
       }
     },
     "agentTools": {
@@ -370,6 +389,55 @@
         "title": "{megabytes} MB can be freed",
         "body": "Files nothing refers to are waiting to be swept in Settings → Disk."
       }
+    },
+    "about": {
+      "title": "About MakeKeeper",
+      "subtitle": "What this is, which version you run, and how to reach the people who build it.",
+      "section": {
+        "title": "About",
+        "description": "What this is, and how to write to us."
+      },
+      "description": "MakeKeeper helps you run a workshop: the projects you are building, the parts you keep, where each one sits and what is still on its way — on your own server. It is built by one person, and every message gets an answer within a day.",
+      "actions": {
+        "bug": {
+          "title": "Report a problem",
+          "hint": "Something works the wrong way. Opens a bug report with your version, install method and plugins already filled in."
+        },
+        "idea": {
+          "title": "Suggest an improvement",
+          "hint": "Something is missing, or should work differently. Opens a discussion, where others can see the idea and back it."
+        },
+        "question": {
+          "title": "Ask a question",
+          "hint": "Stuck on a setting, or unsure how something works. Goes to the discussions, not to the bug tracker."
+        }
+      },
+      "report": {
+        "title": "What the report will carry",
+        "description": "Filled in for you, so you do not have to look it up. Nothing else is sent.",
+        "version": "Version",
+        "installMethod": "Install method",
+        "plugins": "Plugins",
+        "locale": "Language"
+      },
+      "facts": {
+        "version": "Version",
+        "install": "Install method",
+        "plugins": "Plugins enabled",
+        "license": "License",
+        "licenseValue": "FSL-1.1-ALv2 (source-available)"
+      },
+      "links": {
+        "source": "Source code",
+        "install": "Install guide",
+        "releases": "What's new",
+        "discussions": "Discussions",
+        "license": "License"
+      },
+      "contact": {
+        "title": "Reach the people who build it",
+        "description": "Three doors, and the app fills in what a report needs before you get there."
+      }
     }
   },
   "nav": {
@@ -378,14 +446,16 @@
     "agentCapabilities": "Agent Capabilities",
     "plugins": "Plugins",
     "updates": "Updates",
-    "disk": "Disk"
+    "disk": "Disk",
+    "about": "About"
   },
   "routeTitles": {
     "settings": "Settings and Connections",
     "settings-agent": "AI Agent Capabilities",
     "settings-plugins": "Plugins",
     "settings-updates": "Version & Updates",
-    "settings-disk": "Disk usage"
+    "settings-disk": "Disk usage",
+    "settings-about": "About MakeKeeper"
   },
   "plugins": {
     "settings": {

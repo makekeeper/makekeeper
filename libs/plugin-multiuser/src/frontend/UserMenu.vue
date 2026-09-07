@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { RouterLink } from 'vue-router';
+import { computed, ref, watch } from 'vue';
+import { RouterLink, useRoute } from 'vue-router';
 import {
   AnchoredPopover,
   Badge,
@@ -20,6 +20,18 @@ const initial = computed(() => {
   const name = session.user?.displayName || session.user?.username || '?';
   return name.charAt(0).toUpperCase();
 });
+
+// Navigating from the menu closes it. The menu's own rows were toggles and
+// actions that close themselves; the shell now puts LINKS in its `extra` slot
+// (#342), and a panel left hanging over the page it just opened reads as a
+// stuck overlay.
+const route = useRoute();
+watch(
+  () => route.fullPath,
+  () => {
+    open.value = false;
+  },
+);
 
 const activeScopeId = computed(
   () => session.activeScope?.scopeId ?? session.user?.id,

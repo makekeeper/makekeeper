@@ -174,7 +174,15 @@ export function registerPlugin(plugin: FrontendPlugin): void {
     }
     route.meta = { ...route.meta, pluginId: plugin.id };
   }
-  activePlugins.push(plugin);
+  // An id names one plugin, so registering it again REPLACES rather than adds.
+  // Appending blindly duplicated everything derived from the list — two sidebar
+  // entries, two hub tabs, two copies of every contribution — with no error to
+  // point at. It happens in dev whenever HMR re-runs the loader, and it is a
+  // live possibility for external plugins, which register at runtime (#150) and
+  // may re-announce themselves after reconnecting.
+  const existing = activePlugins.findIndex((p) => p.id === plugin.id);
+  if (existing >= 0) activePlugins.splice(existing, 1, plugin);
+  else activePlugins.push(plugin);
   registryVersion.value += 1;
 }
 

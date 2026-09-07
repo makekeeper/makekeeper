@@ -90,6 +90,12 @@ const HUB_FALLBACK_PATH = '/';
 // Inert for a hub whose main tab IS the hub root (Settings → General), so every
 // hub can wire it unconditionally. `replace`, never `push` — with `push` the
 // Back button bounces straight off the redirect and the user is trapped.
+//
+// "Inert" used to hold only by accident: the check was `first.path !== hubPath`,
+// which is true the moment the root tab stops being the FIRST one. Settings put
+// About ahead of General (#342) and the hub started forwarding its own root
+// away. The rule is about the hub root BEING a tab, not about where that tab
+// sits, so that is what it asks now.
 export function useHubRedirect(
   hubPath: string,
   tabs: ComputedRef<RegisteredNavItem[]>,
@@ -100,12 +106,13 @@ export function useHubRedirect(
     () => [route.path, tabs.value] as const,
     ([path, visible]) => {
       if (path !== hubPath) return;
+      if (visible.some((tab) => tab.path === hubPath)) return;
       const first = visible[0];
       if (first === undefined) {
         router.replace(HUB_FALLBACK_PATH);
         return;
       }
-      if (first.path !== hubPath) router.replace(first.path);
+      router.replace(first.path);
     },
     { immediate: true },
   );

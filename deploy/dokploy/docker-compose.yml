@@ -56,7 +56,9 @@ services:
       # Leave empty to derive per-request from the X-Forwarded-* headers Dokploy's
       # Traefik sets; set a fixed origin only if you need stable phone-capture links.
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
-      RUN_SEED: ${RUN_SEED:-0}
+      # Demo workshop on a FIRST install (1/0, default 1); 0 brings up an empty
+      # instance. Only ever fires on a database that holds no data.
+      DEMO_SEED: ${DEMO_SEED:-1}
       # Two proxies front the API here — Dokploy's Traefik, then the `web`
       # nginx — so Express must trust two X-Forwarded-For hops to see the real
       # client IP (the login throttle keys on it, #237). Raise only if you put
