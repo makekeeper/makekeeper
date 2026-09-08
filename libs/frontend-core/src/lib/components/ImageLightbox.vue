@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 // that library, and a lib importing itself through its own alias is a cycle.
 import Button from './Button.vue';
 import { previewUrl } from '../preview-url';
+import { useDialogPresence } from '../dialog-presence';
 import { ChevronLeft, ChevronRight, Download, X } from '@lucide/vue';
 
 // Full-size viewing for the Files tab (#117).
@@ -45,6 +46,10 @@ const current = computed<LightboxImage | null>(
 );
 
 const isOpen = computed<boolean>(() => current.value !== null);
+
+// The viewer is a dialog in everything but its chrome, so it answers the
+// same question `Modal` answers (#351).
+useDialogPresence(() => isOpen.value);
 
 const go = (step: number): void => {
   if (props.images.length === 0 || index.value < 0) return;

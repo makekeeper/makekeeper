@@ -315,6 +315,15 @@ export const usePreferencesStore = defineStore('preferences', () => {
     headerOverflowCoached.value = true;
     localStorage.setItem(OVERFLOW_COACH_KEY, '1');
   };
+  // The inverse exists because the flag is written when the coachmark is put
+  // on screen, which is not the same moment as it being read: a dialog opening
+  // on top of it takes it down after a glimpse (#351). A lesson that was not
+  // delivered has not been spent, so the caller that cut it short gives it
+  // back rather than leaving the profile permanently taught by nothing.
+  const unmarkHeaderOverflowCoached = (): void => {
+    headerOverflowCoached.value = false;
+    localStorage.removeItem(OVERFLOW_COACH_KEY);
+  };
 
   const setTheme = (mode: ThemeMode): void => {
     themeMode.value = mode;
@@ -393,6 +402,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
     setChatWidth,
     headerOverflowCoached,
     markHeaderOverflowCoached,
+    unmarkHeaderOverflowCoached,
     setMode,
     setTheme,
     setColorScheme,

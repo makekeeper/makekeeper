@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 // A drift guard over the Updates page (#267), modelled on
@@ -24,6 +24,16 @@ const read = (name: string): string =>
 const REPO_ROOT = join(__dirname, '..', '..', '..', '..');
 const readRepo = (path: string): string =>
   readFileSync(join(REPO_ROOT, path), 'utf8');
+
+// The published mirror is this tree minus `.forgejo/`, with the issue
+// templates lifted to `.github/` on the way out (snapshot.sh). A guard that
+// names only the development path passes here and fails on the public copy's
+// CI, which is the ONLY place the whole monorepo is linted, built and tested
+// (#299) — so it fails after the release, not before it. Read whichever half
+// of the pair this checkout actually has.
+const DEV_TEMPLATES = '.forgejo/publish/github/ISSUE_TEMPLATE';
+const MIRROR_TEMPLATES = '.github/ISSUE_TEMPLATE';
+const hasRepo = (path: string): boolean => existsSync(join(REPO_ROOT, path));
 
 const templateOf = (source: string): string => {
   const at = source.indexOf('<template>');
@@ -176,18 +186,20 @@ describe('updates view (#267)', () => {
   // stops arriving with no error anywhere (#342).
   it('prefills a bug form that the published template actually defines', () => {
     const feedback = read('feedback.ts');
-    const template = readRepo(
-      '.forgejo/publish/github/ISSUE_TEMPLATE/bug_report.yml',
-    );
+    const dir = hasRepo(DEV_TEMPLATES) ? DEV_TEMPLATES : MIRROR_TEMPLATES;
+    const template = readRepo(`${dir}/bug_report.yml`);
     const file = /const BUG_TEMPLATE = '([^']+)'/.exec(feedback)?.[1];
     const field = /const ENVIRONMENT_FIELD = '([^']+)'/.exec(feedback)?.[1];
     expect(file).toBe('bug_report.yml');
     expect(field).toBeTruthy();
     expect(template).toContain(`id: ${field}`);
     // …and the snapshot plants it, or the mirror never sees the template.
-    expect(readRepo('.forgejo/publish/snapshot.sh')).toContain(
-      '.github/ISSUE_TEMPLATE',
-    );
+    // On the mirror itself the template's own location is that proof.
+    if (dir === DEV_TEMPLATES) {
+      expect(readRepo('.forgejo/publish/snapshot.sh')).toContain(
+        MIRROR_TEMPLATES,
+      );
+    }
   });
 
   it('defines every section key it uses, in both locales', () => {

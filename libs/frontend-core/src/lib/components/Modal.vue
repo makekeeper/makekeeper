@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onBeforeUnmount, computed } from 'vue';
 import { X } from '@lucide/vue';
+// Relative, not the package alias: this component lives inside that library.
+import { useDialogPresence } from '../dialog-presence';
 
 // One dialog primitive: teleported overlay, glass panel, Esc + backdrop dismiss,
 // focus capture/return. Replaces the three hand-rolled modals that differed in
@@ -33,6 +35,9 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void;
   (e: 'close'): void;
 }>();
+
+// Announce the dialog to whatever else wants to draw on screen (#351).
+useDialogPresence(() => props.modelValue);
 
 const panelRef = ref<HTMLElement | null>(null);
 // The element focused before the dialog opened, restored on close.

@@ -2,7 +2,7 @@
 
 > 🇷🇺 Русская версия: **[README.ru.md](README.ru.md)**
 
-**You have the part. Somewhere.** MakeKeeper is a self-hosted workshop log: what you are building,
+**You have the part. Somewhere.** MakeKeeper keeps a workshop in order: what you are building,
 what you have on the shelf, where exactly it is, and what is still on its way — in one place, on
 your own server.
 

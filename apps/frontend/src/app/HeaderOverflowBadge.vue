@@ -2,6 +2,7 @@
 import { computed, inject, onBeforeUnmount, ref, watch } from 'vue';
 import {
   AnchoredPopover,
+  isDialogOpen,
   usePreferencesStore,
 } from '@makekeeper/frontend-core';
 import { HEADER_OVERFLOW } from './header-overflow';
@@ -34,6 +35,24 @@ const dismissCoach = (): void => {
   document.removeEventListener('click', dismissCoach);
 };
 
+// The lesson is spent here, at the moment it is on screen — not where the
+// collapse is observed. A coachmark shown behind a dialog's backdrop would
+// point at a dimmed header nobody is looking at, and mark the profile as
+// taught anyway (#351); so while a dialog is open it is not shown, the flag
+// stays unwritten, and the next collapse teaches instead.
+const showCoach = (): void => {
+  prefs.markHeaderOverflowCoached();
+  coachAnchor.value = badgeRef.value?.parentElement ?? null;
+  coachOpen.value = true;
+  coachTimer = setTimeout(dismissCoach, 6500);
+  // Attached only while the coachmark is open, and only after the event
+  // that caused the collapse has finished propagating — a click that opened
+  // the chat panel must not dismiss the lesson it just triggered.
+  setTimeout(() => {
+    if (coachOpen.value) document.addEventListener('click', dismissCoach);
+  }, 0);
+};
+
 watch(count, (next, prev) => {
   // The count updates instantly; a short scale bump marks an increase. No
   // flight animation — it was tried and cut for jank (see HeaderOverflowRow).
@@ -43,19 +62,40 @@ watch(count, (next, prev) => {
     bumpTimer = setTimeout(() => (bumping.value = false), 200);
   }
 
-  // The one-time lesson, on the first collapse this profile has ever seen.
-  if (next > 0 && prev === 0 && !prefs.headerOverflowCoached) {
-    prefs.markHeaderOverflowCoached();
-    coachAnchor.value = badgeRef.value?.parentElement ?? null;
-    coachOpen.value = true;
-    coachTimer = setTimeout(dismissCoach, 6500);
-    // Attached only while the coachmark is open, and only after the event
-    // that caused the collapse has finished propagating — a click that opened
-    // the chat panel must not dismiss the lesson it just triggered.
-    setTimeout(() => {
-      if (coachOpen.value) document.addEventListener('click', dismissCoach);
-    }, 0);
+  // The one-time lesson, on the first collapse this profile has ever seen —
+  // unless a dialog owns the screen, in which case it keeps waiting.
+  if (
+    next > 0 &&
+    prev === 0 &&
+    !prefs.headerOverflowCoached &&
+    !isDialogOpen.value
+  ) {
+    showCoach();
   }
+});
+
+// The other half of "not while a dialog is open", in both directions.
+watch(isDialogOpen, (open) => {
+  if (open) {
+    // A dialog that opens a moment after the coachmark did would leave it
+    // drawing over the backdrop, since the popover tier deliberately sits
+    // above the modal one. It comes down — but the lesson goes back with it:
+    // the reader's attention moved to the dialog, so what they got was a
+    // glimpse, and spending the one chance on a glimpse is the loss this
+    // ticket exists to prevent.
+    if (!coachOpen.value) return;
+    clearTimeout(coachTimer);
+    dismissCoach();
+    prefs.unmarkHeaderOverflowCoached();
+    return;
+  }
+
+  // The screen is the reader's again. The header did not un-collapse while the
+  // dialog was up, so `count` never returned to zero and its rising edge will
+  // never come round again — teaching here is what makes "the next collapse
+  // teaches instead" true in the very case that caused #351, rather than
+  // deferring the lesson until the window happens to be widened and renarrowed.
+  if (count.value > 0 && !prefs.headerOverflowCoached) showCoach();
 });
 
 onBeforeUnmount(() => {

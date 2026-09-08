@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Users, User } from '@lucide/vue';
+import { useDialogPresence } from '@makekeeper/frontend-core';
 import { useModeTransitionStore } from './transition-store';
 
 // The "magic moment" shown while the multiuser plugin itself is being toggled,
@@ -10,6 +11,10 @@ import { useModeTransitionStore } from './transition-store';
 // edge. Enabling plays it in full spectrum with a hue-rotate shimmer; disabling
 // is the same swirl drained to slate grays: the magic fading out.
 const transition = useModeTransitionStore();
+
+// The veil covers the whole screen while the mode is being switched; nothing
+// else may put itself on top of it on its own initiative (#351).
+useDialogPresence(() => transition.phase !== null);
 
 const enabling = computed(() => transition.phase === 'enabling');
 

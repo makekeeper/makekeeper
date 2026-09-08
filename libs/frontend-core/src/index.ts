@@ -6,6 +6,7 @@ export * from './lib/offline-queue';
 export * from './lib/i18n';
 export * from './lib/plugins-store';
 export * from './lib/preferences-store';
+export { useDialogPresence, isDialogOpen } from './lib/dialog-presence';
 export * from './lib/api';
 export * from './lib/sanitize-html';
 export * from './lib/errors';

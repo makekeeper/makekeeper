@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { WifiOff, Wifi, Loader, RotateCcw, CheckCircle } from '@lucide/vue';
 import { useAvailabilityStore } from '../availability-store';
+import { useDialogPresence } from '../dialog-presence';
 import Spinner from './Spinner.vue';
 import Button from './Button.vue';
 
@@ -58,6 +59,11 @@ watch(
 const isRestored = computed<boolean>(
   () => showRestored.value && !availability.isOffline,
 );
+
+// Same visibility condition as the template's `v-if`: while this lock is up it
+// owns the screen, a tier above the popover one, so nothing may draw over it
+// on its own initiative (#351).
+useDialogPresence(() => availability.isOffline || showRestored.value);
 </script>
 
 <template>

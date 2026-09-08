@@ -3,6 +3,10 @@
 // Authorization + x-scope-id + x-locale headers and funnels 401s into a
 // logout/redirect — while staying a plain passthrough when multi-user mode is
 // off (no token stored → no auth header, exactly today's requests).
+//
+// It is also the one place that says every API request must actually reach the
+// server: `cache: 'no-store'` on the fetch below (#350) — see the note there
+// before "optimising" it away.
 
 export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
@@ -167,6 +171,20 @@ export async function apiFetch(
     headers,
     body,
     signal: options.signal,
+    // Do NOT drop this (#350). Express puts an ETag on every JSON response and
+    // no Cache-Control at all, which leaves the caching decision to per-browser
+    // heuristics: Safari answers a GET from its own copy without asking the
+    // server, so a value changed elsewhere (or reset server-side) never arrives
+    // and the feature looks broken — it cost real time during #343. `no-store`
+    // makes the rule uniform here instead of per-endpoint, and it costs nothing
+    // this app wants, because API answers are live state.
+    //
+    // The immutable attachment cache (#113) is untouched by this: previews and
+    // inline images are `<img src>`/browser fetches that never enter this
+    // function, so they keep their year-long cache. `apiDownload` DOES come
+    // through here — an explicit "save this file" click re-fetches instead of
+    // reusing the cached copy, which is what that gesture should do anyway.
+    cache: 'no-store',
   });
 
   // A server-restart re-arm consumes the presented session key (#243); the

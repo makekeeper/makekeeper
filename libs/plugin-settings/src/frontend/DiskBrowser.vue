@@ -361,9 +361,17 @@ const removeSelected = async (): Promise<void> => {
           </div>
 
           <!-- The only scrolling part, so the dialog's height never depends on
-             how many files a directory happens to hold. -->
+             how many files a directory happens to hold. It claims the free
+             space only while it has rows to show: an empty directory hands the
+             growing role to the empty state below, which would otherwise be
+             pushed to the bottom edge of the frame with a gap above it. -->
           <ul
-            class="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto dark:divide-white/5"
+            class="divide-y divide-slate-100 overflow-y-auto dark:divide-white/5"
+            :class="
+              listing.data.value.entries.length === 0
+                ? 'shrink-0'
+                : 'min-h-0 flex-1'
+            "
           >
             <li v-if="listing.data.value.parentPath !== null">
               <button
@@ -465,6 +473,7 @@ const removeSelected = async (): Promise<void> => {
 
           <EmptyState
             v-if="listing.data.value.entries.length === 0"
+            class="min-h-0 flex-1"
             :icon="Folder"
             :title="$t('settings.disk.browser.empty')"
           />

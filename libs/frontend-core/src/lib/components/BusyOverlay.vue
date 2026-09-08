@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import Spinner from './Spinner.vue';
+// Relative, not the package alias: this component lives inside that library.
+import { useDialogPresence } from '../dialog-presence';
 
 // A full-screen wait lock for ONE operation the person must not work around.
 //
@@ -15,7 +17,7 @@ import Spinner from './Spinner.vue';
 // and it covers the viewport — that IS the interaction block, no `pointer-events`
 // gymnastics needed. `aria-modal` + `role="alertdialog"` tell a screen reader
 // the same thing the backdrop tells the eye.
-defineProps<{
+const props = defineProps<{
   show: boolean;
   // What is being waited on, in the caller's words. Always a resolved string —
   // the primitive holds no copy of its own, because it has no idea what the
@@ -27,6 +29,11 @@ defineProps<{
   // behind it.
   preview?: string;
 }>();
+
+// A wait lock covers the page as completely as a dialog does, and sits a tier
+// ABOVE the popover one — anything drawn on the app's own initiative while
+// this is up is not merely rude, it is invisible (#351).
+useDialogPresence(() => props.show);
 </script>
 
 <template>

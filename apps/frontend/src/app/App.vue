@@ -1666,8 +1666,13 @@ const retry = (msg: ChatMessage): void => {
       }"
     >
       <!-- Top Header -->
+      <!-- The top rule is one line across three regions (#352): the sidebar
+           head, this header and the chat panel head. All three draw it the same
+           way — the same border classes on the element that owns the h-16
+           height, so the 1px lands INSIDE those 64px and the three ends meet.
+           Put it on a wrapper instead and the line drops a pixel. -->
       <header
-        class="flex items-center justify-between h-16 px-6 glass-header sticky top-0 z-30"
+        class="flex items-center justify-between h-16 px-6 border-b border-slate-200/50 dark:border-white/5 glass-header sticky top-0 z-30"
       >
         <div class="flex items-center gap-4 min-w-0">
           <button
@@ -1988,9 +1993,13 @@ const retry = (msg: ChatMessage): void => {
         </span>
       </div>
 
-      <!-- Chat Header -->
-      <div class="relative border-b border-slate-200/50 dark:border-white/5">
-        <div class="flex items-center justify-between h-16 px-4">
+      <!-- Chat Header. The rule belongs to the h-16 row, not to this wrapper
+           (which only anchors the session dropdown) — see the top-rule note on
+           the page header. -->
+      <div class="relative">
+        <div
+          class="flex items-center justify-between h-16 px-4 border-b border-slate-200/50 dark:border-white/5"
+        >
           <div class="flex items-center gap-2 min-w-0">
             <div
               class="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-500/10 text-brand-600 dark:text-brand-400 shrink-0"

@@ -27,7 +27,15 @@ const noReloadOnWsReconnect = (): Plugin => ({
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
-  cacheDir: '../../node_modules/.vite/apps/frontend',
+  // Vitest and the dev server share this config, and on a shared cacheDir a
+  // test run wipes the optimized-deps directory out from under a running
+  // `nx serve`. Eagerly imported deps survive in the browser's cache, so the
+  // breakage surfaces only on the app's one lazy import (`qrcode` in
+  // frontend-core) — which then answers 504 "Outdated Optimize Dep" and QR
+  // codes silently stop rendering until the dev server is restarted.
+  cacheDir: process.env.VITEST
+    ? '../../node_modules/.vite-test/apps/frontend'
+    : '../../node_modules/.vite/apps/frontend',
   server: {
     port: 4200,
     host: true,

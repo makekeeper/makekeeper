@@ -8,6 +8,7 @@ import {
 } from '@makekeeper/plugin-external/backend';
 import { MobileOriginService } from '@makekeeper/plugin-mobile/backend';
 import { AppModule } from './app/app.module';
+import { createNoStoreMiddleware } from './app/no-store.middleware';
 import { setupSwagger } from './app/swagger';
 
 // One header value, whatever Express hands over (a string, a list, nothing).
@@ -59,6 +60,11 @@ async function bootstrap() {
   // is never deserialized (no parse-DoS surface, SSE flows untouched), so
   // nothing downstream may buffer or parse it.
   app.use(createExternalPubPipe(app.get(ExternalPubService)));
+  // Every API answer states that it is live state and must not be served from a
+  // browser cache (#350). Mounted AFTER the pub pipe on purpose: a piped
+  // request is handed to the plugin container untouched, and its response
+  // headers are the plugin's to state.
+  app.use(createNoStoreMiddleware());
   // Larger bodies so requests can carry a base64 attachment — chat images,
   // screenshot import, and project file uploads (3D models, archives, code).
   // Kept in step with nginx's client_max_body_size (.devcontainer/nginx.conf).

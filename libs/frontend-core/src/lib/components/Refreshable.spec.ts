@@ -52,4 +52,22 @@ describe('Refreshable', () => {
       true,
     );
   });
+
+  // #354: the wrapper that carries the blur used to be a plain block box, so a
+  // caller giving this component a bounded height could not pass that height to
+  // a scrolling child — the child grew to its content and overflowed the frame.
+  // Both boxes are flex columns so the height reaches the slot.
+  it('passes a bounded height through to the slot', () => {
+    const wrapper = render({});
+    const root = wrapper.find('.relative');
+    expect(root.classes()).toEqual(
+      expect.arrayContaining(['flex', 'flex-col']),
+    );
+
+    const inner = root.find(':scope > div');
+    expect(inner.classes()).toEqual(
+      expect.arrayContaining(['flex', 'flex-col', 'flex-1', 'min-h-0']),
+    );
+    expect(inner.text()).toContain('the numbers');
+  });
 });

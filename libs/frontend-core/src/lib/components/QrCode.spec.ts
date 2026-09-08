@@ -132,6 +132,15 @@ const LONG =
   'https://court-discussions-reviewer-featured.trycloudflare.com/m/pair?code=bSpwLA51RMf59HP33XjAJ6gDiWrI8YH4y4fbQCZVOb4&lang=en';
 const SHORT = 'http://localhost/c/STG-Y663P';
 
+// Decoding is the expensive half of this file: each of these cases rasterises
+// two to four 1024/2048 px images through sharp and runs zxing over them, and
+// vitest's default budget is 5s per test. On a fast machine a case lands around
+// 3s — comfortable until the runner is slower, where the same case takes 5.2s
+// and the suite fails on the clock rather than on the geometry it guards (#355:
+// the private CI runner is slower than the public one, and only it caught this).
+// The number is a ceiling for a hung decode, not a target.
+const DECODE_TIMEOUT_MS = 30_000;
+
 describe('QrCode', () => {
   for (const [scheme, accent] of Object.entries(SCHEME_ACCENTS)) {
     // Light and dark differ only in the plate: the code stays dark-on-light in
@@ -140,15 +149,19 @@ describe('QrCode', () => {
       ['light', '#ffffff'],
       ['dark', accent.tint],
     ] as const) {
-      it(`decodes the ${scheme} scheme in ${theme}`, async () => {
-        const palette = { plate, module: SLATE_900, accent: accent.accent };
-        for (const value of [LONG, SHORT]) {
-          const markup = await render(value);
-          for (const size of [1024, 2048]) {
-            expect(await decode(markup, palette, size)).toBe(value);
+      it(
+        `decodes the ${scheme} scheme in ${theme}`,
+        async () => {
+          const palette = { plate, module: SLATE_900, accent: accent.accent };
+          for (const value of [LONG, SHORT]) {
+            const markup = await render(value);
+            for (const size of [1024, 2048]) {
+              expect(await decode(markup, palette, size)).toBe(value);
+            }
           }
-        }
-      });
+        },
+        DECODE_TIMEOUT_MS,
+      );
 
       it(`decodes the ${scheme} scheme in ${theme} at the size it is shown`, async () => {
         // A camera can only resolve what the screen renders, so the size the
@@ -163,33 +176,49 @@ describe('QrCode', () => {
 
   const INK = { plate: '#ffffff', module: SLATE_900, accent: SLATE_900 };
 
-  it('decodes the print variant', async () => {
-    const markup = await render(LONG, 'print');
-    for (const size of [1024, 2048]) {
-      expect(await decode(markup, INK, size)).toBe(LONG);
-    }
-  });
+  it(
+    'decodes the print variant',
+    async () => {
+      const markup = await render(LONG, 'print');
+      for (const size of [1024, 2048]) {
+        expect(await decode(markup, INK, size)).toBe(LONG);
+      }
+    },
+    DECODE_TIMEOUT_MS,
+  );
 
   // The size that actually matters for `plugin-codes`, and the one a screen
   // preview flatters: a 23mm label on a 203dpi thermal head is 184 px. The
   // label carries the mark like every other code — that only works because the
   // mark is snapped to the module grid (see `qr-code.ts`); scaled freely it
   // needed roughly 416 px, more than twice what the printer gives it.
-  it('decodes a printed short code at thermal resolution, mark and all', async () => {
-    const markup = await render(SHORT, 'print');
-    // Plate + window + ring + the mark's 21 cells: the label is fully branded.
-    expect((markup.match(/<rect/g) ?? []).length).toBe(24);
-    for (const px of [144, 23 * 8, 320]) {
-      expect(await decode(markup, INK, px)).toBe(SHORT);
-    }
-  });
+  it(
+    'decodes a printed short code at thermal resolution, mark and all',
+    async () => {
+      const markup = await render(SHORT, 'print');
+      // Plate + window + ring + the mark's 21 cells: the label is fully branded.
+      expect((markup.match(/<rect/g) ?? []).length).toBe(24);
+      for (const px of [144, 23 * 8, 320]) {
+        expect(await decode(markup, INK, px)).toBe(SHORT);
+      }
+    },
+    DECODE_TIMEOUT_MS,
+  );
 
-  it('does not decode when inverted — why dark mode keeps a light plate', async () => {
-    const markup = await render(LONG);
-    const inverted = { plate: '#0c1322', module: '#f1f5f9', accent: '#60a5fa' };
-    expect(await decode(markup, inverted, 1024)).toBeNull();
-    expect(await decode(markup, inverted, 2048)).toBeNull();
-  });
+  it(
+    'does not decode when inverted — why dark mode keeps a light plate',
+    async () => {
+      const markup = await render(LONG);
+      const inverted = {
+        plate: '#0c1322',
+        module: '#f1f5f9',
+        accent: '#60a5fa',
+      };
+      expect(await decode(markup, inverted, 1024)).toBeNull();
+      expect(await decode(markup, inverted, 2048)).toBeNull();
+    },
+    DECODE_TIMEOUT_MS,
+  );
 
   it('is decorative unless given a label', async () => {
     const wrapper = mount(QrCode, { props: { value: 'x' } });

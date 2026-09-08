@@ -36,6 +36,11 @@ describe('apiFetch', () => {
     expect(sentHeaders()['x-locale']).toBe('ru');
   });
 
+  it('never lets the browser answer a request from its own cache (#350)', async () => {
+    await apiFetch('/api/telemetry');
+    expect(fetchMock.mock.calls[0][1].cache).toBe('no-store');
+  });
+
   it('injects Authorization and x-scope-id when a session is stored', async () => {
     setStoredToken('tok');
     setStoredScopeId('scope2');

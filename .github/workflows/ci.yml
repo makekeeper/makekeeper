@@ -14,7 +14,10 @@
 # a stock runner? The release workflows are deliberately absent: they publish
 # images under this project's credentials, so a fork could only fail on them.
 #
-# Keep the Prettier version in step with the repo's devDependency.
+# Keep the Prettier version in step with the repo's devDependency, and the
+# verify steps below in step with `.forgejo/verify.sh` — the private side's
+# copy of the same sweep. They cannot share a file: `.forgejo/` is stripped
+# from the snapshot, so this workflow can only carry its own copy.
 name: ci
 
 on:

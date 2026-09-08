@@ -19,12 +19,20 @@ defineProps<{
 </script>
 
 <template>
-  <div class="relative">
+  <!-- The height passes through, deliberately: root and wrapper are both flex
+       columns, so a caller that gives this component a bounded height (its own
+       `flex-1 min-h-0`) hands that height down to the slot, and a scrolling
+       child inside it actually scrolls. Without it the wrapper below would be a
+       plain block box sizing to its content, and every `flex-1` under it would
+       have nothing to resolve against — the list would grow past the frame and
+       whatever sits after it would be overlapped (#354). In an auto-height
+       caller the same classes are inert: the column still sizes to content. -->
+  <div class="relative flex flex-col">
     <!-- The blur is what makes the state read as "being updated" rather than
          "broken"; pointer-events-none stops a click landing on a value that is
          about to change under it. -->
     <div
-      class="transition duration-200"
+      class="flex min-h-0 flex-1 flex-col transition duration-200"
       :class="
         refreshing ? 'pointer-events-none select-none blur-sm opacity-60' : ''
       "

@@ -68,6 +68,10 @@ export const useSessionStore = defineStore('session', () => {
       const token = getStoredToken() ?? getStoredDeviceToken();
       const response = await fetch('/api/auth/status', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
+        // Raw fetch to stay out of the 401 funnel — but still never from the
+        // browser's cache, like every call through apiFetch (#350). A cached
+        // answer here would freeze the whole session state the app boots on.
+        cache: 'no-store',
       });
       if (!response.ok) {
         // Only a definitive answer toggles the overlay. 404 ⇒ plugin disabled.

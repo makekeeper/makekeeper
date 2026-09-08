@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { RotateCcw } from '@lucide/vue';
+import { useDialogPresence } from '@makekeeper/frontend-core';
 import { matchLandscapePhone, observeLandscapePhone } from './orientation';
 
 // The phone shell is a portrait shape, and a phone turned on its side gets told
@@ -21,6 +22,10 @@ const stop = observeLandscapePhone(matchLandscapePhone(), (landscape) => {
   isLandscapePhone.value = landscape;
 });
 onBeforeUnmount(stop);
+
+// It blocks the screen exactly as a dialog does, so it answers the same
+// question a dialog answers (#351).
+useDialogPresence(() => isLandscapePhone.value);
 
 // A modal that never takes focus is a modal only for the eyes: the shell behind
 // it stays tab-reachable, so a keyboard or a switch lands on controls that are
