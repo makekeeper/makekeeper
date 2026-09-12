@@ -11,8 +11,15 @@
 # It is not a copy of the Forgejo-side pipeline, and the two are allowed to
 # diverge: that one gates pushes to the private instance, this one answers the
 # only question a reader or forker has — does this tree lint, build and test on
-# a stock runner? The release workflows are deliberately absent: they publish
-# images under this project's credentials, so a fork could only fail on them.
+# a stock runner?
+#
+# It answers that question twice over. `release.yml` calls this file as a
+# reusable workflow before it builds an image (#356), so the sweep a reader can
+# run is also the gate a release passes — the tag event never fires `push`, and
+# the tree an image is cut from is this snapshot rather than the private one.
+# The plugin release workflow is still deliberately absent: it publishes under
+# this project's credentials against tags that never reach this repository, so
+# a fork could only ever fail on it.
 #
 # Keep the Prettier version in step with the repo's devDependency, and the
 # verify steps below in step with `.forgejo/verify.sh` — the private side's
@@ -25,6 +32,12 @@ on:
     branches:
       - '**'
   pull_request:
+  # Called by `release.yml` before it builds the images. Declared here rather
+  # than duplicated there: both files live in this directory on the published
+  # side, which is the one place in this pipeline where sharing a definition is
+  # possible at all — `.forgejo/verify.sh`, the private side's copy of the same
+  # sweep, is stripped from the snapshot and cannot be reached from here.
+  workflow_call:
 
 concurrency:
   group: ci-${{ github.ref }}

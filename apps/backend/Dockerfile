@@ -8,12 +8,12 @@
 # by `migrate` is more reliable on glibc.
 
 # ---- dependency stage ------------------------------------------------------
-# Isolating `npm ci` in its own stage is what makes the registry build cache
+# Isolating `npm ci` in its own stage is what makes the release build cache
 # (release.yml, mode=max) worth having: the layer is keyed on the lockfile, so a
 # release that did not touch package-lock.json restores the whole monorepo
 # install instead of re-running it. The web image has its own, leaner copy of
 # this stage — the two need not match, since app and web are separate matrix
-# legs with separate cache refs and cannot share a layer.
+# legs with separate cache scopes and cannot share a layer.
 #
 # openssl + ca-certificates: Prisma downloads/loads its engines during install
 # and generate; without them `prisma generate`/`migrate` can fail to init.

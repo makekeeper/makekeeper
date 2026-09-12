@@ -1,0 +1,300 @@
+# Build the app + web images and push them to GitHub Container Registry (ghcr.io),
+# then mirror the pushed tags to Docker Hub. GHCR stays the source of truth; the
+# mirror exists because GHCR is not searchable and Docker Hub is (#341).
+#
+# This file is generated: development happens on a private Forgejo instance,
+# which publishes each release here as a snapshot and plants this workflow at
+# `.github/workflows/release.yml`. Editing it in the published repository has no
+# effect past the next release — see CONTRIBUTING.md for how a change travels.
+# (In the development repository it is `.forgejo/publish/github/release.yml`,
+# kept out of `.github/workflows/` so Forgejo Actions does not run it a second
+# time there.)
+#
+# Why the build lives here and not next to the source (#356): the image is then
+# provably built from the code that was published. The private tree and the
+# published snapshot are not the same tree — the snapshot has the agent and CI
+# directories stripped and these workflows planted — so a build on the private
+# side could only ever assert the correspondence, never demonstrate it.
+#
+# The publishing jobs are inert in a fork: they are guarded on the repository
+# name, because they push under this project's credentials and a fork has none.
+# `ci.yml` is the workflow a fork is meant to get value from.
+#
+# Configuration (Settings -> Secrets and variables -> Actions):
+#   GITHUB_TOKEN        built in; `packages: write` below is all ghcr.io needs.
+#                       Each package (`app`, `web`) must additionally grant this
+#                       repository write access under Package settings -> Manage
+#                       Actions access, once, by hand — otherwise the push fails
+#                       with a 403 that reads like a bad token.
+#   secrets.DOCKERHUB_USER / secrets.DOCKERHUB_TOKEN — OPTIONAL Docker Hub account
+#                       and access token with write access. Leave both unset and the
+#                       mirror is skipped; the release itself is unaffected.
+#   vars.DOCKERHUB_OWNER — OPTIONAL Docker Hub namespace; defaults to "makekeeper".
+#   vars.GHCR_OWNER     — OPTIONAL ghcr namespace; defaults to this repository's owner.
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build without pushing — smoke-test the build and the cache'
+        # A choice, not a boolean: a `type: boolean` input reaches an expression
+        # as a real boolean here and as the string "true" on other runners, and
+        # this value decides whether we publish. A comparison that must never
+        # fail open should not depend on which of the two we get.
+        type: choice
+        options:
+          - 'no'
+          - 'yes'
+        default: 'no'
+
+# One release at a time. A second tag pushed while the first is still building
+# must queue rather than race it to `:latest`.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # Nothing is published from a tree that does not build (#355). `ci` runs on
+  # every branch push but never on a tag, and the tree it saw is not the tree
+  # this job builds: the snapshot arrives with these workflows planted and the
+  # private directories stripped. So the sweep runs once more, here, over
+  # exactly the tree the images are cut from. `ci.yml` is reused rather than
+  # copied — both files live in the same directory on the published side, which
+  # is the one place in this pipeline where sharing is possible at all.
+  #
+  # Unconditional, a dry run included. Gating it on `dry_run != 'yes'` would
+  # save seven minutes on a smoke test and cost the gate its one property: a
+  # skipped `needs:` dependency skips the build too, so the escape hatch has to
+  # be written with `always()`, and an `always()` guard that is one clause short
+  # is exactly how a red tree gets published.
+  verify:
+    uses: ./.github/workflows/ci.yml
+
+  build-push:
+    needs: verify
+    # A fork inherits this file but none of the credentials it needs. Skipping
+    # is the honest outcome — the alternative is every fork carrying a release
+    # workflow that can only fail.
+    if: github.repository == 'makekeeper/makekeeper'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        include:
+          - name: app
+            dockerfile: apps/backend/Dockerfile
+          - name: web
+            dockerfile: apps/frontend/Dockerfile
+          # First-party external plugins (plugins/*) are separate products with
+          # their own version lines, released by their own tags
+          # (mk-plugin-<id>/vX.Y.Z), never by a product tag. Those tags are not
+          # published to this repository, so their build stays on the private
+          # side until it is — see #305.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      # The default driver cannot export a cache at all; `docker-container`,
+      # which this action sets up, can. That is the whole reason the step is
+      # here — a release that did not touch package-lock.json must restore the
+      # `deps` stage rather than re-run `npm ci` twice.
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        # The mirror's on/off switch is decided here, from the presence of the
+        # credentials, and consumed downstream as a plain output: the `secrets`
+        # context is not available to a job-level `if:`, and reading it in one
+        # place beats scattering the question.
+        env:
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKERHUB_OWNER: ${{ vars.DOCKERHUB_OWNER }}
+          GHCR_OWNER: ${{ vars.GHCR_OWNER }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          IMAGE_NAME: ${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          ref_name="${GITHUB_REF_NAME:-${GITHUB_REF##*/}}"
+
+          # "Is this a tag?" is read off GITHUB_REF rather than GITHUB_REF_TYPE:
+          # the former is what the fallback above already trusts, and an unset
+          # REF_TYPE would silently turn every release into a non-release.
+          case "${GITHUB_REF}" in
+            refs/tags/*) is_tag=true ;;
+            *)           is_tag=false ;;
+          esac
+
+          # Publishing is opt-out on a tag, impossible off one. A manual run from
+          # a branch would otherwise push `app:<branch>` AND move `app:latest`
+          # onto a branch build — so a non-tag ref is only allowed as a dry run.
+          if [ "${DRY_RUN:-no}" = "yes" ]; then
+            push=false
+          else
+            push=true
+          fi
+          if [ "$push" = "true" ] && [ "$is_tag" != "true" ]; then
+            echo "refusing to publish from non-tag ref '${ref_name}': push a vX.Y.Z tag, or re-run this workflow with dry_run=yes" >&2
+            exit 1
+          fi
+          echo "push=${push}" >> "$GITHUB_OUTPUT"
+
+          owner="${GHCR_OWNER:-$REPO_OWNER}"
+          img="ghcr.io/${owner}/${IMAGE_NAME}"
+
+          # Docker Hub is an account on a different service and cannot be derived
+          # from context, so it gets its own override with a project default.
+          hub_owner="${DOCKERHUB_OWNER:-makekeeper}"
+          hub_img="docker.io/${hub_owner}/${IMAGE_NAME}"
+
+          # A dry run gets a FIXED version and a fixed image tag, never one
+          # derived from the ref. Deriving it made the dispatch unusable from
+          # this project's own branches: a Docker tag may not contain `/`, and
+          # `feature/…`, `fix/…`, `chore/…` are the naming convention (#257) —
+          # the build failed on tag validation, which `push: false` does not
+          # skip, and read as a broken build rather than a bad name.
+          if [ "$is_tag" != "true" ]; then
+            echo "dry run from '${ref_name}': building without pushing"
+            {
+              echo "version=0.0.0-dryrun"
+              echo "list=${img}:dryrun"
+              echo "dockerhub=false"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          version="${ref_name#v}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+          # A prerelease publishes its own tag and nothing else. `v0.19.0-rc.1`
+          # used to move `latest` onto a release candidate and invent a
+          # `0.19.0-rc` series alongside it (`${version%.*}` cuts at the last
+          # dot, which on a prerelease is the one inside the suffix). Both are
+          # wrong, and together they made a candidate tag unusable as a
+          # rehearsal of the pipeline — the one thing a candidate is for.
+          # Same reading of "is this final?" as the Release object uses: a
+          # hyphen in the version means no.
+          case "$version" in
+            *-*) tag_list="${img}:${version}"
+                 hub_tag_list="${hub_img}:${version}" ;;
+            *)   major_minor="${version%.*}"
+                 tag_list="${img}:${version}
+          ${img}:${major_minor}
+          ${img}:latest"
+                 hub_tag_list="${hub_img}:${version}
+          ${hub_img}:${major_minor}
+          ${hub_img}:latest" ;;
+          esac
+
+          {
+            echo "list<<EOF"
+            echo "${tag_list}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ "$push" = "true" ] && [ -n "${DOCKERHUB_USER:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
+            echo "dockerhub=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "hub_list<<EOF"
+              echo "${hub_tag_list}"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "dockerhub=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          # Decided in "Compute image tags": false only for a dry run, which is
+          # also the only way to reach this step without a release tag.
+          push: ${{ steps.tags.outputs.push }}
+          tags: ${{ steps.tags.outputs.list }}
+          # The Actions cache rather than a registry ref (#356/#300): it is the
+          # native store for a hosted runner, and it keeps the `buildcache` tag
+          # out of the release package, where it used to headline the package
+          # page as the newest thing to pull. Unlike the registry cache it is
+          # evicted after seven days idle, so a release cut weeks after the last
+          # one builds cold — accepted: a cold build is four minutes.
+          #
+          # mode=max is the point of caching here at all: it is the only mode
+          # that keeps intermediate stages, i.e. the `deps` stage holding the
+          # monorepo's `npm ci`. Each matrix leg owns its scope — two legs
+          # writing one scope would clobber each other, and they run in
+          # parallel, so the win is release-over-release.
+          #
+          # A dry run writes this cache too, which the registry-backed version
+          # deliberately did not: an export there was a registry write that
+          # would have overwritten a published package's tag. The Actions cache
+          # is neither published nor pullable, so the rule it existed for does
+          # not apply.
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+          # Bakes the release version into the app image (ignored by the web image).
+          build-args: |
+            APP_VERSION=${{ steps.tags.outputs.version }}
+          # linux/arm64 is #357, and it wants native arm runners rather than
+          # emulation — which is one of the reasons this build moved here.
+          platforms: linux/amd64
+          # Off by choice, not by driver limitation: provenance turns the tag
+          # into a manifest index with an extra attestation manifest, which some
+          # registry UIs and older pullers mishandle. A release tag stays a
+          # plain single-platform manifest.
+          provenance: false
+
+      # Docker Hub is published by a SECOND push of the same build, not by a
+      # registry-to-registry copy. `buildx imagetools create` was the obvious
+      # choice and is wrong here: it wraps the single-platform manifest in an
+      # OCI index, and an index makes the client select by platform — so an
+      # arm64 host, which today pulls our amd64 image from ghcr.io and runs it
+      # under emulation, gets "no matching manifest for linux/arm64/v8" from
+      # Docker Hub. Verified on an aarch64 host against both shapes (#341).
+      #
+      # Every stage is a cache hit from the push above, so this step uploads
+      # rather than rebuilds. Both steps are `continue-on-error` by requirement:
+      # the release is what ghcr.io already has, and an expired Docker Hub token
+      # or a Docker Hub outage must not turn a shipped release red.
+      - name: Log in to Docker Hub
+        if: steps.tags.outputs.dockerhub == 'true'
+        continue-on-error: true
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Mirror the release to Docker Hub
+        if: steps.tags.outputs.dockerhub == 'true'
+        continue-on-error: true
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.tags.outputs.hub_list }}
+          # Read-only: this step re-uploads the build above, it does not produce
+          # a second one worth caching.
+          cache-from: type=gha,scope=${{ matrix.name }}
+          build-args: |
+            APP_VERSION=${{ steps.tags.outputs.version }}
+          platforms: linux/amd64
+          provenance: false
