@@ -92,9 +92,15 @@ jobs:
       push: ${{ steps.tags.outputs.push }}
       version: ${{ steps.tags.outputs.version }}
       suffixes: ${{ steps.tags.outputs.suffixes }}
-      ghcr_owner: ${{ steps.tags.outputs.ghcr_owner }}
-      hub_owner: ${{ steps.tags.outputs.hub_owner }}
       dockerhub: ${{ steps.tags.outputs.dockerhub }}
+      # The registry OWNERS are deliberately NOT outputs here. Actions refuses
+      # to pass a job output whose value matches a registered secret, replacing
+      # it with an empty string and one warning line ("Skip output '…' since it
+      # may contain secret") — and `DOCKERHUB_USER` happens to be the same word
+      # as the namespace. The first attempt at this job graph pushed to
+      # `ghcr.io//app` and failed on "invalid reference format". They are cheap
+      # to derive, so every job that needs one derives it inline from `vars` and
+      # the repository owner instead of routing it through here.
     steps:
       - name: Compute the version and its tags
         id: tags
@@ -105,9 +111,6 @@ jobs:
         env:
           DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          DOCKERHUB_OWNER: ${{ vars.DOCKERHUB_OWNER }}
-          GHCR_OWNER: ${{ vars.GHCR_OWNER }}
-          REPO_OWNER: ${{ github.repository_owner }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
@@ -133,13 +136,7 @@ jobs:
             echo "refusing to publish from non-tag ref '${ref_name}': push a vX.Y.Z tag, or re-run this workflow with dry_run=yes" >&2
             exit 1
           fi
-          {
-            echo "push=${push}"
-            echo "ghcr_owner=${GHCR_OWNER:-$REPO_OWNER}"
-            # Docker Hub is an account on a different service and cannot be
-            # derived from context, so it gets its own override with a default.
-            echo "hub_owner=${DOCKERHUB_OWNER:-makekeeper}"
-          } >> "$GITHUB_OUTPUT"
+          echo "push=${push}" >> "$GITHUB_OUTPUT"
 
           # A dry run gets a FIXED version, never one derived from the ref.
           # Deriving it made the dispatch unusable from this project's own
@@ -247,7 +244,7 @@ jobs:
           # Push by digest on a release; build and discard on a dry run. Written
           # as one conditional output rather than a `push:` flag because these
           # legs must never carry a tag — see the job comment.
-          outputs: ${{ needs.meta.outputs.push == 'true' && format('type=image,name=ghcr.io/{0}/{1},push-by-digest=true,name-canonical=true,push=true', needs.meta.outputs.ghcr_owner, matrix.image.name) || '' }}
+          outputs: ${{ needs.meta.outputs.push == 'true' && format('type=image,name=ghcr.io/{0}/{1},push-by-digest=true,name-canonical=true,push=true', vars.GHCR_OWNER || github.repository_owner, matrix.image.name) || '' }}
           # The Actions cache rather than a registry ref (#356/#300): it is the
           # native store for a hosted runner, and it keeps the `buildcache` tag
           # out of the release package, where it used to headline the package
@@ -340,7 +337,7 @@ jobs:
 
       - name: Create the multi-architecture tags
         env:
-          IMG: ghcr.io/${{ needs.meta.outputs.ghcr_owner }}/${{ matrix.image }}
+          IMG: ghcr.io/${{ vars.GHCR_OWNER || github.repository_owner }}/${{ matrix.image }}
           SUFFIXES: ${{ needs.meta.outputs.suffixes }}
         run: |
           set -euo pipefail
@@ -367,7 +364,7 @@ jobs:
 
       - name: Show what was published
         env:
-          IMG: ghcr.io/${{ needs.meta.outputs.ghcr_owner }}/${{ matrix.image }}
+          IMG: ghcr.io/${{ vars.GHCR_OWNER || github.repository_owner }}/${{ matrix.image }}
           VERSION: ${{ needs.meta.outputs.version }}
         run: docker buildx imagetools inspect "${IMG}:${VERSION}"
 
@@ -395,8 +392,8 @@ jobs:
         if: needs.meta.outputs.dockerhub == 'true'
         continue-on-error: true
         env:
-          IMG: ghcr.io/${{ needs.meta.outputs.ghcr_owner }}/${{ matrix.image }}
-          HUB: docker.io/${{ needs.meta.outputs.hub_owner }}/${{ matrix.image }}
+          IMG: ghcr.io/${{ vars.GHCR_OWNER || github.repository_owner }}/${{ matrix.image }}
+          HUB: docker.io/${{ vars.DOCKERHUB_OWNER || 'makekeeper' }}/${{ matrix.image }}
           SUFFIXES: ${{ needs.meta.outputs.suffixes }}
         run: |
           set -euo pipefail
