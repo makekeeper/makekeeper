@@ -13,7 +13,9 @@
 # release that did not touch package-lock.json restores the whole monorepo
 # install instead of re-running it. The web image has its own, leaner copy of
 # this stage — the two need not match, since app and web are separate matrix
-# legs with separate cache scopes and cannot share a layer.
+# legs with separate cache scopes and cannot share a layer. The scope is keyed
+# by architecture too (#357): an arm64 layer is not a substitute for an amd64
+# one, and the two legs build in parallel on different runners.
 #
 # openssl + ca-certificates: Prisma downloads/loads its engines during install
 # and generate; without them `prisma generate`/`migrate` can fail to init.

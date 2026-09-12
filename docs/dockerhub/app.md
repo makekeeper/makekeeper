@@ -52,10 +52,14 @@ Everything above is a **plugin**: turn off what you do not use and it disappears
 interface, the API and the assistant's tools. The app is not tied to electronics — it fits any
 craft where you build things out of parts.
 
-## Tags
+## Tags and architectures
 
 `X.Y.Z` (pin this in production), `X.Y`, `latest`. Every tag is the same manifest published to
 `ghcr.io/makekeeper/app`, which stays the primary registry.
+
+Each tag covers **`linux/amd64` and `linux/arm64`**, so Docker pulls a native image on either —
+a Raspberry Pi 5, an Ampere VPS or an Apple Silicon machine runs the ARM build, not an emulated
+x86 one. No other architectures are published.
 
 ## Links & licence
 

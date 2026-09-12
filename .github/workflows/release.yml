@@ -1,6 +1,7 @@
-# Build the app + web images and push them to GitHub Container Registry (ghcr.io),
-# then mirror the pushed tags to Docker Hub. GHCR stays the source of truth; the
-# mirror exists because GHCR is not searchable and Docker Hub is (#341).
+# Build the app + web images for every supported architecture and push them to
+# GitHub Container Registry (ghcr.io), then mirror the pushed tags to Docker Hub.
+# GHCR stays the source of truth; the mirror exists because GHCR is not
+# searchable and Docker Hub is (#341).
 #
 # This file is generated: development happens on a private Forgejo instance,
 # which publishes each release here as a snapshot and plants this workflow at
@@ -14,7 +15,9 @@
 # provably built from the code that was published. The private tree and the
 # published snapshot are not the same tree — the snapshot has the agent and CI
 # directories stripped and these workflows planted — so a build on the private
-# side could only ever assert the correspondence, never demonstrate it.
+# side could only ever assert the correspondence, never demonstrate it. It is
+# also what makes arm64 affordable (#357): GitHub lends a public repository free
+# native arm runners, and the private instance has none.
 #
 # The publishing jobs are inert in a fork: they are guarded on the repository
 # name, because they push under this project's credentials and a fork has none.
@@ -78,45 +81,22 @@ jobs:
   verify:
     uses: ./.github/workflows/ci.yml
 
-  build-push:
-    needs: verify
-    # A fork inherits this file but none of the credentials it needs. Skipping
-    # is the honest outcome — the alternative is every fork carrying a release
-    # workflow that can only fail.
-    if: github.repository == 'makekeeper/makekeeper'
+  # Everything the other jobs need to agree on, decided once. Before #357 this
+  # lived inside the build job, which was fine while a build and a publication
+  # were the same step; now the per-platform builds and the manifest that joins
+  # them are different jobs, and two of them deriving the version from the ref
+  # independently is a disagreement waiting to happen.
+  meta:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    strategy:
-      matrix:
-        include:
-          - name: app
-            dockerfile: apps/backend/Dockerfile
-          - name: web
-            dockerfile: apps/frontend/Dockerfile
-          # First-party external plugins (plugins/*) are separate products with
-          # their own version lines, released by their own tags
-          # (mk-plugin-<id>/vX.Y.Z), never by a product tag. Those tags are not
-          # published to this repository, so their build stays on the private
-          # side until it is — see #305.
+    outputs:
+      push: ${{ steps.tags.outputs.push }}
+      version: ${{ steps.tags.outputs.version }}
+      suffixes: ${{ steps.tags.outputs.suffixes }}
+      ghcr_owner: ${{ steps.tags.outputs.ghcr_owner }}
+      hub_owner: ${{ steps.tags.outputs.hub_owner }}
+      dockerhub: ${{ steps.tags.outputs.dockerhub }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-
-      # The default driver cannot export a cache at all; `docker-container`,
-      # which this action sets up, can. That is the whole reason the step is
-      # here — a release that did not touch package-lock.json must restore the
-      # `deps` stage rather than re-run `npm ci` twice.
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Log in to ghcr.io
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Compute image tags
+      - name: Compute the version and its tags
         id: tags
         # The mirror's on/off switch is decided here, from the presence of the
         # credentials, and consumed downstream as a plain output: the `secrets`
@@ -129,7 +109,6 @@ jobs:
           GHCR_OWNER: ${{ vars.GHCR_OWNER }}
           REPO_OWNER: ${{ github.repository_owner }}
           DRY_RUN: ${{ inputs.dry_run }}
-          IMAGE_NAME: ${{ matrix.name }}
         run: |
           set -euo pipefail
           ref_name="${GITHUB_REF_NAME:-${GITHUB_REF##*/}}"
@@ -154,27 +133,25 @@ jobs:
             echo "refusing to publish from non-tag ref '${ref_name}': push a vX.Y.Z tag, or re-run this workflow with dry_run=yes" >&2
             exit 1
           fi
-          echo "push=${push}" >> "$GITHUB_OUTPUT"
+          {
+            echo "push=${push}"
+            echo "ghcr_owner=${GHCR_OWNER:-$REPO_OWNER}"
+            # Docker Hub is an account on a different service and cannot be
+            # derived from context, so it gets its own override with a default.
+            echo "hub_owner=${DOCKERHUB_OWNER:-makekeeper}"
+          } >> "$GITHUB_OUTPUT"
 
-          owner="${GHCR_OWNER:-$REPO_OWNER}"
-          img="ghcr.io/${owner}/${IMAGE_NAME}"
-
-          # Docker Hub is an account on a different service and cannot be derived
-          # from context, so it gets its own override with a project default.
-          hub_owner="${DOCKERHUB_OWNER:-makekeeper}"
-          hub_img="docker.io/${hub_owner}/${IMAGE_NAME}"
-
-          # A dry run gets a FIXED version and a fixed image tag, never one
-          # derived from the ref. Deriving it made the dispatch unusable from
-          # this project's own branches: a Docker tag may not contain `/`, and
-          # `feature/…`, `fix/…`, `chore/…` are the naming convention (#257) —
-          # the build failed on tag validation, which `push: false` does not
-          # skip, and read as a broken build rather than a bad name.
+          # A dry run gets a FIXED version, never one derived from the ref.
+          # Deriving it made the dispatch unusable from this project's own
+          # branches: a Docker tag may not contain `/`, and `feature/…`, `fix/…`,
+          # `chore/…` are the naming convention (#257) — the build failed on tag
+          # validation, which not pushing does not skip, and read as a broken
+          # build rather than a bad name.
           if [ "$is_tag" != "true" ]; then
             echo "dry run from '${ref_name}': building without pushing"
             {
               echo "version=0.0.0-dryrun"
-              echo "list=${img}:dryrun"
+              echo "suffixes="
               echo "dockerhub=false"
             } >> "$GITHUB_OUTPUT"
             exit 0
@@ -192,89 +169,221 @@ jobs:
           # Same reading of "is this final?" as the Release object uses: a
           # hyphen in the version means no.
           case "$version" in
-            *-*) tag_list="${img}:${version}"
-                 hub_tag_list="${hub_img}:${version}" ;;
-            *)   major_minor="${version%.*}"
-                 tag_list="${img}:${version}
-          ${img}:${major_minor}
-          ${img}:latest"
-                 hub_tag_list="${hub_img}:${version}
-          ${hub_img}:${major_minor}
-          ${hub_img}:latest" ;;
+            *-*) suffixes="${version}" ;;
+            *)   suffixes="${version} ${version%.*} latest" ;;
           esac
+          echo "suffixes=${suffixes}" >> "$GITHUB_OUTPUT"
 
-          {
-            echo "list<<EOF"
-            echo "${tag_list}"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-          if [ "$push" = "true" ] && [ -n "${DOCKERHUB_USER:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
+          if [ -n "${DOCKERHUB_USER:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
             echo "dockerhub=true" >> "$GITHUB_OUTPUT"
-            {
-              echo "hub_list<<EOF"
-              echo "${hub_tag_list}"
-              echo "EOF"
-            } >> "$GITHUB_OUTPUT"
           else
             echo "dockerhub=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build and push
+  # One job per image PER ARCHITECTURE, each on a runner of that architecture
+  # (#357). The alternative — one job building both platforms through QEMU —
+  # emulates an entire monorepo install, Prisma generation and webpack build,
+  # and turns a four-minute leg into a long one. GitHub lends public
+  # repositories native arm runners, so there is no reason to pay that.
+  #
+  # These legs push by DIGEST and carry no tag: a tag can only name one
+  # manifest, and two jobs writing the same tag would each overwrite the other.
+  # The `merge` job below is what turns the digests into the tagged index.
+  build:
+    needs: [verify, meta]
+    # A fork inherits this file but none of the credentials it needs. Skipping
+    # is the honest outcome — the alternative is every fork carrying a release
+    # workflow that can only fail.
+    if: github.repository == 'makekeeper/makekeeper'
+    runs-on: ${{ matrix.platform.runner }}
+    timeout-minutes: 60
+    strategy:
+      # One failed architecture must not cancel the other: knowing whether arm64
+      # alone is broken, or the tree is, is the whole diagnostic value here.
+      fail-fast: false
+      matrix:
+        image:
+          - name: app
+            dockerfile: apps/backend/Dockerfile
+          - name: web
+            dockerfile: apps/frontend/Dockerfile
+          # First-party external plugins (plugins/*) are separate products with
+          # their own version lines, released by their own tags
+          # (mk-plugin-<id>/vX.Y.Z), never by a product tag. Those tags are not
+          # published to this repository, so their build stays on the private
+          # side until it is — see #305.
+        platform:
+          - key: amd64
+            docker: linux/amd64
+            runner: ubuntu-latest
+          - key: arm64
+            docker: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      # The default driver cannot export a cache at all; `docker-container`,
+      # which this action sets up, can. That is the whole reason the step is
+      # here — a release that did not touch package-lock.json must restore the
+      # `deps` stage rather than re-run `npm ci` four times over.
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        id: build
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
-          # Decided in "Compute image tags": false only for a dry run, which is
-          # also the only way to reach this step without a release tag.
-          push: ${{ steps.tags.outputs.push }}
-          tags: ${{ steps.tags.outputs.list }}
+          file: ${{ matrix.image.dockerfile }}
+          platforms: ${{ matrix.platform.docker }}
+          # Push by digest on a release; build and discard on a dry run. Written
+          # as one conditional output rather than a `push:` flag because these
+          # legs must never carry a tag — see the job comment.
+          outputs: ${{ needs.meta.outputs.push == 'true' && format('type=image,name=ghcr.io/{0}/{1},push-by-digest=true,name-canonical=true,push=true', needs.meta.outputs.ghcr_owner, matrix.image.name) || '' }}
           # The Actions cache rather than a registry ref (#356/#300): it is the
           # native store for a hosted runner, and it keeps the `buildcache` tag
           # out of the release package, where it used to headline the package
           # page as the newest thing to pull. Unlike the registry cache it is
           # evicted after seven days idle, so a release cut weeks after the last
-          # one builds cold — accepted: a cold build is four minutes.
+          # one builds cold — accepted: a cold build is a few minutes.
           #
           # mode=max is the point of caching here at all: it is the only mode
           # that keeps intermediate stages, i.e. the `deps` stage holding the
-          # monorepo's `npm ci`. Each matrix leg owns its scope — two legs
-          # writing one scope would clobber each other, and they run in
-          # parallel, so the win is release-over-release.
+          # monorepo's `npm ci`. The scope is keyed by image AND architecture:
+          # the legs run in parallel, and an arm64 layer is not a substitute for
+          # an amd64 one, so a shared scope would both clobber and mislead.
           #
           # A dry run writes this cache too, which the registry-backed version
           # deliberately did not: an export there was a registry write that
           # would have overwritten a published package's tag. The Actions cache
           # is neither published nor pullable, so the rule it existed for does
           # not apply.
-          cache-from: type=gha,scope=${{ matrix.name }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+          cache-from: type=gha,scope=${{ matrix.image.name }}-${{ matrix.platform.key }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}-${{ matrix.platform.key }}
           # Bakes the release version into the app image (ignored by the web image).
           build-args: |
-            APP_VERSION=${{ steps.tags.outputs.version }}
-          # linux/arm64 is #357, and it wants native arm runners rather than
-          # emulation — which is one of the reasons this build moved here.
-          platforms: linux/amd64
-          # Off by choice, not by driver limitation: provenance turns the tag
-          # into a manifest index with an extra attestation manifest, which some
-          # registry UIs and older pullers mishandle. A release tag stays a
-          # plain single-platform manifest.
+            APP_VERSION=${{ needs.meta.outputs.version }}
+          # Off by choice, not by driver limitation: provenance would attach an
+          # extra attestation manifest to each per-platform digest, which some
+          # registry UIs and older pullers mishandle — and here it would also
+          # make each leg's "digest" an index of its own, which is not what the
+          # merge step expects to be handed.
           provenance: false
 
-      # Docker Hub is published by a SECOND push of the same build, not by a
-      # registry-to-registry copy. `buildx imagetools create` was the obvious
-      # choice and is wrong here: it wraps the single-platform manifest in an
-      # OCI index, and an index makes the client select by platform — so an
-      # arm64 host, which today pulls our amd64 image from ghcr.io and runs it
-      # under emulation, gets "no matching manifest for linux/arm64/v8" from
-      # Docker Hub. Verified on an aarch64 host against both shapes (#341).
+      # The digest is the only thing the merge job needs, and there is no output
+      # channel between jobs but artifacts. An empty file named after the digest
+      # is the cheapest carrier: the merge job reads the NAMES, never the
+      # contents.
+      - name: Export the digest
+        if: needs.meta.outputs.push == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/digests
+          digest='${{ steps.build.outputs.digest }}'
+          if [ -z "$digest" ]; then
+            echo "FATAL: the build produced no digest — nothing to merge." >&2
+            exit 1
+          fi
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload the digest
+        if: needs.meta.outputs.push == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: digests-${{ matrix.image.name }}-${{ matrix.platform.key }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # The tags are created here, once per image, from the per-architecture digests
+  # — so `latest` becomes an index listing amd64 and arm64 rather than a single
+  # manifest. Until #357 a tag was a plain amd64 manifest and an arm64 host
+  # pulled it and emulated it, which needed a binfmt handler it may not have.
+  #
+  # Skipped on a dry run: there is nothing to join, because the legs pushed
+  # nothing. A dry run therefore exercises the builds and not the manifest —
+  # stated rather than hidden.
+  merge:
+    needs: [meta, build]
+    if: needs.meta.outputs.push == 'true' && github.repository == 'makekeeper/makekeeper'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [app, web]
+    steps:
+      - name: Download the digests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: /tmp/digests
+          pattern: digests-${{ matrix.image }}-*
+          merge-multiple: true
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create the multi-architecture tags
+        env:
+          IMG: ghcr.io/${{ needs.meta.outputs.ghcr_owner }}/${{ matrix.image }}
+          SUFFIXES: ${{ needs.meta.outputs.suffixes }}
+        run: |
+          set -euo pipefail
+          cd /tmp/digests
+
+          # Count what arrived before joining it. A leg that failed leaves its
+          # artifact missing, and `fail-fast: false` means the others still get
+          # here — publishing a half index (amd64 only, say) under `latest` is
+          # worse than publishing nothing, and it would look like success.
+          found=$(ls -1 | wc -l)
+          echo "digests for ${IMG}: $found"
+          ls -1 | sed 's/^/  sha256:/'
+          if [ "$found" -ne 2 ]; then
+            echo "FATAL: expected one digest per architecture (2), got ${found}." >&2
+            echo "FATAL: nothing was tagged — fix the failed build leg and re-run." >&2
+            exit 1
+          fi
+
+          tag_args=""
+          for s in $SUFFIXES; do tag_args="${tag_args} -t ${IMG}:${s}"; done
+          # shellcheck disable=SC2086 — both lists are deliberately word-split.
+          docker buildx imagetools create ${tag_args} \
+            $(printf "${IMG}@sha256:%s " *)
+
+      - name: Show what was published
+        env:
+          IMG: ghcr.io/${{ needs.meta.outputs.ghcr_owner }}/${{ matrix.image }}
+          VERSION: ${{ needs.meta.outputs.version }}
+        run: docker buildx imagetools inspect "${IMG}:${VERSION}"
+
+      # Docker Hub is a copy of what ghcr.io just received, made with
+      # `imagetools create` from the same digests. That command was rejected for
+      # this job in #341, and the reason no longer holds: back then it wrapped a
+      # single amd64 manifest in an index, and an index makes a client select by
+      # platform — so an arm64 host, which until #357 pulled our amd64 image and
+      # emulated it, got "no matching manifest for linux/arm64/v8". The index it
+      # now builds CARRIES arm64, which is the entry whose absence was the bug.
       #
-      # Every stage is a cache hit from the push above, so this step uploads
-      # rather than rebuilds. Both steps are `continue-on-error` by requirement:
-      # the release is what ghcr.io already has, and an expired Docker Hub token
-      # or a Docker Hub outage must not turn a shipped release red.
+      # Both steps are `continue-on-error` by requirement: the release is what
+      # ghcr.io already has, and an expired Docker Hub token or a Docker Hub
+      # outage must not turn a shipped release red.
       - name: Log in to Docker Hub
-        if: steps.tags.outputs.dockerhub == 'true'
+        if: needs.meta.outputs.dockerhub == 'true'
         continue-on-error: true
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
@@ -283,18 +392,18 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Mirror the release to Docker Hub
-        if: steps.tags.outputs.dockerhub == 'true'
+        if: needs.meta.outputs.dockerhub == 'true'
         continue-on-error: true
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          push: true
-          tags: ${{ steps.tags.outputs.hub_list }}
-          # Read-only: this step re-uploads the build above, it does not produce
-          # a second one worth caching.
-          cache-from: type=gha,scope=${{ matrix.name }}
-          build-args: |
-            APP_VERSION=${{ steps.tags.outputs.version }}
-          platforms: linux/amd64
-          provenance: false
+        env:
+          IMG: ghcr.io/${{ needs.meta.outputs.ghcr_owner }}/${{ matrix.image }}
+          HUB: docker.io/${{ needs.meta.outputs.hub_owner }}/${{ matrix.image }}
+          SUFFIXES: ${{ needs.meta.outputs.suffixes }}
+        run: |
+          set -euo pipefail
+          cd /tmp/digests
+          tag_args=""
+          for s in $SUFFIXES; do tag_args="${tag_args} -t ${HUB}:${s}"; done
+          # shellcheck disable=SC2086 — both lists are deliberately word-split.
+          docker buildx imagetools create ${tag_args} \
+            $(printf "${IMG}@sha256:%s " *)
+          docker buildx imagetools inspect "${HUB}:${{ needs.meta.outputs.version }}"

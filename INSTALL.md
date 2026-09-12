@@ -23,6 +23,10 @@ The stack also runs a bundled **PostgreSQL 16** and persists two named volumes
 ## Requirements
 
 - **Docker Engine** + **Docker Compose v2** (`docker compose version`).
+- A **64-bit x86 (`linux/amd64`) or ARM (`linux/arm64`) host**. Both images are published for
+  both, under the same tag, and Docker picks the right one — a Raspberry Pi 5, an Ampere VPS
+  or an Apple Silicon machine pulls a native image, not an emulated one. Other architectures
+  (32-bit ARM, RISC-V) are not published and will not pull.
 - One free host port for the web UI (default `8080`).
 - For a public deployment: a TLS-terminating reverse proxy (Caddy, Traefik,
   nginx, or the one built into Portainer/Coolify) in front of the `web` service.
