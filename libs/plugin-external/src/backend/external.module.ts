@@ -47,6 +47,7 @@ import {
 } from '@makekeeper/plugin-contract';
 import { ExternalCapabilitiesService } from './external-capabilities.service';
 import { ExternalChannelsService } from './external-channels.service';
+import { ExternalPrintersService } from './external-printers.service';
 import { ExternalPubService } from './external-pub.service';
 import { ExternalProvisioningService } from './external-provisioning.service';
 import { ExternalDiscoveryService } from './external-discovery.service';
@@ -83,6 +84,7 @@ import { ExternalDiscoveryService } from './external-discovery.service';
     ExternalExchangeService,
     ExternalCapabilitiesService,
     ExternalChannelsService,
+    ExternalPrintersService,
     ExternalProvisioningService,
     ExternalDiscoveryService,
     ExternalPubService,
@@ -102,6 +104,7 @@ import { ExternalDiscoveryService } from './external-discovery.service';
     ExternalExchangeService,
     ExternalCapabilitiesService,
     ExternalChannelsService,
+    ExternalPrintersService,
     ExternalProvisioningService,
     ExternalDiscoveryService,
   ],
@@ -117,6 +120,7 @@ export class ExternalPluginModule implements OnModuleInit {
     private readonly exchange: ExternalExchangeService,
     private readonly capabilities: ExternalCapabilitiesService,
     private readonly channels: ExternalChannelsService,
+    private readonly printers: ExternalPrintersService,
     private readonly capabilityRegistry: CapabilityRegistryService,
     private readonly eventBus: PluginEventBusService,
     private readonly events: ExternalEventsService,
@@ -153,6 +157,9 @@ export class ExternalPluginModule implements OnModuleInit {
     // Plugins that deliver notifications (#312): registered as channels so the
     // bus can offer them in the matrix from the first boot after install.
     await this.channels.syncAll();
+    // Plugins that own a printer (#362): registered as print drivers, so a print
+    // dialog offers them next to the browser's own driver.
+    await this.printers.syncAll();
     // Offered to the exchange plugin so an archive carrying data of an
     // UNINSTALLED external plugin is parked instead of silently dropped —
     // without either plugin importing the other (§5.10).

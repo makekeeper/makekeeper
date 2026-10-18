@@ -52,6 +52,7 @@ const VIEWS = [
   'InstallMethodSection.vue',
   'AboutSection.vue',
   'CountingSection.vue',
+  'HelloSection.vue',
 ];
 const SOURCE = VIEWS.map(read).join('\n');
 const TEMPLATE = VIEWS.map((name) => templateOf(read(name))).join('\n');

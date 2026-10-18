@@ -157,6 +157,9 @@ export class UpdateService {
         throw new Error(`GitHub tags request returned ${res.status}`);
       }
       const tags = (await res.json()) as GithubTag[];
+      // `/tags` lists candidates (`v1.0.0-rc.1`) next to finals in whatever
+      // order GitHub likes; `highestSemver` skips them, so a pushed candidate
+      // is never offered as an update (#304).
       return highestSemver(tags.map((t) => t.name));
     } finally {
       clearTimeout(timer);

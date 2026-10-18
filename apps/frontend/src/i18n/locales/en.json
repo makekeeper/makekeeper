@@ -151,6 +151,15 @@
   "core": {
     "errors": {
       "reservedRoutePrefix": "Route prefix /plugins/ is reserved for the external-plugin public proxy"
+    },
+    "printing": {
+      "route": {
+        "server": "from this instance, over the network"
+      },
+      "errors": {
+        "unknownDriver": "That printer is not available right now.",
+        "badRaster": "The label could not be prepared for that printer."
+      }
     }
   },
   "telemetry": {
@@ -188,5 +197,17 @@
     "frequency": "Once a day, while it is switched on. If the instance is off or offline, nothing is queued and nothing is sent later.",
     "limits": "Nothing else leaves this instance: no project or item names, no files, no accounts, no counts of your data. We store no IP addresses — though Cloudflare, which fronts the receiver, necessarily sees them in transit. The instance id is random and tied to nothing, but it does link this instance's reports to each other, which is what makes counting possible at all.",
     "pendingId": "Created when you turn this on — there is none yet."
+  },
+  "hello": {
+    "banner": {
+      "title": "Hi, how is MakeKeeper working for you?",
+      "body": "As the developer of MakeKeeper, I'd like to know whether the project has turned out to be useful for you. I'd be glad of any response: a star, a release subscription, a wish or a complaint. That way I'll understand what works, what needs fixing, and where to go next.",
+      "star": "Star on GitHub",
+      "follow": "Follow releases",
+      "feedback": "Share your thoughts",
+      "ping": "Send the daily ping",
+      "dismiss": "Don't show again",
+      "dismissFailed": "Could not hide the card. Please try again."
+    }
   }
 }

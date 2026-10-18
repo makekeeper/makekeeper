@@ -20,5 +20,7 @@ import '@makekeeper/plugin-stats/frontend';
 import '@makekeeper/plugin-tags/frontend';
 import '@makekeeper/plugin-exchange/frontend';
 import '@makekeeper/plugin-codes/frontend';
+import '@makekeeper/plugin-printing-niimbot/frontend';
+import '@makekeeper/plugin-homeassistant/frontend';
 import '@makekeeper/plugin-mobile/frontend';
 import '@makekeeper/plugin-external/frontend';

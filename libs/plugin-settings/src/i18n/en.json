@@ -51,6 +51,7 @@
       "upToDate": "Up to date",
       "newVersion": "A newer version ({version}) is available.",
       "viewRelease": "Release notes",
+      "changelog": "What changed in each version",
       "checkNow": "Check for updates",
       "lastChecked": "Last checked: {time}",
       "neverChecked": "never",
@@ -395,7 +396,7 @@
       "subtitle": "What this is, which version you run, and how to reach the people who build it.",
       "section": {
         "title": "About",
-        "description": "What this is, and how to write to us."
+        "description": "What this is, and how to write to me."
       },
       "description": "MakeKeeper helps you run a workshop: the projects you are building, the parts you keep, where each one sits and what is still on its way — on your own server. It is built by one person, and every message gets an answer within a day.",
       "actions": {
@@ -437,6 +438,31 @@
       "contact": {
         "title": "Reach the people who build it",
         "description": "Three doors, and the app fills in what a report needs before you get there."
+      },
+      "hello": {
+        "title": "Let me know you're here",
+        "description": "I cannot see who uses MakeKeeper unless you tell me. Any one of these is enough, and none of them is required.",
+        "star": {
+          "title": "Star the repository",
+          "hint": "The quickest way to say the product is useful. Needs a GitHub account.",
+          "action": "Star on GitHub"
+        },
+        "follow": {
+          "title": "Follow releases",
+          "hint": "Get the release notes when a new version ships. On GitHub, watch the repository for releases only.",
+          "action": "Open on GitHub",
+          "feed": "Or subscribe to the feed, no account needed"
+        },
+        "feedback": {
+          "title": "Send a wish or a complaint",
+          "hint": "Tell me what works, what gets in the way and what is missing. If something is plainly broken, the bug report in the block above is better: it fills in your setup for you.",
+          "action": "Write on GitHub"
+        },
+        "ping": {
+          "title": "Send the daily ping",
+          "hint": "One small report a day that this instance is running. No account needed, and it is off unless you turn it on.",
+          "details": "What exactly is sent"
+        }
       }
     }
   },

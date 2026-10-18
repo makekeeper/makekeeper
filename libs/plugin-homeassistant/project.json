@@ -1,0 +1,8 @@
+{
+  "name": "plugin-homeassistant",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-homeassistant/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:homeassistant"],
+  "targets": {}
+}

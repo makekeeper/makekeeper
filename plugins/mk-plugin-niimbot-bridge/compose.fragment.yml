@@ -1,0 +1,34 @@
+# Runs on the box NEXT TO THE PRINTER — a Raspberry Pi, a mini-PC, the Home
+# Assistant host — not necessarily where MakeKeeper itself runs. What it needs
+# from that box is the Bluetooth adapter; what it needs from MakeKeeper is a
+# reachable address in both directions.
+#
+# The service name doubles as the hostname in MK_PLUGIN_URL: rename both
+# together or the core cannot call back. When the bridge is NOT on the app's
+# network, set MK_CORE_URL to the instance's address and MK_PLUGIN_URL to this
+# host's address as the core sees it.
+#
+# MK_INSTALL_TOKEN: Settings → External plugins → "Generate install token"
+# (one-time; leave empty to pair via the code in `docker logs niimbot-bridge`).
+services:
+  niimbot-bridge:
+    image: ghcr.io/makekeeper/mk-plugin-niimbot-bridge:latest
+    restart: unless-stopped
+    # Bluetooth is not namespaced: the container shares the host's adapter and
+    # its D-Bus, which is why this one asks for more than the other plugins do.
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - niimbot-bridge-data:/data
+      - /var/run/dbus:/var/run/dbus
+    environment:
+      MK_CORE_URL: http://localhost:3000
+      MK_PLUGIN_URL: http://localhost:4420
+      PORT: '4420'
+      MK_STATE_DIR: /data
+      MK_INSTALL_TOKEN: 'paste-once-here'
+
+volumes:
+  niimbot-bridge-data:

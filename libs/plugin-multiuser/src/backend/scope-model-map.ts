@@ -262,6 +262,12 @@ export const SCOPE_MODEL_MAP: Record<Prisma.ModelName, ModelScopeRule> = {
   // tag vocabulary. Carries its own scopeId; its target is an opaque ORef, so
   // 'direct' (no typed-FK 'child' relation applies).
   Label: { kind: 'direct' },
+  // A parked print job (#361): the person's own errand, not the workshop's
+  // data — a shared scope has no business reading someone's pending label, and
+  // the row is gone within ten minutes either way. The anonymous handoff page
+  // reads it by token with enforcement suspended, exactly like the public
+  // `/c/<code>` resolver.
+  PrintHandoff: { kind: 'direct', binding: 'user' },
 
   // ── Unscoped: system / infrastructure & instance-level config ───────────────
   // These hold no per-scope user data, so the access policy passes them through.
@@ -323,6 +329,13 @@ export const SCOPE_MODEL_MAP: Record<Prisma.ModelName, ModelScopeRule> = {
     kind: 'unscoped',
     reason: 'instance configuration: where the mobile surface is published',
   },
+  HelloNudgeSettings: {
+    kind: 'unscoped',
+    reason:
+      'instance state: when this instance first met the say-hello card (#367)',
+  },
+  // Each person closes the say-hello card for themselves (#368).
+  HelloNudgeDismissal: { kind: 'direct', binding: 'user' },
   PairedDevice: {
     kind: 'unscoped',
     reason:
@@ -378,6 +391,19 @@ export const SCOPE_MODEL_MAP: Record<Prisma.ModelName, ModelScopeRule> = {
   LogisticsSettings: {
     kind: 'unscoped',
     reason: 'singleton logistics plugin settings',
+  },
+  HomeAssistantSettings: {
+    kind: 'unscoped',
+    reason: 'singleton homeassistant plugin settings (instance connection)',
+  },
+  NiimbotPrintSettings: {
+    kind: 'unscoped',
+    reason:
+      'singleton printer settings (density, label stock) for the instance',
+  },
+  NiimbotHaSettings: {
+    kind: 'unscoped',
+    reason: 'singleton settings for printing through Home Assistant',
   },
   PhoneBridgeSession: {
     kind: 'unscoped',

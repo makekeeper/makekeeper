@@ -57,6 +57,25 @@
       "previewSummary": "Exactly what an install report would carry",
       "consentSummary": "Agree to, or refuse, install counting",
       "promptedSummary": "Record that a human has been asked"
+    },
+    "printing": {
+      "drivers": "Printers the instance itself can print on",
+      "print": "Print a prepared page on one of the instance's printers",
+      "params": {
+        "driverId": "Which registered printer to print on",
+        "widthDots": "Page width in printer dots",
+        "heightDots": "Page height in printer dots",
+        "rows": "Base64 of the packed 1-bpp rows (MSB first, a set bit is ink)",
+        "copies": "How many copies of the page to print"
+      },
+      "errors": {
+        "unknownDriver": "That printer is not available right now.",
+        "badRaster": "The page does not match its own size."
+      }
+    },
+    "hello": {
+      "stateSummary": "Whether the \"let us know you're here\" card is due for you",
+      "dismissSummary": "Close the card for yourself, for good"
     }
   }
 }

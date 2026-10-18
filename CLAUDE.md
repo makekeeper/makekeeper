@@ -37,7 +37,7 @@ keep the two in sync when it changes.
 | `@makekeeper/plugin-contract` | `libs/plugin-contract` | Framework-agnostic types: `PluginManifest`, agent-tool types, `withPlugin`. |
 | `@makekeeper/backend-core` | `libs/backend-core` | Shared NestJS infra: `PrismaService`, plugin/agent registries, error/uuid helpers. |
 | `@makekeeper/frontend-core` | `libs/frontend-core` | Shared Vue infra: plugin registry, `buildMessages`, shared `Select`/`RichEditor`. |
-| `@makekeeper/plugin-<id>/{backend,frontend}` | `libs/plugin-<id>` | One self-contained plugin (manifest + i18n + tools + settings + nav + routes). Plugins: `projects`, `inventory`, `storages`, `logistics`, `settings`, `chat`, `capture`, `uxmode` (simple/advanced interface mode — see [`docs/plugins.md`](docs/plugins.md) §2), `multiuser` (optional multi-user overlay — see [`docs/multiuser.md`](docs/multiuser.md)). |
+| `@makekeeper/plugin-<id>/{backend,frontend}` | `libs/plugin-<id>` | One self-contained plugin (manifest + i18n + tools + settings + nav + routes). Plugins: `projects`, `inventory`, `storages`, `logistics`, `settings`, `chat`, `capture`, `printing-niimbot` (a Niimbot label printer over Web Bluetooth, plus its handoff link — see [`docs/plugins.md`](docs/plugins.md) §8), `homeassistant` (a Home Assistant gateway: address, token and the `homeassistant.api` capability other plugins reach devices through — see [`docs/plugins.md`](docs/plugins.md) §8), `uxmode` (simple/advanced interface mode — see [`docs/plugins.md`](docs/plugins.md) §2), `multiuser` (optional multi-user overlay — see [`docs/multiuser.md`](docs/multiuser.md)). |
 
 **No cross-project relative imports** — use `@makekeeper/*` aliases only. NX enforces module
 boundaries in lint.

@@ -9,9 +9,15 @@ import Button from './Button.vue';
 // — the phone-bridge session and the device pairing offer to begin with — and a
 // second hand-rolled copy of it is exactly how the two phone dialogs drifted
 // apart in the first place (#271).
+// `hint` is the plain-text line above the address. A caller that needs part of
+// that line emphasised — "open it in **Chrome or Edge**" — fills the `hint`
+// SLOT instead, because the emphasis is presentation and belongs to the
+// component, never to a locale value (§5.4).
 const props = withDefaults(defineProps<{ url: string; hint?: string }>(), {
   hint: '',
 });
+
+const slots = defineSlots<{ hint?: () => unknown }>();
 
 const copied = ref(false);
 let copyTimer: ReturnType<typeof setTimeout> | null = null;
@@ -50,8 +56,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="space-y-3 text-center">
     <div class="space-y-1">
-      <p v-if="hint" class="text-xs text-slate-500 dark:text-slate-400">
-        {{ hint }}
+      <p
+        v-if="slots.hint || hint"
+        class="text-xs text-slate-600 dark:text-slate-300"
+      >
+        <slot name="hint">{{ hint }}</slot>
       </p>
       <a
         :href="url"

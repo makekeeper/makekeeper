@@ -23,7 +23,8 @@ export type SystemBypassReason =
   | 'stats-aggregation' // stats/inventory: nightly all-scope rollup jobs
   | 'scheduler-tick' // schedule: the minute tick, which reads every scope's due rows before entering each owner's own
   | 'device-revoked' // notify: drop a revoked device's push rows — an admin may revoke a device that is not in their own scope
-  | 'demo-clear'; // core: remove the shipped demo dataset, which is instance-wide and seeded before any scope existed
+  | 'demo-clear' // core: remove the shipped demo dataset, which is instance-wide and seeded before any scope existed
+  | 'public-print-handoff'; // printing-niimbot: the anonymous handoff page reads one parked raster by its token (#361)
 
 export interface RequestContextData {
   userId?: string;

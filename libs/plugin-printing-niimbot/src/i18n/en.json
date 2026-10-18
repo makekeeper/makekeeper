@@ -1,0 +1,168 @@
+{
+  "plugins": {
+    "printing-niimbot": {
+      "name": "Niimbot printer",
+      "description": "Prints labels straight to a Niimbot B1 — from this browser over Bluetooth, or from the server through Home Assistant."
+    }
+  },
+  "printingNiimbot": {
+    "ux": {
+      "driver": "Print directly on a Niimbot"
+    },
+    "driver": {
+      "name": "Niimbot B1",
+      "route": "via this browser’s Bluetooth",
+      "haName": "Niimbot via Home Assistant",
+      "haRoute": "Printed by this workshop through Home Assistant on {printer}",
+      "haRouteSole": "Printed by this workshop through Home Assistant"
+    },
+    "settings": {
+      "title": "Niimbot B1",
+      "description": "One printer, two ways to reach it: this browser over Bluetooth, or the server through Home Assistant.",
+      "unsupported": "This browser has no Web Bluetooth, so it cannot reach the printer. Chrome or Edge can — on a desktop or on Android.",
+      "density": {
+        "label": "Density",
+        "help": "How hard the printhead burns the label: 1 is the lightest, 5 the darkest."
+      },
+      "labelType": {
+        "label": "Label stock",
+        "options": {
+          "withGaps": "Gap labels",
+          "black": "Black-mark labels",
+          "transparent": "Transparent labels"
+        },
+        "help": "Match the roll loaded in the printer, or it will not find where one label ends."
+      },
+      "device": {
+        "label": "Last printer",
+        "none": "None yet",
+        "help": "The printer this browser last printed on. Bluetooth asks which device to use each time the browser has not been granted one."
+      }
+    },
+    "errors": {
+      "unsupported": "This browser cannot reach a Bluetooth printer.",
+      "noDeviceChosen": "No printer was chosen.",
+      "connection": "Could not reach the printer. Check it is on, in range, and not connected to the Niimbot phone app.",
+      "badRaster": "The label could not be prepared for printing.",
+      "tooWide": "The label is wider than the printhead ({max} dots).",
+      "coverOpen": "The printer's cover is open.",
+      "noPaper": "The printer is out of labels.",
+      "lowBattery": "The printer's battery is too low to print.",
+      "batteryException": "The printer reported a battery fault.",
+      "userCancel": "Printing was cancelled on the printer.",
+      "dataError": "The printer rejected the label data.",
+      "overheat": "The printhead is too hot. Let it cool down.",
+      "paperOutException": "The printer could not feed the label.",
+      "printerBusy": "The printer is busy with another job.",
+      "deviceCode": "The printer reported error {code}."
+    },
+    "handoff": {
+      "title": "Print a label",
+      "action": "Connect the printer and print",
+      "previewLabel": "The label that will be printed",
+      "gone": "This link has already been used or has expired. Ask for a new one from the app.",
+      "done": "Printed. You can close this page.",
+      "stage": {
+        "connecting": "Connecting to the printer…",
+        "sending": "Sending the label… {done} of {total} rows",
+        "printing": "Printing… {done} of {total} rows",
+        "finishing": "Finishing up…"
+      },
+      "errors": {
+        "gone": "This print link is no longer valid."
+      },
+      "unsupported": "This browser cannot reach a Bluetooth printer either. Open this same link in Chrome or Edge — on a desktop or on Android — next to the printer."
+    },
+    "api": {
+      "handoff": {
+        "create": "Park a rendered label and return a one-time print link",
+        "claim": "The parked label behind a print link",
+        "printed": "Mark a print link as used after a successful print",
+        "widthDots": "Page width in printer dots",
+        "heightDots": "Page height in printer dots",
+        "rows": "Base64 of the packed 1-bpp rows (MSB first, a set bit is ink)",
+        "copies": "How many copies of the page to print"
+      },
+      "ha": {
+        "read": "Which Home Assistant printer this instance prints on",
+        "write": "Save the Home Assistant printing settings",
+        "printers": "The hass-niimbot printers this instance's Home Assistant knows",
+        "preview": "Render a test page through Home Assistant without printing it",
+        "printerName": "The entity's own name, remembered for the print dialog",
+        "soleTarget": "Send no target, for a Home Assistant with exactly one printer",
+        "sendSize": "Send the page size with the job",
+        "targetId": "The hass-niimbot device, or one of its entities, to send the label to",
+        "targetKind": "Whether the target is a device or an entity"
+      },
+      "print": {
+        "read": "How the printer prints: density and label stock",
+        "write": "Save the density and label stock",
+        "density": "How hard the printhead burns the label (1–5)",
+        "labelType": "Label stock loaded in the printer"
+      }
+    },
+    "ha": {
+      "title": "Through Home Assistant",
+      "description": "Print from the server instead of from this browser: Home Assistant talks to the printer, so a phone with no Bluetooth of its own can print too.",
+      "adminOnlyNote": "Printing through Home Assistant is set up by an administrator.",
+      "noBridge": "The Home Assistant plugin is turned off, so there is no connection to print through.",
+      "unconfigured": "Home Assistant has no address or token yet.",
+      "openConnection": "Open the Home Assistant settings",
+      "printer": {
+        "label": "Printer",
+        "help": "The Niimbot that Home Assistant looks after.",
+        "none": "No printer",
+        "unfiltered": "The list could not even be narrowed to hass-niimbot, so every entity this Home Assistant knows is in it.",
+        "empty": "No hass-niimbot printer was found on this Home Assistant. Install the integration and add the printer there first.",
+        "entities": "This Home Assistant could not be asked which printers hass-niimbot looks after, so its entities are listed instead — pick the one that prints.",
+        "only": "The only printer this Home Assistant has."
+      },
+      "soleTarget": {
+        "label": "Let Home Assistant pick the printer",
+        "help": "It prints on its only Niimbot. Use this where the printers could not be listed above."
+      },
+      "sendSize": {
+        "label": "Send the page size",
+        "help": "Off lets Home Assistant take the size from the roll's own label lookup instead."
+      },
+      "preview": "Test the printer",
+      "previewOk": "The printer answered, and the page went through.",
+      "saved": "Saved.",
+      "saveFailed": "The settings could not be saved.",
+      "loadFailed": "The settings could not be loaded.",
+      "errors": {
+        "noBridge": "There is no Home Assistant connection to print through.",
+        "noEntity": "No Home Assistant printer has been chosen.",
+        "integrationMissing": "This Home Assistant has no hass-niimbot integration installed.",
+        "badRaster": "The label could not be prepared for printing.",
+        "encodeFailed": "The label could not be turned into an image.",
+        "payloadTooLarge": "The label came out too large to send to Home Assistant.",
+        "pageSize": "Home Assistant cannot render a page this size."
+      },
+      "previewAlt": "The test page Home Assistant drew",
+      "previewNotPrinted": "Nothing was printed — a label comes out only when you print one.",
+      "previewFailedDevice": "Home Assistant could not reach the printer.",
+      "previewFailedRender": "The printer answered, but the page did not go through."
+    },
+    "print": {
+      "title": "Print",
+      "description": "How the printer burns and what is loaded in it. The same for every way of sending a job below.",
+      "adminOnlyNote": "An administrator sets these: one printer, one roll in it.",
+      "saved": "Saved.",
+      "saveFailed": "The print settings could not be saved.",
+      "carriedOver": "The density and label stock this browser remembered are now the instance’s.",
+      "density": "Density {density}"
+    },
+    "routes": {
+      "title": "Where to send the job",
+      "description": "These are the destinations the print dialog offers. The print settings above apply to all of them.",
+      "browser": {
+        "title": "This browser",
+        "ready": "Ready",
+        "unsupported": "Not available here",
+        "help": "This browser talks to the printer itself, over Bluetooth. The device it was granted belongs to this browser alone.",
+        "transport": "Bluetooth"
+      }
+    }
+  }
+}

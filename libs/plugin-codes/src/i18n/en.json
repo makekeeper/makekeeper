@@ -41,16 +41,39 @@
       "button": "Print label",
       "title": "Print label",
       "prepareError": "Could not prepare the label. Please try again.",
-      "action": "Print",
       "format": {
         "label": "Code format",
         "qr": "QR code",
         "barcode": "Barcode"
       },
-      "layout": {
-        "label": "Layout",
-        "thermal": "Single (thermal)",
-        "a4": "A4 sheet"
+      "driver": {
+        "action": "Print",
+        "again": "Again",
+        "printed": "Printed.",
+        "rasterError": "Could not prepare the label for this printer.",
+        "stage": {
+          "connecting": "Connecting to the printer…",
+          "sending": "Sending the label… {done} of {total} rows",
+          "printing": "Printing… {done} of {total} rows",
+          "printingNoCount": "Printing…",
+          "finishing": "Finishing up…"
+        }
+      },
+      "handoff": {
+        "action": "Get link",
+        "route": "via a one-time link you open next to the printer",
+        "title": "Open next to the printer",
+        "alt": "QR code of the one-time print link",
+        "linkHint": "Open it in {browsers} next to the printer",
+        "error": "Could not prepare the link. Please try again.",
+        "browsers": "Chrome or Edge",
+        "showQr": "Show a QR code"
+      },
+      "destinations": "Where to print",
+      "system": {
+        "name": "This computer’s printer",
+        "route": "one 40 × 30 mm label, through the system dialog",
+        "action": "Open"
       }
     },
     "redirect": {

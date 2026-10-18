@@ -1,0 +1,48 @@
+{
+  "plugins": {
+    "homeassistant": {
+      "name": "Home Assistant",
+      "description": "Connects this workshop to a Home Assistant, so other plugins can reach the devices it already owns."
+    }
+  },
+  "homeassistant": {
+    "settings": {
+      "title": "Connection",
+      "description": "One address and one long-lived token for the whole instance. Other plugins reach Home Assistant through this connection — printing a label on a Niimbot the household already has, for example.",
+      "baseUrl": {
+        "label": "Address",
+        "placeholder": "http://homeassistant.local:8123",
+        "help": "Where Home Assistant answers on your network. Both the plain address and the one ending in /api are accepted."
+      },
+      "token": {
+        "label": "Long-lived access token",
+        "help": "In Home Assistant, open your profile, go to Security and create a long-lived access token at the bottom of the page."
+      },
+      "check": "Check connection",
+      "checkOk": "Home Assistant {version} answered, and this token can read {count} entities.",
+      "checkNoEntities": "Home Assistant {version} answered, but this token cannot read any entity.",
+      "saved": "Connection saved.",
+      "saveFailed": "The connection could not be saved."
+    },
+    "errors": {
+      "notConfigured": "Home Assistant is not connected yet.",
+      "badUrl": "That is not a valid http:// or https:// address.",
+      "unreachable": "Nothing answered at that address.",
+      "timeout": "Home Assistant did not answer in time.",
+      "unauthorized": "Home Assistant refused the token.",
+      "notFound": "Home Assistant has no such endpoint ({status}).",
+      "badRequest": "Home Assistant rejected the request ({status}).",
+      "serverError": "Home Assistant reported an error ({status}).",
+      "badResponse": "The answer did not look like Home Assistant."
+    },
+    "api": {
+      "settings": {
+        "read": "The instance's Home Assistant connection",
+        "write": "Save the Home Assistant address and token",
+        "test": "Check the Home Assistant connection and report its version",
+        "baseUrl": "Home Assistant base URL, with no trailing path",
+        "token": "Long-lived access token; omitted keeps the stored one, empty clears it"
+      }
+    }
+  }
+}

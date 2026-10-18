@@ -1,4 +1,5 @@
 export * from './lib/registry';
+export * from './lib/printing-registry';
 export * from './lib/contributions';
 export * from './lib/navigation';
 export * from './lib/use-camera-scanner';
@@ -46,6 +47,7 @@ export type { SegmentedOption } from './lib/components/SegmentedControl.vue';
 export { default as SecretInput } from './lib/components/SecretInput.vue';
 export { secretPatch, type SecretAction } from './lib/secret-field';
 export { default as Spinner } from './lib/components/Spinner.vue';
+export { default as ActionRow } from './lib/components/ActionRow.vue';
 export { default as Refreshable } from './lib/components/Refreshable.vue';
 export { default as Modal } from './lib/components/Modal.vue';
 export { default as LanguageSelect } from './lib/components/LanguageSelect.vue';

@@ -26,9 +26,10 @@ import { PermissionLevel } from '../agent-types';
 // plugin-side paging for tables and lists; 1.9 added sortable columns; 1.10
 // added `publicPaths` (web-reachable plugin surface, #250); 1.11 added the
 // `destructive` scoped access class (#252); 1.12 added `publicHintKey`, the
-// setup line shown beside a public plugin's connection address (all additive →
-// minor, per §1 of the spec).
-export const EXTERNAL_CONTRACT_VERSION = { major: 1, minor: 13 } as const;
+// setup line shown beside a public plugin's connection address; 1.13 added
+// `deliveryChannel` (notification delivery, #312); 1.14 added `printDriver` (a
+// plugin that owns a printer, #362) (all additive → minor, per §1 of the spec).
+export const EXTERNAL_CONTRACT_VERSION = { major: 1, minor: 14 } as const;
 
 // Majors the core accepts at registration. Grows to [N-1, N] whenever a new
 // major ships, shrinks back when the deprecation window closes.
@@ -244,6 +245,22 @@ export interface ExternalPluginManifest {
   // names. The admin has to see that plainly when they approve it, and the core
   // shows this label beside it.
   deliveryChannel?: ExternalDeliveryChannel;
+  // Declares the plugin as a PRINT DRIVER (contract 1.14, #362): it owns a
+  // printer and prints rasters other plugins hand it. Its own field, like
+  // `deliveryChannel`, for the same reason — what the plugin is granted here is
+  // a piece of hardware in the workshop, which an admin has to see plainly when
+  // approving it, and the core shows this label wherever a printer is offered.
+  printDriver?: ExternalPrintDriver;
+}
+
+export interface ExternalPrintDriver {
+  // Names the printer wherever it is offered ("Workshop label printer"). An
+  // i18n key into this manifest's own bundles.
+  labelKey: string;
+  // Printhead width in dots and its resolution: the two facts a consumer needs
+  // to lay out a page it will never see printed (see `printing.ts`).
+  maxWidthDots: number;
+  dpi: number;
 }
 
 export interface ExternalDeliveryChannel {
@@ -257,6 +274,22 @@ export interface ExternalDeliveryChannel {
 // plugin id IS the channel id.
 export const externalChannelCapabilityId = (pluginId: string): string =>
   `${pluginId}.notify-channel`;
+
+// The capability id the core relays PRINT calls to — fixed for the same reason:
+// the plugin id is the driver's identity, so no plugin can offer a printer
+// under another's name. Note it is NOT `printing.driver.<pluginId>`: that id is
+// what the CORE registers for consumers (see `printing.ts`), while this one
+// addresses the container behind it.
+export const externalPrintDriverCapabilityId = (pluginId: string): string =>
+  `${pluginId}.print-driver`;
+
+// Methods the core calls on a print-driver plugin. Named constants rather than
+// literals at the call site, like the channel methods: the strings are a wire
+// contract an external author implements from the docs.
+export const EXTERNAL_PRINT_DRIVER_METHODS = {
+  describe: 'describe',
+  print: 'print',
+} as const;
 
 // The two methods a channel plugin answers on that capability.
 export const EXTERNAL_CHANNEL_METHODS = {
@@ -386,6 +419,30 @@ export function validateExternalManifest(
       typeof (channel as { labelKey?: unknown }).labelKey !== 'string'
     ) {
       err('delivery-channel-label-invalid', '$.deliveryChannel.labelKey');
+    }
+  }
+
+  const printer = value['printDriver'];
+  if (printer !== undefined) {
+    if (typeof printer !== 'object' || printer === null) {
+      err('print-driver-invalid', '$.printDriver');
+    } else {
+      const decl = printer as Record<string, unknown>;
+      if (typeof decl['labelKey'] !== 'string') {
+        err('print-driver-label-invalid', '$.printDriver.labelKey');
+      }
+      // A printhead is measured in dots and a resolution in dpi; both must be
+      // real numbers or every consumer's page layout is nonsense.
+      for (const field of ['maxWidthDots', 'dpi'] as const) {
+        const number = decl[field];
+        if (
+          typeof number !== 'number' ||
+          !Number.isInteger(number) ||
+          number <= 0
+        ) {
+          err('print-driver-geometry-invalid', `$.printDriver.${field}`);
+        }
+      }
     }
   }
 

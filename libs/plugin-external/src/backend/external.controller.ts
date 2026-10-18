@@ -49,6 +49,7 @@ import { ExternalToolsService } from './external-tools.service';
 import { ExternalExchangeService } from './external-exchange.service';
 import { ExternalCapabilitiesService } from './external-capabilities.service';
 import { ExternalChannelsService } from './external-channels.service';
+import { ExternalPrintersService } from './external-printers.service';
 import {
   ExternalProvisioningService,
   type ProvisionedTokens,
@@ -104,6 +105,7 @@ export class ExternalController {
     private readonly exchange: ExternalExchangeService,
     private readonly capabilities: ExternalCapabilitiesService,
     private readonly channels: ExternalChannelsService,
+    private readonly printers: ExternalPrintersService,
     private readonly provisioning: ExternalProvisioningService,
     private readonly discovery: ExternalDiscoveryService,
     private readonly settings: ExternalSettingsService,
@@ -416,6 +418,7 @@ export class ExternalController {
     // leave a plugin approved later publishing nothing.
     await this.capabilities.syncPlugin(pluginId);
     await this.channels.syncPlugin(pluginId);
+    await this.printers.syncPlugin(pluginId);
     // A block that was waiting for this plugin can now be handed over — the
     // "import first, install later" order is the normal restore sequence.
     await this.exchange.applyDeferred(pluginId);
@@ -469,6 +472,7 @@ export class ExternalController {
     await this.tools.syncPlugin(pluginId);
     await this.capabilities.syncPlugin(pluginId);
     await this.channels.syncPlugin(pluginId);
+    await this.printers.syncPlugin(pluginId);
     this.announceShellChange();
     return { ok: true };
   }
@@ -490,6 +494,7 @@ export class ExternalController {
     await this.tools.syncPlugin(pluginId);
     await this.capabilities.syncPlugin(pluginId);
     await this.channels.syncPlugin(pluginId);
+    await this.printers.syncPlugin(pluginId);
     this.announceShellChange();
     return { ok: true, purgeFailed: res.purgeFailed };
   }

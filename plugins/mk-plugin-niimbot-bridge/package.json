@@ -1,0 +1,14 @@
+{
+  "name": "mk-plugin-niimbot-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MakeKeeper BLE print bridge — owns a Niimbot label printer and prints on behalf of any client, including iPhones.",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "dependencies": {
+    "@mmote/niimbluelib": "0.47.0-node"
+  },
+  "scripts": {
+    "test": "esbuild src/*.test.ts --bundle --platform=node --format=esm --target=node22 --outdir=.test-build --external:node:* --external:@mmote/* --alias:@makekeeper/plugin-sdk=../../libs/plugin-sdk/src/index.ts --alias:@makekeeper/plugin-contract=../../libs/plugin-contract/src/index.ts && node --test \".test-build/**/*.test.js\""
+  }
+}

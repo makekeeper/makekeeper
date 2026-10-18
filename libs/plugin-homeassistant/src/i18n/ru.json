@@ -1,0 +1,48 @@
+{
+  "plugins": {
+    "homeassistant": {
+      "name": "Home Assistant",
+      "description": "Связывает мастерскую с Home Assistant, чтобы другие плагины дотягивались до устройств, которыми он уже управляет."
+    }
+  },
+  "homeassistant": {
+    "settings": {
+      "title": "Подключение",
+      "description": "Один адрес и один долгоживущий токен на весь экземпляр. Через это подключение Home Assistant доступен другим плагинам — например, для печати этикетки на Niimbot, который уже стоит в доме.",
+      "baseUrl": {
+        "label": "Адрес",
+        "placeholder": "http://homeassistant.local:8123",
+        "help": "Где Home Assistant отвечает в вашей сети. Подойдёт и обычный адрес, и адрес, оканчивающийся на /api."
+      },
+      "token": {
+        "label": "Долгоживущий токен доступа",
+        "help": "В Home Assistant откройте свой профиль, перейдите в «Безопасность» и создайте долгоживущий токен доступа в нижней части страницы."
+      },
+      "check": "Проверить связь",
+      "checkOk": "Home Assistant {version} ответил, и этому токену видно {count} сущностей.",
+      "checkNoEntities": "Home Assistant {version} ответил, но этому токену не видно ни одной сущности.",
+      "saved": "Подключение сохранено.",
+      "saveFailed": "Не удалось сохранить подключение."
+    },
+    "errors": {
+      "notConfigured": "Home Assistant ещё не подключён.",
+      "badUrl": "Это не похоже на адрес http:// или https://.",
+      "unreachable": "По этому адресу никто не ответил.",
+      "timeout": "Home Assistant не ответил за отведённое время.",
+      "unauthorized": "Home Assistant отклонил токен.",
+      "notFound": "У Home Assistant нет такой точки входа ({status}).",
+      "badRequest": "Home Assistant отклонил запрос ({status}).",
+      "serverError": "Home Assistant сообщил об ошибке ({status}).",
+      "badResponse": "Ответ не похож на ответ Home Assistant."
+    },
+    "api": {
+      "settings": {
+        "read": "Подключение экземпляра к Home Assistant",
+        "write": "Сохранить адрес и токен Home Assistant",
+        "test": "Проверить связь с Home Assistant и вернуть его версию",
+        "baseUrl": "Базовый адрес Home Assistant без хвостового пути",
+        "token": "Долгоживущий токен доступа; отсутствие поля оставляет сохранённый, пустая строка стирает"
+      }
+    }
+  }
+}

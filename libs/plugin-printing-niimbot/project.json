@@ -1,0 +1,8 @@
+{
+  "name": "plugin-printing-niimbot",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugin-printing-niimbot/src",
+  "projectType": "library",
+  "tags": ["scope:plugin", "plugin:printing-niimbot"],
+  "targets": {}
+}

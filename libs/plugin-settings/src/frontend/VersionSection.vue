@@ -10,6 +10,7 @@ import {
 } from '@makekeeper/frontend-core';
 import { RefreshCw } from '@lucide/vue';
 import SectionShell from './SectionShell.vue';
+import { FEEDBACK_LINKS } from './feedback';
 import { useUpdateStore } from './update-store';
 
 // What version is installed and whether anything newer exists (#267). The
@@ -116,6 +117,13 @@ async function onCheck(): Promise<void> {
           {{ $t('settings.updates.lastChecked', { time: lastCheckedLabel }) }}
         </span>
       </p>
+
+      <!-- Always offered, not only when an update is pending (#346): the
+           reader who just updated wants to know what changed as much as the
+           one who is about to. One page for every version, newest first. -->
+      <Button variant="link" size="sm" :href="FEEDBACK_LINKS.changelog">
+        {{ $t('settings.updates.changelog') }}
+      </Button>
     </div>
 
     <p

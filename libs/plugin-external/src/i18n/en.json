@@ -275,6 +275,12 @@
         "backedOff": "The plugin “{plugin}” is being given time to recover.",
         "refused": "The channel “{plugin}” refused the message."
       }
+    },
+    "printer": {
+      "errors": {
+        "unreachable": "The printer plugin did not answer. Check that its container is running next to the printer.",
+        "failed": "The printer plugin could not print the label."
+      }
     }
   }
 }

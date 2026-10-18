@@ -19,9 +19,10 @@ and import only the Apache SDK libs (`plugin-sdk`, `plugin-contract`).
 
 ## Plugins
 
-| Plugin                               | What it does                                                                                                                                                                |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [**mk-plugin-mcp**](./mk-plugin-mcp) | MCP server: exposes the instance's agent tools to MCP clients (Claude Desktop, Claude Code, …) at `https://<instance>/plugins/mcp`. Guide: [`docs/mcp.md`](../docs/mcp.md). |
+| Plugin                                                     | What it does                                                                                                                                                                |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [**mk-plugin-mcp**](./mk-plugin-mcp)                       | MCP server: exposes the instance's agent tools to MCP clients (Claude Desktop, Claude Code, …) at `https://<instance>/plugins/mcp`. Guide: [`docs/mcp.md`](../docs/mcp.md). |
+| [**mk-plugin-niimbot-bridge**](./mk-plugin-niimbot-bridge) | BLE print bridge: owns a Niimbot label printer and prints for any device, iPhones included. Runs on the box next to the printer (needs its Bluetooth adapter).              |
 
 ## Versioning & releases
 

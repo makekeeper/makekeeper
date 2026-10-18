@@ -9,6 +9,7 @@ import {
 } from '@makekeeper/frontend-core';
 import { Info } from '@lucide/vue';
 import AboutSection from './AboutSection.vue';
+import HelloSection from './HelloSection.vue';
 import { useUpdateStore } from './update-store';
 import { buildUpdatesNav, type UpdatesNavKey } from './updates-sections';
 
@@ -63,8 +64,10 @@ onMounted(() => {
         class="lg:sticky lg:top-6 lg:self-start"
       />
 
-      <div class="min-w-0">
+      <div class="min-w-0 space-y-8">
         <AboutSection />
+        <!-- The permanent home of the dashboard card (#367-#369). -->
+        <HelloSection />
       </div>
     </div>
   </div>

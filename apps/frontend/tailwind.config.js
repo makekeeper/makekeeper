@@ -23,6 +23,21 @@ module.exports = {
           '-apple-system',
           'sans-serif',
         ],
+        // The same stack with the display face taken out — Inter alone. For
+        // type that has to survive being PRINTED small: a label's 7 pt line is
+        // about 20 dots tall on a 203 dpi thermal head, where ink spreads into
+        // its neighbours, and Inter's open apertures and even stroke hold up
+        // there while Outfit's geometric counters close. Not a second brand
+        // face: one stack, one purpose, declared once (#359).
+        label: ['Inter Variable', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      letterSpacing: {
+        // The label's two lines of type. Tokens rather than arbitrary values
+        // because the PRINT path reads the tracking back off the rendered node
+        // and scales it to the printhead (`label-raster.ts`), so this is a
+        // contract between the screen and the sticker, not a one-off look.
+        'label-brand': '0.18em',
+        'label-code': '0.06em',
       },
       fontSize: {
         // Metadata/badge size used repo-wide; previously defined only in App.vue's
@@ -53,6 +68,21 @@ module.exports = {
           '0%, 100%': { transform: 'scale(1)' },
           '50%': { transform: 'scale(1.05)' },
         },
+        // The say-hello card (#369): one 3.2s cycle shared by two movements
+        // that take turns — the hand waves in the first half, the shine
+        // crosses the card in the second — so they never compete for the eye.
+        'hello-wave': {
+          '0%, 50%, 100%': { transform: 'rotate(0deg)' },
+          '8%': { transform: 'rotate(16deg)' },
+          '16%': { transform: 'rotate(-10deg)' },
+          '24%': { transform: 'rotate(14deg)' },
+          '32%': { transform: 'rotate(-6deg)' },
+          '40%': { transform: 'rotate(8deg)' },
+        },
+        'hello-sweep': {
+          '0%, 40%': { transform: 'translateX(-100%)' },
+          '85%, 100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.2s ease-out both',
@@ -70,6 +100,13 @@ module.exports = {
         'mode-orbit-4': 'spin 6.9s linear infinite reverse',
         'mode-hue': 'mode-hue 6s linear infinite',
         'mode-breathe': 'mode-breathe 2.8s ease-in-out infinite',
+        // Same duration on both, or the two halves drift apart (#369).
+        'hello-wave': 'hello-wave 3.2s ease-in-out infinite',
+        'hello-sweep': 'hello-sweep 3.2s ease-in-out infinite',
+      },
+      // A waving hand pivots near the wrist, not at its centre (#369).
+      transformOrigin: {
+        'hello-hand': '70% 80%',
       },
       backgroundImage: {
         // The iridescent spectrum (brand → violet → fuchsia → cyan → emerald).
@@ -84,6 +121,13 @@ module.exports = {
         // slate grays — the magic fading out.
         'mode-aurora-dim':
           'conic-gradient(from 0deg, #94a3b8, #64748b, #cbd5e1, #475569, #94a3b8)',
+        // The band of light that crosses the say-hello card (#369). White on a
+        // light surface; on a dark one, the scheme's own brand-400, so the
+        // shine follows the colour scheme rather than glaring white.
+        'hello-shine':
+          'linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%)',
+        'hello-shine-dark':
+          'linear-gradient(105deg, transparent 35%, rgb(var(--mk-brand-400) / 0.22) 50%, transparent 65%)',
       },
       colors: {
         // Both scheme-aware ramps resolve through CSS variables (#236): the
@@ -145,6 +189,13 @@ module.exports = {
     // pointer variant (that landed in v4), so it is registered here.
     plugin(({ addVariant }) => {
       addVariant('coarse', '@media (pointer: coarse)');
+    }),
+    // `paused` — hold a running animation where it is. Tailwind 3 has no
+    // animation-play-state utility. Born for the say-hello card (#369): motion
+    // that loops for longer than 5 s must be pausable (WCAG 2.2.2), and the
+    // card stops while the pointer or the focus is on it.
+    plugin(({ addUtilities }) => {
+      addUtilities({ '.paused': { 'animation-play-state': 'paused' } });
     }),
   ],
 };

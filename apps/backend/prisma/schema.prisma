@@ -946,6 +946,35 @@ model Label {
   @@index([scopeId])
 }
 
+// A one-time print handoff (#361): a raster parked for a browser that CAN reach
+// the printer, because the one that made it cannot (Web Bluetooth is Chromium
+// only). The row holds the rendered page and nothing else — no ORef, no object
+// name, no label code — so a token reveals exactly what the sticker would, which
+// is the whole security argument for serving it to an anonymous page.
+//
+// Per-creator private data (`binding: 'user'` in SCOPE_MODEL_MAP): a print job
+// is the person's own errand, never something a shared scope reads.
+model PrintHandoff {
+  token      String    @id
+  scopeId    String?
+  // The page, exactly as the `printing` contract defines it: packed 1-bpp rows,
+  // MSB first, `ceil(widthDots / 8)` bytes per row.
+  widthDots  Int
+  heightDots Int
+  rows       Bytes
+  copies     Int       @default(1)
+  // Fetches of the payload. A link survives a failed Bluetooth connection (that
+  // must not cost a new link), so the ceiling is on attempts rather than opens.
+  attempts   Int       @default(0)
+  // Set when a driver reported a printed page; the link stops working then.
+  printedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+
+  @@index([scopeId])
+  @@index([expiresAt])
+}
+
 // ── External plugins (#131/#133) ────────────────────────────────────────────
 // A third-party plugin running as its own container. The row is the core's
 // entire knowledge of it: the validated manifest (cached so the shell renders
@@ -1540,5 +1569,77 @@ model NotifyChannelPref {
   updatedAt DateTime @updatedAt
 
   @@unique([scopeId, channelId])
+  @@index([scopeId])
+}
+
+// The instance's Home Assistant connection (#364). Single row (id "default"):
+// one address and one long-lived token for the whole instance, because the HA
+// install is the household's, not a person's. Instance-global — no scopeId.
+model HomeAssistantSettings {
+  id      String  @id @default("default")
+  baseUrl String?
+  // AES-GCM encrypted at rest (secret-box); never returned raw.
+  token     String?
+  updatedAt DateTime @updatedAt
+}
+
+// Printing a Niimbot label through Home Assistant (#364). Single row: the
+// printer belongs to the instance because the INSTANCE prints — unlike the
+// Web Bluetooth path, whose device grant belongs to one browser profile and
+// whose settings therefore live in that browser's localStorage.
+// How the Niimbot prints, whatever carried the job here (#366). Single row:
+// the burn density and the roll in the machine are facts about the PRINTER, so
+// they belong to the instance — the browser's Bluetooth path and the server's
+// Home Assistant path read the same two values, and the panel asks once.
+model NiimbotPrintSettings {
+  id        String   @id @default("default")
+  density   Int      @default(3)
+  labelType String   @default("withGaps")
+  updatedAt DateTime @updatedAt
+}
+
+model NiimbotHaSettings {
+  id String @id @default("default")
+  // What the job is aimed at: a hass-niimbot DEVICE (the printer itself) or
+  // one of its entities, which hass-niimbot also accepts. Null while
+  // unconfigured.
+  targetId   String?
+  targetKind String  @default("device")
+  // How Home Assistant named that target when it was chosen — remembered so
+  // naming the printer in a print dialog costs no request. Stale after a
+  // rename in HA, and corrected the next time the picker is used.
+  printerName String?
+  // Send no target at all, for an instance whose Home Assistant has exactly
+  // one printer (which hass-niimbot then resolves itself).
+  soleTarget Boolean  @default(false)
+  // Send the page size with the job. Off hands the decision to hass-niimbot's
+  // own online label lookup.
+  sendSize  Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
+
+// "Let us know you're here" (#367). A singleton like the other settings rows.
+// Created lazily on the first read — `firstSeenAt` is then the day this
+// instance met the feature, which is the only install date an instance that
+// predates it can honestly claim. The week is the INSTANCE's; closing the card
+// is each person's own (HelloNudgeDismissal, #368).
+model HelloNudgeSettings {
+  id          String   @id @default("default")
+  firstSeenAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// One row per person who closed the say-hello card (#368). A star or a release
+// subscription is a personal act, so every user is asked and each closes it
+// for themselves. Found by its owner (`scopeId`, stamped by the scope policy;
+// NULL on a single-user instance), never by its id: an id derived from the
+// owner ("solo") collided once backfill handed the row to the first admin and
+// multi-user mode was later turned off again, and the card could no longer be
+// closed. A solo row claimed by the first admin is right — same person.
+model HelloNudgeDismissal {
+  id          String   @id @default(uuid())
+  scopeId     String?
+  dismissedAt DateTime @default(now())
+
   @@index([scopeId])
 }

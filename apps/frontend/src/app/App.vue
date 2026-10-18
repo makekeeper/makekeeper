@@ -58,6 +58,7 @@ import {
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import DemoBanner from './DemoBanner.vue';
 import TelemetryConsent from './TelemetryConsent.vue';
+import HelloBanner from './HelloBanner.vue';
 import { useI18n } from 'vue-i18n';
 import { storeToRefs } from 'pinia';
 import {
@@ -1916,6 +1917,12 @@ const retry = (msg: ChatMessage): void => {
              column, above the view: it describes the page, it does not
              interrupt it. Renders nothing once cleared or dismissed. -->
         <DemoBanner v-if="contentReady" />
+
+        <!-- "Let us know you're here" (#367-#369): a week in, for every
+             signed-in person until they close it. Same column as the demo
+             notice; the ping button on it stays with whoever may act for the
+             instance. -->
+        <HelloBanner v-if="contentReady" />
 
         <!-- Asked once per instance, wherever the admin happens to be (#343).
              Same gate as the banner: nothing about the instance is fetched

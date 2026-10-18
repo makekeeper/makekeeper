@@ -26,6 +26,8 @@ const controller = (): ExternalController =>
     // (#312), so a plugin approved later becomes a usable channel without a
     // restart.
     { syncPlugin: noop } as never,
+    // Print drivers ride the same hooks (#362), for the same reason.
+    { syncPlugin: noop } as never,
     { provision: noop } as never,
     {} as never,
     {} as never,

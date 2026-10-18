@@ -146,8 +146,13 @@ function choose(action: SecretAction): void {
 
 <template>
   <div class="space-y-1.5">
-    <div class="flex gap-2">
-      <div class="relative min-w-0 flex-1">
+    <!-- Wraps, because the row carries however many controls the caller adds:
+         with a `#actions` button beside Change, a narrow settings column ran
+         the last button off the panel's edge, where nothing could reach it
+         (the page itself does not scroll sideways). The field keeps the first
+         line to itself by claiming a basis wider than any control. -->
+    <div class="flex flex-wrap gap-2">
+      <div class="relative min-w-0 flex-1 basis-48">
         <!-- The glyph follows the intent, not the readonly-ness: an emptied box
              staged for removal keeps its red trash while it is still a box. -->
         <component

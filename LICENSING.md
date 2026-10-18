@@ -7,16 +7,16 @@ plugin ecosystem is never touched by the FSL restriction.
 
 ## Which license applies where
 
-| Path                                  | Role                                      | License                                                                             |
-| ------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------- |
-| `apps/backend`, `apps/frontend`       | The application / service                 | **FSL-1.1-ALv2** — see [`LICENSE.md`](LICENSE.md)                                   |
-| `libs/plugin-*` (first-party plugins) | The product                               | **FSL-1.1-ALv2** — see [`LICENSE.md`](LICENSE.md)                                   |
-| `plugins/*` (first-party external plugins) | The product (out-of-process)         | **FSL-1.1-ALv2** — see [`LICENSE.md`](LICENSE.md)                                   |
-| `libs/plugin-contract`                | SDK imported by every plugin author       | **Apache-2.0** — see [`libs/plugin-contract/LICENSE`](libs/plugin-contract/LICENSE) |
-| `libs/frontend-core`                  | Shared Vue primitives imported by plugins | **Apache-2.0** — see [`libs/frontend-core/LICENSE`](libs/frontend-core/LICENSE)     |
-| `libs/backend-core`                   | Shared NestJS infra imported by plugins   | **Apache-2.0** — see [`libs/backend-core/LICENSE`](libs/backend-core/LICENSE)       |
-| `libs/plugin-sdk`                     | SDK for out-of-process (external) plugins  | **Apache-2.0** — see [`libs/plugin-sdk/LICENSE`](libs/plugin-sdk/LICENSE)           |
-| `examples/*`                          | External-plugin templates authors copy     | **Apache-2.0** — see [`examples/LICENSE`](examples/LICENSE)                         |
+| Path                                       | Role                                      | License                                                                             |
+| ------------------------------------------ | ----------------------------------------- | ----------------------------------------------------------------------------------- |
+| `apps/backend`, `apps/frontend`            | The application / service                 | **FSL-1.1-ALv2** — see [`LICENSE.md`](LICENSE.md)                                   |
+| `libs/plugin-*` (first-party plugins)      | The product                               | **FSL-1.1-ALv2** — see [`LICENSE.md`](LICENSE.md)                                   |
+| `plugins/*` (first-party external plugins) | The product (out-of-process)              | **FSL-1.1-ALv2** — see [`LICENSE.md`](LICENSE.md)                                   |
+| `libs/plugin-contract`                     | SDK imported by every plugin author       | **Apache-2.0** — see [`libs/plugin-contract/LICENSE`](libs/plugin-contract/LICENSE) |
+| `libs/frontend-core`                       | Shared Vue primitives imported by plugins | **Apache-2.0** — see [`libs/frontend-core/LICENSE`](libs/frontend-core/LICENSE)     |
+| `libs/backend-core`                        | Shared NestJS infra imported by plugins   | **Apache-2.0** — see [`libs/backend-core/LICENSE`](libs/backend-core/LICENSE)       |
+| `libs/plugin-sdk`                          | SDK for out-of-process (external) plugins | **Apache-2.0** — see [`libs/plugin-sdk/LICENSE`](libs/plugin-sdk/LICENSE)           |
+| `examples/*`                               | External-plugin templates authors copy    | **Apache-2.0** — see [`examples/LICENSE`](examples/LICENSE)                         |
 
 Guiding principle: **what others build on is permissive; what is our product is FSL.**
 
@@ -45,6 +45,16 @@ permissive (MIT/Apache-2.0/BSD) and need no note here; the exception is recorded
 
 Because the library is unmodified and dynamically linked, its terms do not extend to MakeKeeper's
 own source. If you redistribute a build, keep the module intact and its license notice with it.
+
+## Acknowledgements
+
+Not a licensing obligation, recorded because the knowledge is borrowed rather than ours: the
+Niimbot print driver (`libs/plugin-printing-niimbot`) talks to the printer through
+[**niimbluelib**](https://github.com/MultiMote/niimblue) (MIT, (c) 2024 MultiMote), installed
+unmodified from npm — nothing is copied into this repository, so no file headers are carried. The
+same project, together with [**niimprint**](https://github.com/kjy00302/niimprint) (MIT, (c) 2023
+kjy00302), is where the protocol was documented well enough for the device facts in issue #359 to
+be verified rather than guessed.
 
 ## Commercial licensing
 

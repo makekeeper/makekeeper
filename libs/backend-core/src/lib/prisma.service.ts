@@ -124,6 +124,12 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   get telemetrySettings(): ExtendedClient['telemetrySettings'] {
     return this.client.telemetrySettings;
   }
+  get helloNudgeSettings(): ExtendedClient['helloNudgeSettings'] {
+    return this.client.helloNudgeSettings;
+  }
+  get helloNudgeDismissal(): ExtendedClient['helloNudgeDismissal'] {
+    return this.client.helloNudgeDismissal;
+  }
   get taskComponent(): ExtendedClient['taskComponent'] {
     return this.client.taskComponent;
   }
@@ -156,6 +162,18 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   }
   get label(): ExtendedClient['label'] {
     return this.client.label;
+  }
+  get printHandoff(): ExtendedClient['printHandoff'] {
+    return this.client.printHandoff;
+  }
+  get niimbotPrintSettings(): ExtendedClient['niimbotPrintSettings'] {
+    return this.client.niimbotPrintSettings;
+  }
+  get niimbotHaSettings(): ExtendedClient['niimbotHaSettings'] {
+    return this.client.niimbotHaSettings;
+  }
+  get homeAssistantSettings(): ExtendedClient['homeAssistantSettings'] {
+    return this.client.homeAssistantSettings;
   }
   get storage(): ExtendedClient['storage'] {
     return this.client.storage;

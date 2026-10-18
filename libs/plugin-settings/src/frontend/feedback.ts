@@ -9,7 +9,10 @@
 // drifts: the issue form's field id below has to match the template
 // `publish-github.yml` writes, and that agreement is only checkable while both
 // halves are named in one place.
-const REPO_URL = 'https://github.com/makekeeper/makekeeper';
+import {
+  PRODUCT_RELEASES_FEED_URL,
+  PRODUCT_REPO_URL as REPO_URL,
+} from '@makekeeper/plugin-contract';
 
 /** The bug template's `id:` in `.github/ISSUE_TEMPLATE/bug_report.yml`. */
 const BUG_TEMPLATE = 'bug_report.yml';
@@ -35,6 +38,8 @@ export const FEEDBACK_TRAILS = {
   bug: ['GitHub', 'Issues'],
   idea: ['GitHub', 'Discussions', 'Ideas'],
   question: ['GitHub', 'Discussions', 'Q&A'],
+  // How to subscribe to releases only (#367): GitHub's own menu, step by step.
+  follow: ['GitHub', 'Watch', 'Custom', 'Releases'],
 } as const satisfies Record<string, readonly string[]>;
 
 export const FEEDBACK_LINKS = {
@@ -44,6 +49,8 @@ export const FEEDBACK_LINKS = {
   source: REPO_URL,
   install: `${REPO_URL}/blob/main/INSTALL.md`,
   releases: `${REPO_URL}/releases`,
+  changelog: `${REPO_URL}/blob/main/CHANGELOG.md`,
+  releasesFeed: PRODUCT_RELEASES_FEED_URL,
   license: `${REPO_URL}/blob/main/LICENSE.md`,
 } as const;
 

@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    // The repo asks for strict TS (§5.1) and `tsconfig.base.json` does not set
+    // it, so a standalone plugin has to. Without it a discriminated union does
+    // not narrow — `{ ok: true } | { ok: false; errorKey }` then reads as "no
+    // such property" on the arm that has it, which is exactly the shape every
+    // print outcome here uses.
+    "strict": true,
+    "moduleResolution": "nodenext",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["node"],
+    "target": "es2022"
+  },
+  "include": ["src/**/*.ts"]
+}

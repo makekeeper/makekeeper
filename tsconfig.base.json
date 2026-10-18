@@ -135,6 +135,18 @@
       ],
       "@makekeeper/plugin-codes/frontend": [
         "libs/plugin-codes/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-homeassistant/backend": [
+        "libs/plugin-homeassistant/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-homeassistant/frontend": [
+        "libs/plugin-homeassistant/src/frontend/index.ts"
+      ],
+      "@makekeeper/plugin-printing-niimbot/backend": [
+        "libs/plugin-printing-niimbot/src/backend/index.ts"
+      ],
+      "@makekeeper/plugin-printing-niimbot/frontend": [
+        "libs/plugin-printing-niimbot/src/frontend/index.ts"
       ]
     }
   },

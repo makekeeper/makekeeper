@@ -52,13 +52,17 @@ import { StatsPluginModule } from '@makekeeper/plugin-stats/backend';
 import { TagsPluginModule } from '@makekeeper/plugin-tags/backend';
 import { ExchangePluginModule } from '@makekeeper/plugin-exchange/backend';
 import { CodesPluginModule } from '@makekeeper/plugin-codes/backend';
+import { PrintingNiimbotPluginModule } from '@makekeeper/plugin-printing-niimbot/backend';
+import { HomeassistantPluginModule } from '@makekeeper/plugin-homeassistant/backend';
 import { MobilePluginModule } from '@makekeeper/plugin-mobile/backend';
 import { ExternalPluginModule } from '@makekeeper/plugin-external/backend';
 import { NotifyPluginModule } from '@makekeeper/plugin-notify/backend';
 import { SchedulePluginModule } from '@makekeeper/plugin-schedule/backend';
 
+import { PrintingController } from './printing.controller';
 import { DemoModule } from './demo/demo.module';
 import { TelemetryModule } from './telemetry/telemetry.module';
+import { HelloModule } from './hello/hello.module';
 
 @Module({
   imports: [
@@ -98,6 +102,8 @@ import { TelemetryModule } from './telemetry/telemetry.module';
     TagsPluginModule,
     ExchangePluginModule,
     CodesPluginModule,
+    PrintingNiimbotPluginModule,
+    HomeassistantPluginModule,
     MobilePluginModule,
     ExternalPluginModule,
     AgentRegistryModule,
@@ -109,6 +115,7 @@ import { TelemetryModule } from './telemetry/telemetry.module';
     // writes into every plugin's models, so it wants them all registered.
     DemoModule,
     TelemetryModule,
+    HelloModule,
   ],
   controllers: [
     AppController,
@@ -116,6 +123,7 @@ import { TelemetryModule } from './telemetry/telemetry.module';
     UploadsController,
     DiskUsageController,
     RefsController,
+    PrintingController,
   ],
   providers: [
     AppService,

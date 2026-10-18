@@ -349,6 +349,121 @@ export interface CodesRawResolveCapability {
   resolveRawCode(value: string): Promise<string | null>;
 }
 
+// A Home Assistant instance, as a transport (#364).
+//
+// Offered by the `homeassistant` plugin, which owns the address, the
+// long-lived token and nothing else: it is a way to REACH things, not a
+// feature. Consumers ask it to read entity states or to call an action, and
+// the HA plugin never learns what the action does — that knowledge belongs to
+// whoever owns the device (the Niimbot printer, a relay, a scale), which is
+// also why the domain and service arrive as two plain strings.
+//
+// `null` from the registry (plugin absent, disabled, or simply unconfigured)
+// means "this instance has no Home Assistant", so the consumer degrades: the
+// surface that needed it does not exist, rather than failing when pressed.
+export const HOMEASSISTANT_API_CAPABILITY = 'homeassistant.api';
+
+// Every call answers with a keyed result instead of throwing. A transport
+// failure is an ordinary outcome here — the consumer renders it, and a print
+// driver can forward `errorKey` into its own `PrintResult` with no translation
+// table in between. `status`/`detail` are for refining a generic answer (a 400
+// that means "the integration is not installed") and for logs; they are not
+// text to show anyone.
+export interface HomeAssistantFailure {
+  ok: false;
+  errorKey: string;
+  params?: Record<string, string>;
+  status?: number;
+  detail?: string;
+}
+
+export type HomeAssistantResult<T> =
+  | { ok: true; data: T }
+  | HomeAssistantFailure;
+
+// Read a result's failure branch through this, not through `!result.ok`.
+//
+// Not a style choice: the backend app compiles without `strict`, and without
+// `strictNullChecks` TypeScript does not narrow a union by a boolean literal
+// discriminant — so `if (!result.ok) return result;` keeps the success member
+// in the type and fails to compile there while compiling fine inside a plugin
+// lib (which is strict). A user-defined guard narrows under both.
+export function isHomeAssistantFailure<T>(
+  result: HomeAssistantResult<T>,
+): result is HomeAssistantFailure {
+  return result.ok === false;
+}
+
+export interface HomeAssistantEntityState {
+  entityId: string;
+  state: string;
+  // As Home Assistant names it for a person; absent when the entity carries no
+  // friendly name, and then the id is the only honest label.
+  friendlyName: string | null;
+}
+
+export interface HomeAssistantStatesFilter {
+  // An integration's domain, e.g. `niimbot`. Home Assistant exposes its entity
+  // REGISTRY only over its WebSocket API, so this filter is answered through a
+  // template call and may legitimately fail — see `integrationFilterApplied`.
+  integration?: string;
+  // Entity domains to keep: `button`, `select`, `sensor`.
+  domains?: string[];
+}
+
+export interface HomeAssistantStates {
+  entities: HomeAssistantEntityState[];
+  // False when the integration filter could NOT be applied and this is the
+  // unfiltered list. A consumer must say so rather than present every entity
+  // in the house as "the printers".
+  integrationFilterApplied: boolean;
+}
+
+// A thing in the house, as its owner named it — a printer, a vacuum, a lamp.
+//
+// The unit a person recognises is the DEVICE: an integration gives one device
+// a dozen entities (a Niimbot contributes its cover, its paper, its RFID tag
+// and its battery), and offering those as "the printers" asks somebody to pick
+// a property of their printer instead of their printer.
+export interface HomeAssistantDevice {
+  deviceId: string;
+  name: string;
+}
+
+export interface HomeAssistantServiceCall {
+  // Home Assistant's REST endpoint takes the target inside the body; this is
+  // the structured form of it, so a consumer never assembles that shape. An
+  // action may be aimed at a device or at one of its entities — hass-niimbot
+  // accepts either — so both spellings exist here.
+  target?: { entityId?: string | string[]; deviceId?: string | string[] };
+  data?: Record<string, unknown>;
+  // Ask for the action's own response. Only for actions that return data — on
+  // one that does not, Home Assistant answers 400.
+  returnResponse?: boolean;
+}
+
+export interface HomeAssistantApiCapability {
+  // Is there an address and a token? Synchronous and free of I/O: it is read
+  // while deciding whether a surface exists at all.
+  isConfigured(): boolean;
+  getStates(
+    filter?: HomeAssistantStatesFilter,
+  ): Promise<HomeAssistantResult<HomeAssistantStates>>;
+  // The devices an integration contributed, named as the household named them.
+  // Answered through a rendered template, because Home Assistant publishes its
+  // device registry over the WebSocket API alone — so this can legitimately
+  // come back empty on an instance that refuses templates, and a consumer that
+  // needs a target then falls back to `getStates`.
+  getDevices(
+    integration: string,
+  ): Promise<HomeAssistantResult<{ devices: HomeAssistantDevice[] }>>;
+  callService(
+    domain: string,
+    service: string,
+    call?: HomeAssistantServiceCall,
+  ): Promise<HomeAssistantResult<{ response?: unknown }>>;
+}
+
 // ── Events ──────────────────────────────────────────────────────────────────
 
 // Emitted by logistics wherever an order flow changes physical stock (receive,

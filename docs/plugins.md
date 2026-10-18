@@ -622,7 +622,7 @@ visible? }`; logistics + chat), `projects.shopping-list.actions`,
    **`storages.cell.status`** (ctx `{ entityRef }`) — the cell header's home for
    a background process running against that cell (a live scan session).
    Storages names the cell and never writes another plugin's models.
-   Inbox action slot (#315, rendered by `notify` in the bell): 
+   Inbox action slot (#315, rendered by `notify` in the bell):
    **`notify.inbox.actions`** (no ctx) — what a person could set up so that
    something reaches them, filled by `schedule` with "New reminder". Rendered
    in the empty state's action area, and on a ruled-off footer line when the
@@ -750,3 +750,90 @@ manifest field and never imports `codes`.
   the seam. Adoption is best-effort: an owner that throws (object deleted
   mid-turn, picture already owned elsewhere) leaves the file with the
   conversation rather than failing the turn.
+
+### Printing — the `printing` contract and its drivers (#359)
+
+A plugin with something to put on a label hands a **raster** to a **driver** and
+never learns what the hardware is. The contract
+([`libs/plugin-contract/src/lib/printing.ts`](../libs/plugin-contract/src/lib/printing.ts))
+is deliberately small: a page size in dots, packed 1-bpp rows (`PrintRaster`,
+`rasterRowBytes`, `isValidRaster`), a driver descriptor (printhead width, dpi,
+`nameKey`), progress, and a result whose failure is an **i18n key** — a driver
+may be a remote process that has no idea what locale the reader uses. No queues,
+no paper profiles, no "print subsystem".
+
+- **Browser-side drivers** register with `registerPrintDriver` (frontend-core);
+  consumers read `usePrintDrivers()`, which filters by the owning plugin's
+  enabled state and by the driver's own `visible` lens predicate (#269), then
+  ask each driver `isSupported()` — a per-BROWSER question, because Web
+  Bluetooth exists in Chromium only. That gap is what the handoff link (#361)
+  fills; the system print dialog remains the generic fallback.
+- **Server-side drivers** register the `printing.driver.<pluginId>` capability
+  (`printDriverCapability(pluginId)`, `PrintDriverCapability`) — the same
+  contract on the other side of the wire, which is why the raster is bytes and
+  not a canvas.
+- **`printing-niimbot`** is the first driver: a Niimbot B1 over Web Bluetooth,
+  through [niimbluelib](https://github.com/MultiMote/niimblue) (MIT), imported
+  dynamically so a screen that never prints never loads it. Its settings
+  (density, label stock, last device) are per-browser `localStorage`, because a
+  Web Bluetooth grant is per-browser-profile.
+- **`codes`** is the first consumer: the print dialog offers "Print on
+  <driver>" for whatever the registry hands it, and rasterises **the card it is
+  previewing** — `label-raster.ts` takes the rendered `<svg>` out of
+  `LabelCard` (freezing the paint its Tailwind classes computed, since classes
+  do not travel with a serialised SVG), places it on the page with
+  `THERMAL_CSS`'s own millimetres, and `raster-pack.ts` thresholds and packs.
+  There is deliberately no second code generator: the printed sticker is the
+  previewed sticker, and a change to the QR's geometry reaches the printer with
+  no one copying anything. The two lines of type are drawn on the CANVAS rather
+  than inside that SVG — an SVG in a `data:` URL is a document of its own with
+  no access to the page's `@font-face` fonts, so a label set there would print
+  in the system's default face — and they carry the card's own family, casing
+  (`text-transform`) and tracking. A second driver needs no `codes` change.
+- **A handoff link** (#361) is what a driver offers when it exists but cannot
+  run in this browser: `createHandoff` parks the rendered page through the
+  driver plugin's own endpoint and returns a one-time URL (QR + copyable link
+  in the dialog). The parked row holds the RASTER only — no ORef, no name, no
+  label code — so a token discloses exactly what the sticker would.
+- **A household's Home Assistant can be the printer's radio** (#364). Two
+  plugins and one seam: `homeassistant` owns the instance's address and
+  long-lived token and registers the `homeassistant.api` capability
+  (`isConfigured` / `getStates` / `callService`, every answer a keyed
+  `HomeAssistantResult`, never a throw); `printing-niimbot` owns what a Niimbot
+  is and registers the server-side print driver, resolving that capability per
+  call. Disable the gateway and `describe()` answers `null`, so the row leaves
+  every print dialog — nothing else changes. The gateway must stay generic: the
+  day it grows a `printNiimbot()`, the seam is gone and the next device drags
+  its domain into it.
+  The page is handed to Home Assistant as a PNG `data:` URI in an `imagespec`
+  `dlimg` element (`xsize`/`ysize` from the raster's own size, so nothing is
+  resampled) through the `niimbot.print` action of
+  [hass-niimbot](https://github.com/eigger/hass-niimbot) (MIT; written against
+  **v4.2.1** — no hardware run has signed that off yet). Three of its schemas
+  are depended on, and a version that moves any of them breaks a different
+  thing: `dlimg`'s `data:` URI acceptance (the page itself), `refresh_info`
+  (the printer half of the settings screen's check) and the `preview` flag with
+  its `image` answer (the render the check shows). Its descriptor declares **320** dots, not the printhead's 384:
+  hass-niimbot composes a LABEL-sized canvas and the firmware places it, and
+  `codes` already keeps all ink inside the 40 mm stock. Entity discovery goes
+  through `POST /api/template` with `integration_entities('niimbot')` — Home
+  Assistant exposes its entity registry over WebSocket only — and says so
+  (`integrationFilterApplied: false`) when the filter could not be applied,
+  rather than passing every entity in the house off as a printer. The picker
+  lists the integration's DEVICES, since one printer contributes a dozen
+  entities and none of them is the printer.
+  [`tools/ha-stub`](../tools/ha-stub) is a Home Assistant that is not one: it
+  answers this slice of the REST API, refuses what Home Assistant refuses, and
+  writes every rendered label to disk, so the whole path can be driven from the
+  real screens without a house.
+- **An external plugin can be a driver** (#362): it declares `printDriver`
+  (`{ labelKey, maxWidthDots, dpi }`, contract 1.14) and the external host
+  registers `printing.driver.<pluginId>` on its behalf, relaying prints to the
+  container as `<pluginId>.print-driver`. The descriptor is answered from the
+  manifest — every print dialog asks what can print, and that question must not
+  wake a Raspberry Pi. The core endpoint `/api/printing/drivers` enumerates
+  them and `/api/printing/print` submits a page; `refreshRemotePrintDrivers()`
+  (frontend-core) folds them into the same registry the browser drivers use.
+  First such driver: [`plugins/mk-plugin-niimbot-bridge`](../plugins/mk-plugin-niimbot-bridge),
+  which owns a Niimbot over the host's Bluetooth adapter and is the answer for
+  iOS, where no browser has Web Bluetooth at all.

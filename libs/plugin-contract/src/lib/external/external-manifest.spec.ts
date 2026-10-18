@@ -320,3 +320,73 @@ describe('publicPathCovers', () => {
     expect(publicPathCovers([], 'anything')).toBe(false);
   });
 });
+
+// A plugin that owns a printer declares it (contract 1.14, #362). The geometry
+// is validated because every consumer lays out a page from it, sight unseen.
+describe('validateExternalManifest — printDriver', () => {
+  const withPrinter = (decl: unknown): Record<string, unknown> => ({
+    ...base(),
+    i18n: {
+      en: {
+        weather: {
+          name: 'Weather',
+          nav: 'Weather',
+          tool: 'Reads the forecast',
+          param: 'City name',
+          printer: 'Workshop label printer',
+        },
+      },
+    },
+    printDriver: decl,
+  });
+
+  it('accepts a declared printer', () => {
+    const result = validateExternalManifest(
+      withPrinter({
+        labelKey: 'weather.printer',
+        maxWidthDots: 384,
+        dpi: 203,
+      }),
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it('refuses a printer with no label', () => {
+    const result = validateExternalManifest(
+      withPrinter({ maxWidthDots: 384, dpi: 203 }),
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok === false) {
+      expect(result.errors.map((e) => e.code)).toContain(
+        'print-driver-label-invalid',
+      );
+    }
+  });
+
+  it.each([
+    ['a fractional printhead', { maxWidthDots: 383.5, dpi: 203 }],
+    ['a zero printhead', { maxWidthDots: 0, dpi: 203 }],
+    ['a missing resolution', { maxWidthDots: 384 }],
+    ['a textual resolution', { maxWidthDots: 384, dpi: '203' }],
+  ])('refuses %s', (_case, geometry) => {
+    const result = validateExternalManifest(
+      withPrinter({ labelKey: 'weather.printer', ...geometry }),
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok === false) {
+      expect(result.errors.map((e) => e.code)).toContain(
+        'print-driver-geometry-invalid',
+      );
+    }
+  });
+
+  it('refuses a declaration that is not an object', () => {
+    const result = validateExternalManifest(withPrinter('yes'));
+    expect(result.ok).toBe(false);
+    if (result.ok === false) {
+      expect(result.errors.map((e) => e.code)).toContain(
+        'print-driver-invalid',
+      );
+    }
+  });
+});
