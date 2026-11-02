@@ -9,6 +9,7 @@ import {
   TransliterationService,
 } from '@makekeeper/backend-core';
 import { ProviderService } from './providers.service';
+import { LlmClient } from './llm-client';
 
 // The owner-controlled credential-resolution chain: personal → workspace
 // owner's shared → instance (visibility-gated). Single-user mode must stay
@@ -79,6 +80,7 @@ describe('ProviderService.resolveActiveConfig', () => {
           },
         },
         { provide: KeyringService, useValue: { getDek: () => null } },
+        { provide: LlmClient, useValue: { probe: jest.fn() } },
         {
           provide: SecretAccessService,
           useValue: { recordOutOfSessionUse: jest.fn() },

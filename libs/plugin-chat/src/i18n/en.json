@@ -81,14 +81,16 @@
       "pageContextQuery": "- Screen parameters: {query}",
       "pageContextHeader": "### Context of the user's current page:",
       "pageContextIntro": "The user sent the message while on this screen. Take this into account when interpreting deictic expressions (\"this project\", \"this part\", \"here\", \"show its tasks\"). The context only clarifies intent and does NOT override the mandatory confirmation of dangerous (DESTRUCTIVE) actions.",
-      "geminiSystemWrapper": "SYSTEM INSTRUCTION (follow it unconditionally):\n{systemPrompt}\n\nLet's start the dialogue.",
-      "geminiPrimingReply": "Understood. I am ready to help you with your project according to the system instructions.",
       "pendingToolNote": "[Tool call {name} has been proposed and is awaiting user confirmation — it has not been executed yet]",
       "toolCancelledNote": "[Action {name} cancelled by the user. Say so in words and stop: do not call another tool in this turn, and do not offer a different action. If something else is needed, the person will ask.]",
       "functionCallNote": "[Function call: {name} with arguments {args}]",
       "functionResultNote": "[Function result: {result}]",
       "attachedFileNote": "The user attached a file: «{filename}» ({mimeType}, {size}), reference {ref}. Its content is NOT shown above — use the read_attachment tool with this reference to read it. When mentioning the file in your reply, link its name as [{filename}]({ref}).",
-      "now": "Right now it is {now} where the person is, in the time zone {zone}. Read every relative request against that clock — \"in two minutes\", \"tomorrow morning\", \"Monday\". A schedule's rule must carry its own DTSTART written in that zone; the current moment in that form is {stamp}, e.g. DTSTART;TZID={zone}:{stamp}."
+      "now": "Right now it is {now} where the person is, in the time zone {zone}. Read every relative request against that clock — \"in two minutes\", \"tomorrow morning\", \"Monday\". A schedule's rule must carry its own DTSTART written in that zone; the current moment in that form is {stamp}, e.g. DTSTART;TZID={zone}:{stamp}.",
+      "connectionProbeSystem": "You are being called by a connection test. Reply with the single word OK.",
+      "connectionProbe": "Connection test: reply with OK.",
+      "connectionProbeTool": "Reports that the connection works. Never needed — answer in text instead.",
+      "connectionProbeToolStatus": "Any short status text."
     },
     "messages": {
       "actionCancelledByUser": "Action \"{name}\" cancelled by the user.",
@@ -96,7 +98,8 @@
       "simulationMode": "[Simulation mode: API key not configured].\nYou asked: \"{question}\".\nTo make the AI respond for real, configure a provider.",
       "toolNotRegistered": "Tool {name} is not registered.",
       "emptyResponse": "Empty response from {provider}.",
-      "providerLocked": "The AI connection for this workspace is locked because its owner is signed out. Ask them to sign in, or select your own connection."
+      "providerLocked": "The AI connection for this workspace is locked because its owner is signed out. Ask them to sign in, or select your own connection.",
+      "providerRefused": "The model declined to answer this request."
     },
     "secretAccess": {
       "llmCall": "an AI chat request"
@@ -265,7 +268,6 @@
     "endpoint": "Endpoint (Base URL)",
     "modelName": "Model Name",
     "organizationId": "Organization ID",
-    "apiVersion": "API Version",
     "imageDetail": "Image Detail",
     "imageDetailHint": "Use High so the model can read small component markings on photos.",
     "imageDetailOptions": {
@@ -273,12 +275,16 @@
       "high": "High (best for recognition)"
     },
     "reasoningEffort": "Reasoning Effort",
-    "reasoningEffortHint": "For reasoning models (e.g. gpt-5, o4-mini). Higher is more accurate but slower and costlier.",
+    "reasoningEffortHint": "For reasoning models (e.g. gpt-5). Higher is more thorough but slower and costlier. A level the model doesn't support is skipped automatically.",
     "reasoningEffortOptions": {
       "default": "Default (model's own)",
+      "none": "None",
+      "minimal": "Minimal",
       "low": "Low",
       "medium": "Medium",
-      "high": "High"
+      "high": "High",
+      "xhigh": "Extra high",
+      "max": "Maximum"
     },
     "apiKey": "Personal API Key",
     "keyPlaceholder": "Enter your personal key (stored securely on the server)",
@@ -289,8 +295,7 @@
     "saveError": "Could not save the connection. Please check the fields and try again.",
     "testConnection": "Test connection",
     "testing": "Testing…",
-    "testSuccess": "Connection successful — the credentials work.",
-    "testFailed": "Connection failed: {error}",
+    "testSuccess": "Connection works — a test chat turn with tools succeeded.",
     "testError": "Could not run the test. Please try again.",
     "loadError": "Could not load providers. Please try again.",
     "validation": {
@@ -301,7 +306,6 @@
       "unknownConnection": "Unknown AI connection.",
       "invalidSharing": "Invalid sharing level for this connection.",
       "personalDisabled": "Personal AI connections require multi-user mode.",
-      "blockedHost": "This base URL points to a private or internal address, which is not allowed.",
       "sessionLocked": "Your session is locked — sign in again to save an API key.",
       "proxyHeaderNameInvalid": "A header name may only use letters, digits and the symbols ! # $ % & ' * + - . ^ _ ` | ~",
       "proxyHeaderNameReserved": "This header is already used to authenticate the request and cannot be reused for the label."
@@ -334,7 +338,16 @@
           "Sign up or log in and verify your email address.",
           "Open Plans & Billing and buy credits — a new key needs credits before it will work.",
           "Click \"Create Key\", name it, and copy the value (it is shown only once).",
-          "Paste the key above. Leave \"API Version\" at 2023-06-01 unless Anthropic's documentation tells you to change it."
+          "Paste the key above and pick a model from the list."
+        ]
+      },
+      "openrouter": {
+        "title": "How to get an OpenRouter API key:",
+        "steps": [
+          "Open <a href=\"https://openrouter.ai/settings/keys\" target=\"_blank\" class=\"text-brand-600 dark:text-brand-400 hover:underline\">OpenRouter &rarr; Settings &rarr; API Keys</a> and sign in.",
+          "Add credits under Settings &rarr; Credits — paid models need a balance; free models have tight rate limits.",
+          "Click \"Create API Key\", optionally set a credit limit for this app, and copy the key.",
+          "Paste the key above and pick a model from the list. Only models that support tool calls are listed, because the assistant needs them to act."
         ]
       },
       "ollama": {
@@ -349,10 +362,10 @@
       "custom": {
         "title": "How to connect a custom gateway or proxy:",
         "steps": [
-          "Use this option for a self-hosted proxy or any OpenAI/Gemini/Anthropic-compatible gateway (for example LiteLLM or OpenRouter).",
+          "Use this option for a self-hosted proxy or gateway that speaks the OpenAI Chat Completions API (for example LiteLLM or vLLM).",
           "Enter your gateway's full base URL, including any \"/v1\" path, in the base URL field.",
           "If your gateway requires an access token, paste it into the API key field; otherwise leave it empty.",
-          "Set the model field to a model id your gateway exposes. Check your gateway's documentation for the exact endpoint and model names."
+          "Pick a model from the list your gateway returns, or type the id it expects. The model has to support tool calls for the assistant to act."
         ]
       }
     },
@@ -392,6 +405,43 @@
       "sampleUser": "user",
       "sampleProject": "project",
       "disabledHint": "Sent only through your own endpoint. Set a custom API address above to enable labelling."
+    },
+    "testCredentialsOnly": "Credentials work. Enter a model to test a chat turn as well.",
+    "testStage": {
+      "credentials": "Credentials check failed.",
+      "chat": "Test chat turn failed."
+    },
+    "modelPicker": {
+      "placeholder": "Pick from the list or type a model id",
+      "loading": "Loading the connection's models…",
+      "loaded": "{count} chat models from this connection — or type any id.",
+      "empty": "The connection listed no chat models — type the model id by hand.",
+      "failed": "Couldn't load the model list — type the model id by hand.",
+      "needCredentials": "Enter the credentials to load this connection's models.",
+      "reload": "Reload the model list"
+    },
+    "failure": {
+      "auth": "The API key was rejected — check that it is copied completely and still active.",
+      "permission": "This key has no access to the model or endpoint — check the key's permissions or pick another model.",
+      "model": "The model was not found — check the model id or pick one from the list.",
+      "endpoint": "Nothing answered at this address — check the base URL, including any /v1 path.",
+      "billing": "The account has no credit or quota left — check billing with the provider.",
+      "rateLimit": "The provider is rate-limiting this key — wait a moment and try again.",
+      "overloaded": "The provider is overloaded right now — try again shortly.",
+      "unreachable": "The server could not be reached — check the address and that the server is running.",
+      "timeout": "The provider did not answer in time — check the address or try again.",
+      "blockedHost": "This base URL points to a private or internal address, which is not allowed.",
+      "missingKey": "Enter an API key for this provider.",
+      "missingBaseUrl": "Enter the base URL for this provider.",
+      "locked": "Your session is locked — sign in again to use the stored key.",
+      "badRequest": "The provider rejected the request — see the details for why.",
+      "unknown": "The provider returned an error — see the details for why."
+    },
+    "subscription": {
+      "title": "Using a subscription instead of an API key",
+      "anthropic": "A Claude Pro or Max subscription can't be connected here. Anthropic allows signing in with a subscription only in its own apps and does not permit third-party apps to use it, so a connection needs an API key from the Anthropic Console.",
+      "openai": "A ChatGPT subscription can't be connected here. OpenAI offers \"Sign in with ChatGPT\" to third-party apps only through its partner program, which MakeKeeper is not enrolled in, so a connection needs an API key from the OpenAI Platform.",
+      "gemini": "A Google AI Pro or Ultra subscription can't be connected here. Google offers no sign-in for third-party apps with these plans, so a connection needs a Gemini API key from Google AI Studio, which has a free tier."
     }
   },
   "nav": {},

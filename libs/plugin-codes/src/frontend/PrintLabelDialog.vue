@@ -76,7 +76,12 @@ const ensureLabel = async (): Promise<void> => {
     const res = await apiFetch('/api/codes/labels', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ref: props.entityRef }),
+      // The address bar is the one place scheme, host and port all survive;
+      // the QR is built from it rather than from proxy headers (#372).
+      body: JSON.stringify({
+        ref: props.entityRef,
+        origin: window.location.origin,
+      }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data: { code: string; url: string } = await res.json();

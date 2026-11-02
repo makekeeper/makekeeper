@@ -173,6 +173,77 @@ describe('AppConfigService.resolvePublicBaseUrl', () => {
     ).toBe('http://[::1]:8080');
   });
 
+  // #372: behind chained proxies the outer TLS hop says https while an inner
+  // http hop forwards its own port 80 — the scheme and the port come from
+  // different hops, and the label QR came out as `https://host:80`.
+  it("drops a forwarded port that is the other scheme's default", () => {
+    delete process.env.PUBLIC_BASE_URL;
+    expect(
+      service.resolvePublicBaseUrl(
+        req({
+          'x-forwarded-proto': 'http',
+          'x-forwarded-scheme': 'https',
+          'x-forwarded-host': 'mk.example.com',
+          'x-forwarded-port': '80',
+        }),
+      ),
+    ).toBe('https://mk.example.com');
+    expect(
+      service.resolvePublicBaseUrl(
+        req({ 'x-forwarded-host': 'box.lan', 'x-forwarded-port': '443' }),
+      ),
+    ).toBe('http://box.lan');
+  });
+
+  it("drops a host's own port when it is either scheme's default", () => {
+    delete process.env.PUBLIC_BASE_URL;
+    expect(
+      service.resolvePublicBaseUrl(
+        req({
+          'x-forwarded-scheme': 'https',
+          'x-forwarded-host': 'mk.example.com:80',
+        }),
+      ),
+    ).toBe('https://mk.example.com');
+    expect(service.resolvePublicBaseUrl(req({ host: 'box.lan:443' }))).toBe(
+      'http://box.lan',
+    );
+    // The scheme's own default is just as redundant as the other one's.
+    expect(
+      service.resolvePublicBaseUrl(
+        req({ 'x-forwarded-proto': 'https', host: 'mk.example.com:443' }),
+      ),
+    ).toBe('https://mk.example.com');
+    expect(service.resolvePublicBaseUrl(req({ host: '[::1]:80' }))).toBe(
+      'http://[::1]',
+    );
+    // A real non-default port on https is still the address.
+    expect(
+      service.resolvePublicBaseUrl(
+        req({
+          'x-forwarded-proto': 'https',
+          'x-forwarded-host': 'mk.example.com:8443',
+        }),
+      ),
+    ).toBe('https://mk.example.com:8443');
+  });
+
+  // #372: the browser's origin outranks a header bag that would have produced
+  // the wrong port.
+  it("prefers the caller's origin over headers that carry a mismatched port", () => {
+    delete process.env.PUBLIC_BASE_URL;
+    expect(
+      service.resolvePublicBaseUrl(
+        req({
+          'x-forwarded-scheme': 'https',
+          'x-forwarded-host': 'mk.example.com',
+          'x-forwarded-port': '8080',
+        }),
+        'https://mk.example.com',
+      ),
+    ).toBe('https://mk.example.com');
+  });
+
   it('ignores a junk X-Forwarded-Port rather than building a broken address', () => {
     delete process.env.PUBLIC_BASE_URL;
     expect(

@@ -27,6 +27,20 @@ import {
   type ProxyLabelSegment,
 } from '../proxy-label';
 import {
+  DEFAULT_BASE_URLS,
+  PROVIDER_FIELD_RULES,
+  REASONING_EFFORTS,
+  isProviderFailureKind,
+  type ImageDetail,
+  type ListModelsResult,
+  type ProviderFailureKind,
+  type ProviderFieldRules,
+  type ProviderModelOption,
+  type ProviderType,
+  type ReasoningEffort,
+  type TestConnectionResult,
+} from '../providers-shared';
+import {
   Check,
   Bot,
   Plus,
@@ -38,6 +52,8 @@ import {
   Info,
   ChevronDown,
   Pin,
+  RefreshCw,
+  AlertTriangle,
 } from '@lucide/vue';
 
 // One list of AI connections (instance or the caller's personal ones) with
@@ -61,13 +77,6 @@ const pinnedEnabled = computed<boolean>(
   () => personal.value && !session.isAdmin,
 );
 
-type ProviderType = 'gemini' | 'openai' | 'anthropic' | 'ollama' | 'custom';
-
-// OpenAI vision/reasoning knobs — kept as local unions (mirrors ProviderType
-// above), in sync with the backend providers.dto IMAGE_DETAILS/REASONING_EFFORTS.
-type ImageDetail = 'auto' | 'high';
-type ReasoningEffort = 'default' | 'low' | 'medium' | 'high';
-
 // Public provider shape returned by the API — the raw apiKey is never sent to
 // the client; `hasApiKey` tells us whether a secret is stored so we can offer a
 // "leave blank to keep current" flow when editing.
@@ -78,7 +87,6 @@ interface ProviderConfig {
   baseUrl: string | null;
   modelName: string;
   organizationId: string | null;
-  apiVersion: string | null;
   imageDetail: string | null;
   reasoningEffort: string | null;
   isDefault: boolean;
@@ -97,7 +105,6 @@ interface ProviderForm {
   baseUrl: string;
   modelName: string;
   organizationId: string;
-  apiVersion: string;
   imageDetail: ImageDetail;
   reasoningEffort: ReasoningEffort;
   proxyLabel: string;
@@ -112,77 +119,20 @@ interface ProxyRow {
   on: boolean;
 }
 
-type FieldRule = 'required' | 'optional' | 'hidden';
+// The per-type field rules, endpoints and option lists come from
+// `providers-shared.ts`, the module the backend validates with (#374), so the
+// form and the server can no longer disagree about what a type needs.
+const defaultUrls = DEFAULT_BASE_URLS;
 
-interface FieldRules {
-  baseUrl: FieldRule;
-  apiKey: FieldRule;
-  organizationId: FieldRule;
-  apiVersion: FieldRule;
-  imageDetail: FieldRule;
-  reasoningEffort: FieldRule;
-}
-
-// Which parameters each provider actually needs. Must stay in sync with the
-// backend PROVIDER_FIELD_RULES. modelName and name are required for all.
-const fieldRulesMap: Record<ProviderType, FieldRules> = {
-  gemini: {
-    baseUrl: 'optional',
-    apiKey: 'required',
-    organizationId: 'hidden',
-    apiVersion: 'hidden',
-    imageDetail: 'hidden',
-    reasoningEffort: 'hidden',
-  },
-  openai: {
-    baseUrl: 'optional',
-    apiKey: 'required',
-    organizationId: 'optional',
-    apiVersion: 'hidden',
-    imageDetail: 'optional',
-    reasoningEffort: 'optional',
-  },
-  anthropic: {
-    baseUrl: 'optional',
-    apiKey: 'required',
-    organizationId: 'hidden',
-    apiVersion: 'optional',
-    imageDetail: 'hidden',
-    reasoningEffort: 'hidden',
-  },
-  ollama: {
-    baseUrl: 'required',
-    apiKey: 'hidden',
-    organizationId: 'hidden',
-    apiVersion: 'hidden',
-    imageDetail: 'hidden',
-    reasoningEffort: 'hidden',
-  },
-  custom: {
-    baseUrl: 'required',
-    apiKey: 'optional',
-    organizationId: 'hidden',
-    apiVersion: 'hidden',
-    imageDetail: 'hidden',
-    reasoningEffort: 'hidden',
-  },
-};
-
-// Anthropic's `anthropic-version` header value — a sensible current default.
-const DEFAULT_ANTHROPIC_VERSION = '2023-06-01';
-
-const defaultUrls: Record<ProviderType, string> = {
-  gemini: 'https://generativelanguage.googleapis.com',
-  openai: 'https://api.openai.com/v1',
-  anthropic: 'https://api.anthropic.com/v1',
-  ollama: 'http://localhost:11434',
-  custom: '',
-};
-
+// A starting point only: the picker offers the connection's real list once the
+// credentials are in. Gemini's `-latest` alias tracks the current Flash model,
+// so it does not go stale; OpenRouter and custom gateways have no meaningful
+// default.
 const defaultModels: Record<ProviderType, string> = {
-  gemini: 'gemini-2.5-flash',
-  openai: 'gpt-4o',
-  anthropic: 'claude-sonnet-5',
+  gemini: 'gemini-flash-latest',
+  openai: 'gpt-5.5',
+  anthropic: 'claude-opus-5-5',
+  openrouter: '',
   ollama: 'llama3.1',
   custom: '',
 };
@@ -193,21 +143,22 @@ const providerOptions = computed(() => [
   { value: 'gemini', label: 'Google Gemini API' },
   { value: 'openai', label: 'OpenAI (GPT)' },
   { value: 'anthropic', label: 'Anthropic (Claude)' },
+  { value: 'openrouter', label: 'OpenRouter' },
   { value: 'ollama', label: t('providerSettings.ollamaLocal') },
   { value: 'custom', label: t('providerSettings.customGatewayOption') },
 ]);
 const providerLabel = (type: ProviderType): string =>
   providerOptions.value.find((o) => o.value === type)?.label ?? type;
 
-const reasoningEfforts: readonly ReasoningEffort[] = [
-  'default',
-  'low',
-  'medium',
-  'high',
-];
-
 const isReasoningEffort = (value: string | null): value is ReasoningEffort =>
-  value !== null && (reasoningEfforts as readonly string[]).includes(value);
+  value !== null && (REASONING_EFFORTS as readonly string[]).includes(value);
+
+const reasoningEffortOptions = computed(() =>
+  REASONING_EFFORTS.map((value) => ({
+    value,
+    label: t(`providerSettings.reasoningEffortOptions.${value}`),
+  })),
+);
 
 const providers = ref<ProviderConfig[]>([]);
 // The connection a regular user inherits — the workspace owner's guest-shared
@@ -246,7 +197,14 @@ const showForm = ref(false);
 const formError = ref('');
 const saving = ref(false);
 const testing = ref(false);
-const testResult = ref<{ ok: boolean; message: string } | null>(null);
+// `warn` is the honest middle: the key works, but no chat turn was tried
+// because no model was given — not a pass (#374).
+interface TestOutcome {
+  tone: 'ok' | 'warn' | 'error';
+  message: string;
+  detail?: string;
+}
+const testResult = ref<TestOutcome | null>(null);
 // Collapsed by default — the how-to-get-a-key guide is reference material.
 const showGuide = ref(false);
 
@@ -266,7 +224,6 @@ const emptyForm = (): ProviderForm => ({
   baseUrl: defaultUrls.gemini,
   modelName: defaultModels.gemini,
   organizationId: '',
-  apiVersion: '',
   imageDetail: 'auto',
   reasoningEffort: 'default',
   proxyLabel: '',
@@ -278,7 +235,9 @@ const emptyForm = (): ProviderForm => ({
 
 const form = reactive<ProviderForm>(emptyForm());
 
-const rules = computed<FieldRules>(() => fieldRulesMap[form.provider]);
+const rules = computed<ProviderFieldRules>(
+  () => PROVIDER_FIELD_RULES[form.provider],
+);
 const isEditing = computed(() => editingId.value !== null);
 
 // ── Proxy request labelling (#230) ──────────────────────────────────────────
@@ -452,6 +411,7 @@ const fetchProviders = async (): Promise<void> => {
 const resetFormState = (): void => {
   formError.value = '';
   testResult.value = null;
+  modelList.value = { status: 'idle' };
   keyAction.value = 'keep';
   showGuide.value = false;
 };
@@ -473,7 +433,6 @@ const openEdit = (p: ProviderConfig): void => {
   form.baseUrl = p.baseUrl ?? '';
   form.modelName = p.modelName;
   form.organizationId = p.organizationId ?? '';
-  form.apiVersion = p.apiVersion ?? '';
   form.imageDetail = p.imageDetail === 'high' ? 'high' : 'auto';
   form.reasoningEffort = isReasoningEffort(p.reasoningEffort)
     ? p.reasoningEffort
@@ -521,32 +480,46 @@ const applyProviderDefaults = (): void => {
   form.baseUrl = defaultUrls[form.provider];
   form.modelName = defaultModels[form.provider];
   form.organizationId = '';
-  form.apiVersion =
-    form.provider === 'anthropic' ? DEFAULT_ANTHROPIC_VERSION : '';
   form.imageDetail = 'auto';
   form.reasoningEffort = 'default';
   // A staged key removal belongs to the provider it was staged for; a key the
   // user already typed is still theirs to keep.
   if (keyAction.value === 'remove') keyAction.value = 'keep';
   testResult.value = null;
+  // The previous type's models are not this type's.
+  modelList.value = { status: 'idle' };
 };
 
-const testConnection = async (): Promise<void> => {
-  testing.value = true;
-  testResult.value = null;
-
+// What the probes send: the form as entered, plus the connection id so a
+// stored key is used when the key field is left blank.
+const probePayload = (): Record<string, string> => {
   const payload: Record<string, string> = { provider: form.provider };
   if (isEditing.value && editingId.value) payload.id = editingId.value;
-  if (form.apiKey) payload.apiKey = form.apiKey;
+  if (form.apiKey && keyAction.value !== 'remove') payload.apiKey = form.apiKey;
   if (rules.value.baseUrl !== 'hidden' && form.baseUrl.trim()) {
     payload.baseUrl = form.baseUrl.trim();
   }
   if (rules.value.organizationId !== 'hidden' && form.organizationId.trim()) {
     payload.organizationId = form.organizationId.trim();
   }
-  if (rules.value.apiVersion !== 'hidden' && form.apiVersion.trim()) {
-    payload.apiVersion = form.apiVersion.trim();
-  }
+  return payload;
+};
+
+const failureMessage = (reason: ProviderFailureKind): string =>
+  t(`providerSettings.failure.${reason}`);
+
+const isTestResult = (value: unknown): value is TestConnectionResult =>
+  typeof value === 'object' &&
+  value !== null &&
+  'ok' in value &&
+  typeof value.ok === 'boolean';
+
+const testConnection = async (): Promise<void> => {
+  testing.value = true;
+  testResult.value = null;
+
+  const payload = probePayload();
+  if (form.modelName.trim()) payload.modelName = form.modelName.trim();
 
   try {
     const response = await apiFetch(`${apiBase.value}/test`, {
@@ -554,30 +527,175 @@ const testConnection = async (): Promise<void> => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (response.ok) {
-      const data = (await response.json()) as { ok: boolean; error?: string };
-      testResult.value = data.ok
-        ? { ok: true, message: t('providerSettings.testSuccess') }
-        : {
-            ok: false,
-            message: t('providerSettings.testFailed', {
-              error: data.error ?? '',
-            }),
-          };
-    } else {
+    const data: unknown = response.ok ? await response.json() : null;
+    if (!isTestResult(data)) {
       testResult.value = {
-        ok: false,
-        message: t('providerSettings.testFailed', {
-          error: `HTTP ${response.status}`,
-        }),
+        tone: 'error',
+        message: t('providerSettings.testError'),
+      };
+    } else if (data.ok) {
+      testResult.value = data.chat
+        ? { tone: 'ok', message: t('providerSettings.testSuccess') }
+        : { tone: 'warn', message: t('providerSettings.testCredentialsOnly') };
+    } else {
+      const reason = isProviderFailureKind(data.reason)
+        ? data.reason
+        : 'unknown';
+      // The stage says which half failed, the reason what to change; the
+      // vendor's own words follow as the detail for whoever needs them.
+      testResult.value = {
+        tone: 'error',
+        message: `${t(`providerSettings.testStage.${data.stage}`)} ${failureMessage(reason)}`,
+        detail: data.detail,
       };
     }
   } catch {
-    testResult.value = { ok: false, message: t('providerSettings.testError') };
+    testResult.value = {
+      tone: 'error',
+      message: t('providerSettings.testError'),
+    };
   } finally {
     testing.value = false;
   }
 };
+
+// ── Model picker (#374) ─────────────────────────────────────────────────────
+
+// The connection's own model list, offered in a combobox that still takes a
+// hand-typed id. Loaded once the credentials are in, and for a stored
+// connection straight away (the server uses the stored key). Any failure
+// degrades to free text with a one-line reason, never to a blocked form.
+type ModelListState =
+  | { status: 'idle' }
+  | { status: 'needCredentials' }
+  | { status: 'loading' }
+  | { status: 'loaded'; models: ProviderModelOption[] }
+  | { status: 'failed'; reason: ProviderFailureKind };
+
+const modelList = ref<ModelListState>({ status: 'idle' });
+let modelListTimer: ReturnType<typeof setTimeout> | undefined;
+let modelListSeq = 0;
+
+const canListModels = computed<boolean>(() => {
+  if (rules.value.baseUrl === 'required' && !form.baseUrl.trim()) return false;
+  if (rules.value.apiKey !== 'required') return true;
+  if (keyAction.value === 'remove') return false;
+  return Boolean(form.apiKey) || hasStoredKey.value;
+});
+
+const isListModelsResult = (value: unknown): value is ListModelsResult =>
+  typeof value === 'object' &&
+  value !== null &&
+  'ok' in value &&
+  typeof value.ok === 'boolean';
+
+const loadModels = async (): Promise<void> => {
+  clearTimeout(modelListTimer);
+  const seq = ++modelListSeq;
+  if (!canListModels.value) {
+    modelList.value = { status: 'needCredentials' };
+    return;
+  }
+  modelList.value = { status: 'loading' };
+  try {
+    const response = await apiFetch(`${apiBase.value}/models`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(probePayload()),
+    });
+    const data: unknown = response.ok ? await response.json() : null;
+    if (seq !== modelListSeq) return;
+    if (!isListModelsResult(data)) {
+      modelList.value = { status: 'failed', reason: 'unknown' };
+    } else if (data.ok) {
+      modelList.value = { status: 'loaded', models: data.models };
+    } else {
+      modelList.value = {
+        status: 'failed',
+        reason: isProviderFailureKind(data.reason) ? data.reason : 'unknown',
+      };
+    }
+  } catch {
+    if (seq === modelListSeq) {
+      modelList.value = { status: 'failed', reason: 'unreachable' };
+    }
+  }
+};
+
+// Debounced: the key and the URL are typed character by character, and each
+// keystroke is not a request to the vendor.
+const scheduleModelLoad = (): void => {
+  if (!showForm.value) return;
+  clearTimeout(modelListTimer);
+  modelListTimer = setTimeout(() => void loadModels(), 600);
+};
+
+watch(
+  [
+    () => showForm.value,
+    () => form.provider,
+    () => form.baseUrl,
+    () => form.apiKey,
+    () => form.organizationId,
+    () => keyAction.value,
+  ],
+  scheduleModelLoad,
+);
+
+const modelOptions = computed(() => {
+  const state = modelList.value;
+  if (state.status !== 'loaded') return [];
+  return state.models.map((m) => ({
+    value: m.id,
+    // The id is what gets stored and what a user searches for, so it always
+    // shows; a vendor display name rides in front of it when there is one.
+    label: m.label && m.label !== m.id ? `${m.label} · ${m.id}` : m.id,
+  }));
+});
+
+const modelHint = computed<{ text: string; tone: 'muted' | 'warn' } | null>(
+  () => {
+    const state = modelList.value;
+    switch (state.status) {
+      case 'needCredentials':
+        return {
+          text: t('providerSettings.modelPicker.needCredentials'),
+          tone: 'muted',
+        };
+      case 'loading':
+        return {
+          text: t('providerSettings.modelPicker.loading'),
+          tone: 'muted',
+        };
+      case 'loaded':
+        return state.models.length > 0
+          ? {
+              text: t('providerSettings.modelPicker.loaded', {
+                count: state.models.length,
+              }),
+              tone: 'muted',
+            }
+          : { text: t('providerSettings.modelPicker.empty'), tone: 'warn' };
+      case 'failed':
+        return {
+          text: `${t('providerSettings.modelPicker.failed')} ${failureMessage(state.reason)}`,
+          tone: 'warn',
+        };
+      default:
+        return null;
+    }
+  },
+);
+
+// Only the three consumer brands have a subscription a user might expect to
+// reuse; the note says plainly why it cannot be (#374).
+const subscriptionNoteKey = computed<string | null>(() =>
+  form.provider === 'gemini' ||
+  form.provider === 'openai' ||
+  form.provider === 'anthropic'
+    ? `providerSettings.subscription.${form.provider}`
+    : null,
+);
 
 const setDefault = async (id: string): Promise<void> => {
   const response = await apiFetch(`${apiBase.value}/${id}/default`, {
@@ -647,9 +765,6 @@ const buildPayload = (): Record<string, string | null> => {
   // actually clears it; the backend collapses a blank value to null (#220).
   if (rules.value.organizationId !== 'hidden') {
     payload.organizationId = form.organizationId.trim();
-  }
-  if (rules.value.apiVersion !== 'hidden') {
-    payload.apiVersion = form.apiVersion.trim();
   }
   // Sent even at their default value so switching back to "auto"/"default"
   // propagates; the backend collapses those sentinels to null.
@@ -970,14 +1085,38 @@ onMounted(() => {
               {{ $t('providerSettings.modelName') }}
               <span class="text-red-500" aria-hidden="true">*</span>
             </label>
-            <input
-              id="prov-model"
-              v-model="form.modelName"
-              type="text"
-              required
-              :placeholder="defaultModels[form.provider] || 'model-id'"
-              class="w-full glass-input rounded-xl px-4 py-2.5 text-sm"
-            />
+            <div class="flex items-center gap-2">
+              <Select
+                id="prov-model"
+                v-model="form.modelName"
+                class="flex-1 min-w-0"
+                :options="modelOptions"
+                :placeholder="$t('providerSettings.modelPicker.placeholder')"
+                allow-custom
+                required
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                type="button"
+                :icon-left="RefreshCw"
+                :disabled="!canListModels || modelList.status === 'loading'"
+                :aria-label="$t('providerSettings.modelPicker.reload')"
+                :title="$t('providerSettings.modelPicker.reload')"
+                @click="loadModels"
+              />
+            </div>
+            <p
+              v-if="modelHint"
+              class="text-xxs"
+              :class="
+                modelHint.tone === 'warn'
+                  ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-slate-500 dark:text-slate-400'
+              "
+            >
+              {{ modelHint.text }}
+            </p>
           </div>
 
           <!-- Base URL -->
@@ -1029,26 +1168,6 @@ onMounted(() => {
             />
           </div>
 
-          <!-- API Version (Anthropic only) -->
-          <div v-if="rules.apiVersion !== 'hidden'" class="space-y-1.5">
-            <label
-              for="prov-ver"
-              class="text-xs font-bold text-slate-700 dark:text-slate-300 block"
-            >
-              {{ $t('providerSettings.apiVersion') }}
-              <span class="text-slate-400 dark:text-slate-500 font-normal">
-                {{ $t('providerSettings.optional') }}
-              </span>
-            </label>
-            <input
-              id="prov-ver"
-              v-model="form.apiVersion"
-              type="text"
-              placeholder="2023-06-01"
-              class="w-full glass-input rounded-xl px-4 py-2.5 text-sm"
-            />
-          </div>
-
           <!-- Image detail (OpenAI vision fidelity) -->
           <div v-if="rules.imageDetail !== 'hidden'" class="space-y-1.5">
             <label
@@ -1083,24 +1202,7 @@ onMounted(() => {
             </label>
             <Select
               v-model="form.reasoningEffort"
-              :options="[
-                {
-                  value: 'default',
-                  label: $t('providerSettings.reasoningEffortOptions.default'),
-                },
-                {
-                  value: 'low',
-                  label: $t('providerSettings.reasoningEffortOptions.low'),
-                },
-                {
-                  value: 'medium',
-                  label: $t('providerSettings.reasoningEffortOptions.medium'),
-                },
-                {
-                  value: 'high',
-                  label: $t('providerSettings.reasoningEffortOptions.high'),
-                },
-              ]"
+              :options="reasoningEffortOptions"
             />
             <p class="text-xxs text-slate-500 dark:text-slate-400">
               {{ $t('providerSettings.reasoningEffortHint') }}
@@ -1346,6 +1448,18 @@ onMounted(() => {
               v-html="$rt(step)"
             ></li>
           </ol>
+          <!-- Not a step: the answer to "can I use my subscription instead?",
+               which the guide is where people look for (#374). -->
+          <div
+            v-if="subscriptionNoteKey"
+            v-show="showGuide"
+            class="mx-4 mb-4 rounded-xl px-3 py-2 bg-slate-100/70 dark:bg-dark-800/60 text-xs leading-relaxed text-slate-600 dark:text-slate-400"
+          >
+            <p class="font-bold text-slate-700 dark:text-slate-300">
+              {{ $t('providerSettings.subscription.title') }}
+            </p>
+            <p class="mt-0.5">{{ $t(subscriptionNoteKey) }}</p>
+          </div>
         </div>
 
         <p v-if="formError" class="text-xs text-red-500 dark:text-red-400">
@@ -1358,38 +1472,66 @@ onMounted(() => {
           <!-- Result of the minimal connection test — inside the buttons row,
                filling its free left half, so appearing does not change the
                form's height and the buttons stay put under the pointer. -->
-          <p
+          <div
             v-if="testResult"
-            class="text-xs flex items-center gap-1.5 min-w-0 sm:mr-auto"
-            :class="
-              testResult.ok
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-red-500 dark:text-red-400'
-            "
+            role="status"
+            class="text-xs flex items-start gap-1.5 min-w-0 sm:flex-1"
+            :class="{
+              'text-emerald-600 dark:text-emerald-400':
+                testResult.tone === 'ok',
+              'text-amber-700 dark:text-amber-400': testResult.tone === 'warn',
+              'text-red-500 dark:text-red-400': testResult.tone === 'error',
+            }"
           >
-            <Check v-if="testResult.ok" class="w-3.5 h-3.5 shrink-0" />
-            <X v-else class="w-3.5 h-3.5 shrink-0" />
-            <span class="break-all">{{ testResult.message }}</span>
-          </p>
-          <Button
-            variant="secondary"
-            type="button"
-            :icon-left="Zap"
-            :loading="testing"
-            @click="testConnection"
+            <!-- Three tones, three shapes: the half-pass must not read as a
+                 pass to someone who cannot tell amber from green. -->
+            <Check
+              v-if="testResult.tone === 'ok'"
+              class="w-3.5 h-3.5 shrink-0 mt-0.5"
+            />
+            <AlertTriangle
+              v-else-if="testResult.tone === 'warn'"
+              class="w-3.5 h-3.5 shrink-0 mt-0.5"
+            />
+            <X v-else class="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <div class="min-w-0">
+              <p>{{ testResult.message }}</p>
+              <!-- The vendor's own words: secondary, clamped, full text on
+                   hover — what to fix is the line above. -->
+              <p
+                v-if="testResult.detail"
+                class="mt-0.5 font-mono text-xxs text-slate-500 dark:text-slate-400 break-all line-clamp-2"
+                :title="testResult.detail"
+              >
+                {{ testResult.detail }}
+              </p>
+            </div>
+          </div>
+          <!-- The buttons never give up width to the result line: shrinking
+               them wrapped their labels onto two lines. The text wraps instead. -->
+          <div
+            class="flex flex-col sm:flex-row sm:items-center gap-2 sm:shrink-0 sm:ml-auto"
           >
-            {{ $t('providerSettings.testConnection') }}
-          </Button>
-          <Button variant="secondary" type="button" @click="showForm = false">
-            {{ $t('providerSettings.cancel') }}
-          </Button>
-          <Button type="submit" :icon-left="Check" :loading="saving">
-            {{
-              isEditing
-                ? $t('providerSettings.saveChanges')
-                : $t('providerSettings.saveConnection')
-            }}
-          </Button>
+            <Button
+              variant="secondary"
+              type="button"
+              :icon-left="Zap"
+              :loading="testing"
+              @click="testConnection"
+            >
+              {{ $t('providerSettings.testConnection') }}
+            </Button>
+            <Button variant="secondary" type="button" @click="showForm = false">
+              {{ $t('providerSettings.cancel') }}
+            </Button>
+            <Button type="submit" :icon-left="Check" :loading="saving">
+              {{
+                isEditing
+                  ? $t('providerSettings.saveChanges')
+                  : $t('providerSettings.saveConnection')
+              }}
+            </Button>
+          </div>
         </div>
       </form>
     </Modal>

@@ -59,6 +59,9 @@ describe('checkProxyHeaderName', () => {
     'X-Api-Key',
     'anthropic-version',
     'User-Agent',
+    'x-goog-api-key',
+    'HTTP-Referer',
+    'X-OpenRouter-Title',
   ])('refuses %p, which the client sets itself', (name) => {
     expect(checkProxyHeaderName(name)).toBe('reserved');
   });

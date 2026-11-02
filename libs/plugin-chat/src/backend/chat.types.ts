@@ -7,6 +7,7 @@ import {
   ToolConfirmSummary,
 } from '@makekeeper/plugin-contract';
 import type { ProxyLabelSources } from '../proxy-label';
+import type { ProviderFailureKind } from '../providers-shared';
 
 export type ToolArgs = Record<string, unknown>;
 
@@ -31,7 +32,7 @@ export interface ToolCallResult {
   // Opaque Gemini 2.5 "thinking" signature that rides on the function-call part. It has
   // to be echoed back verbatim on the same part in every later turn, or Gemini rejects
   // the request with 400 (https://ai.google.dev/gemini-api/docs/thought-signatures).
-  // Undefined for OpenAI/Ollama, which don't use it.
+  // Undefined for the other dialects, which don't use it.
   thoughtSignature?: string;
 }
 
@@ -45,6 +46,9 @@ export interface AgentTurnError {
   message: string;
   provider?: string;
   status?: number;
+  // What the user has to change (#374) — the client renders its own sentence
+  // from it; `message` stays as the vendor's raw detail.
+  reason?: ProviderFailureKind;
 }
 
 // Parsed AIChatMessage.content payload (may be plain text, hence all-optional).
@@ -120,10 +124,35 @@ export interface OpenAiResponse {
   };
 }
 
+export interface OllamaToolCall {
+  // Ollama documents `arguments` as an object; some OpenAI-shaped proxies in
+  // front of it send the JSON string instead, so both are accepted.
+  function: { name: string; arguments?: ToolArgs | string };
+}
+
 export interface OllamaResponse {
-  message?: { content?: string };
+  message?: { content?: string; tool_calls?: OllamaToolCall[] };
   prompt_eval_count?: number;
   eval_count?: number;
+}
+
+// The Anthropic Messages API reply, reduced to the blocks this client reads.
+// `thinking` blocks are present on current models (adaptive thinking is on by
+// default) and are deliberately ignored — see LlmClient.
+export type AnthropicResponseBlock =
+  | { type: 'text'; text: string }
+  | { type: 'tool_use'; id: string; name: string; input: ToolArgs }
+  | { type: string };
+
+export interface AnthropicResponse {
+  content?: AnthropicResponseBlock[];
+  stop_reason?: string | null;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    cache_creation_input_tokens?: number | null;
+    cache_read_input_tokens?: number | null;
+  };
 }
 
 // Normalized per-call usage extracted from any provider response, threaded to
@@ -170,8 +199,10 @@ export type ProxyLabelContext = Omit<ProxyLabelSources, 'label'>;
 export class LlmProviderError extends Error {
   constructor(
     public readonly provider: string,
+    // 0 when the request never got a reply (unreachable host, timeout).
     public readonly status: number,
     message: string,
+    public readonly reason: ProviderFailureKind = 'unknown',
   ) {
     super(message);
     this.name = 'LlmProviderError';
@@ -208,6 +239,22 @@ export interface OllamaRequestMessage {
   role: string;
   content: string;
   images?: string[];
+  tool_calls?: Array<{ function: { name: string; arguments: ToolArgs } }>;
+  tool_name?: string;
+}
+
+export type AnthropicContentBlock =
+  | { type: 'text'; text: string }
+  | {
+      type: 'image';
+      source: { type: 'base64'; media_type: string; data: string };
+    }
+  | { type: 'tool_use'; id: string; name: string; input: ToolArgs }
+  | { type: 'tool_result'; tool_use_id: string; content: string };
+
+export interface AnthropicRequestMessage {
+  role: 'user' | 'assistant';
+  content: AnthropicContentBlock[];
 }
 
 // ── Project AI-history shapes (#59) ─────────────────────────────────────────

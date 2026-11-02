@@ -1,5 +1,6 @@
-import { IsString, MaxLength, MinLength } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { MAX_ORIGIN_LENGTH } from '@makekeeper/plugin-contract';
 
 export class EnsureLabelDto {
   @ApiProperty({ description: 'i18n:codes.agentTools.create_label.params.ref' })
@@ -7,6 +8,17 @@ export class EnsureLabelDto {
   @MinLength(1)
   @MaxLength(512)
   ref!: string;
+
+  // The print dialog's own `window.location.origin` (#372): the address the
+  // printed QR has to open. Header-derived guesses lose pieces of it behind
+  // chained proxies (`https://host:80`). Validated as an origin by
+  // AppConfigService, so it is only length-bounded here — same as the phone
+  // bridge and the API section.
+  @ApiPropertyOptional({ maxLength: MAX_ORIGIN_LENGTH })
+  @IsOptional()
+  @IsString()
+  @MaxLength(MAX_ORIGIN_LENGTH)
+  origin?: string;
 }
 
 export class ResolveScanDto {

@@ -11,6 +11,7 @@ import {
   decodeRasterPayload,
   encodeRasterPayload,
   type PrintHandoffLink,
+  type PrintHandoffRequest,
   type PrintRasterPayload,
 } from '@makekeeper/plugin-contract';
 
@@ -58,7 +59,7 @@ export class PrintHandoffService {
   // from, and a print button in a language the person does not speak is a
   // worse answer than a longer link.
   async create(
-    payload: PrintRasterPayload,
+    payload: PrintHandoffRequest,
     req: RequestHeadersLike,
     locale?: string,
   ): Promise<PrintHandoffLink> {
@@ -86,7 +87,9 @@ export class PrintHandoffService {
     // scheduled job: the table only ever holds minutes of traffic, and a sweep
     // that runs when the feature is used cannot drift from it.
     await this.sweep();
-    const base = this.config.resolvePublicBaseUrl(req);
+    // The posting browser's origin first (#372): the link is opened on another
+    // device, so it must be the address this one actually reached.
+    const base = this.config.resolvePublicBaseUrl(req, payload.origin);
     const query = locale ? `?lang=${encodeURIComponent(locale)}` : '';
     return {
       url: `${base}/print/niimbot/${token}${query}`,

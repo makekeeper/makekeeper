@@ -95,6 +95,9 @@ interface AgentTurnError {
   message: string;
   provider?: string;
   status?: number;
+  // What the user has to change (#374): a code the chat plugin's locales turn
+  // into a sentence (`providerSettings.failure.<reason>`).
+  reason?: string;
 }
 
 const isAgentError = (value: unknown): value is AgentTurnError =>
@@ -153,6 +156,14 @@ const isHumanText = (content: string): boolean => {
 };
 
 const t = i18n.global.t;
+
+// The headline of a failed turn: what to fix when the backend could say, the
+// generic line otherwise. Guarded with `te` because the reason arrives from
+// the server or from storage and an unknown code must not render as a key.
+const failureHeadline = (reason?: string): string => {
+  const key = `providerSettings.failure.${reason}`;
+  return reason && i18n.global.te(key) ? t(key) : t('agent.serverError');
+};
 
 const initialMessage = (): ChatMessage => ({
   id: 'init',
@@ -561,7 +572,7 @@ export const useChatStore = defineStore('chat', () => {
     return {
       id: randomId(),
       role: 'assistant',
-      content: t('agent.serverError'),
+      content: failureHeadline(err.reason),
       time: nowTime(),
       kind: 'text',
       canRetry: true,
@@ -583,6 +594,7 @@ export const useChatStore = defineStore('chat', () => {
           message: err.message ?? '',
           provider: err.provider,
           status: err.status,
+          reason: err.reason,
         },
       };
     }

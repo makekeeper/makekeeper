@@ -18,6 +18,7 @@ import {
 } from '@makekeeper/backend-core';
 import {
   ProviderService,
+  type ListModelsResult,
   type PublicProviderConfig,
   type TestConnectionResult,
 } from './providers.service';
@@ -85,7 +86,20 @@ export class ProvidersController {
       // Untrusted caller: block probes at the server's internal network / cloud
       // metadata (SSRF). Admins keep the unrestricted instance test route.
       { blockPrivateHosts: true },
+      locale,
     );
+  }
+
+  // The connection's own model list for the picker (#374). A POST because
+  // the body may carry a freshly typed key, which must never sit in a URL.
+  @Post('personal/models')
+  async listPersonalModels(
+    @Body() data: TestProviderDto,
+    @Headers('x-locale') locale?: string,
+  ): Promise<ListModelsResult> {
+    return this.providerService.listModels(data, this.requirePersonal(locale), {
+      blockPrivateHosts: true,
+    });
   }
 
   // Declared before the :id patterns — "default" must not match as an id.
@@ -156,8 +170,22 @@ export class ProvidersController {
 
   @AdminOnly()
   @Post('test')
-  async test(@Body() data: TestProviderDto): Promise<TestConnectionResult> {
-    return this.providerService.testConnection(data);
+  async test(
+    @Body() data: TestProviderDto,
+    @Headers('x-locale') locale?: string,
+  ): Promise<TestConnectionResult> {
+    return this.providerService.testConnection(
+      data,
+      undefined,
+      undefined,
+      locale,
+    );
+  }
+
+  @AdminOnly()
+  @Post('models')
+  async listModels(@Body() data: TestProviderDto): Promise<ListModelsResult> {
+    return this.providerService.listModels(data);
   }
 
   @AdminOnly()

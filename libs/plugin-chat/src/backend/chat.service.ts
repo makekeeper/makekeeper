@@ -1003,6 +1003,7 @@ export class ChatService implements OnModuleInit {
           message: err.message,
           provider: err.provider,
           status: err.status,
+          reason: err.reason,
         };
       } else {
         this.logger.error(`Agent turn failed: ${getErrorMessage(err)}`);

@@ -3,6 +3,7 @@ import {
   isValidRaster,
   type PrintDriverDescriptor,
   type PrintHandoffLink,
+  type PrintHandoffRequest,
   type PrintJobOptions,
   type PrintProgress,
   type PrintRaster,
@@ -262,7 +263,12 @@ async function createHandoff(
   try {
     return await apiJson<PrintHandoffLink>('/api/printing-niimbot/handoff', {
       method: 'POST',
-      body: encodeRasterPayload(raster, options.copies ?? 1),
+      // The link is opened on another device, so it has to be the address
+      // this browser actually reached, not a proxy-header guess (#372).
+      body: {
+        ...encodeRasterPayload(raster, options.copies ?? 1),
+        origin: window.location.origin,
+      } satisfies PrintHandoffRequest,
     });
   } catch {
     // Null is the contract's "there is no handoff right now" — the plugin may

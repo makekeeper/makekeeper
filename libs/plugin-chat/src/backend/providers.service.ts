@@ -26,11 +26,26 @@ import {
   PROVIDER_TYPES,
   IMAGE_DETAILS,
   REASONING_EFFORTS,
-  DEFAULT_BASE_URLS,
   type ProviderType,
   type ImageDetail,
   type ReasoningEffort,
 } from './providers.dto';
+import {
+  PROVIDER_FIELD_RULES,
+  type ListModelsResult,
+  type ProviderFailureKind,
+  type TestConnectionResult,
+} from '../providers-shared';
+import { LlmClient } from './llm-client';
+import { LlmProviderError, type ProviderConfig } from './chat.types';
+import { authHeaders, resolveBaseUrl } from './provider-wire';
+import { modelListUrl, parseModelList } from './provider-models';
+import {
+  classifyNetworkFailure,
+  classifyProviderFailure,
+  networkFailureDetail,
+  parseProviderError,
+} from './provider-errors';
 import {
   checkProxyHeaderName,
   formatProxyLabelSegments,
@@ -56,65 +71,6 @@ export type ResolvedProviderConfig =
   | { status: 'locked'; ownerUserId: string }
   | { status: 'none' };
 
-type FieldRule = 'required' | 'optional' | 'hidden';
-
-interface ProviderFieldRules {
-  apiKey: FieldRule;
-  baseUrl: FieldRule;
-  organizationId: FieldRule;
-  apiVersion: FieldRule;
-  // imageDetail + reasoningEffort tune the OpenAI vision/reasoning request; only
-  // the openai branch in ChatService reads them, so they are hidden elsewhere.
-  imageDetail: FieldRule;
-  reasoningEffort: FieldRule;
-}
-
-// Which parameters each provider actually needs. modelName + name are always
-// required, so they are not listed here. Keep in sync with the frontend
-// fieldConfig and PROVIDER_TYPES.
-const PROVIDER_FIELD_RULES: Record<ProviderType, ProviderFieldRules> = {
-  gemini: {
-    apiKey: 'required',
-    baseUrl: 'optional',
-    organizationId: 'hidden',
-    apiVersion: 'hidden',
-    imageDetail: 'hidden',
-    reasoningEffort: 'hidden',
-  },
-  openai: {
-    apiKey: 'required',
-    baseUrl: 'optional',
-    organizationId: 'optional',
-    apiVersion: 'hidden',
-    imageDetail: 'optional',
-    reasoningEffort: 'optional',
-  },
-  anthropic: {
-    apiKey: 'required',
-    baseUrl: 'optional',
-    organizationId: 'hidden',
-    apiVersion: 'optional',
-    imageDetail: 'hidden',
-    reasoningEffort: 'hidden',
-  },
-  ollama: {
-    apiKey: 'hidden',
-    baseUrl: 'required',
-    organizationId: 'hidden',
-    apiVersion: 'hidden',
-    imageDetail: 'hidden',
-    reasoningEffort: 'hidden',
-  },
-  custom: {
-    apiKey: 'optional',
-    baseUrl: 'required',
-    organizationId: 'hidden',
-    apiVersion: 'hidden',
-    imageDetail: 'hidden',
-    reasoningEffort: 'hidden',
-  },
-};
-
 interface ProviderValues {
   name: string;
   provider: ProviderType;
@@ -122,7 +78,9 @@ interface ProviderValues {
   baseUrl: string | null;
   modelName: string;
   organizationId: string | null;
-  apiVersion: string | null;
+  // Always written as null (#374): the field is gone from the form and the
+  // version is pinned in code, so a stale stored value is cleared on save.
+  apiVersion: null;
   imageDetail: ImageDetail | null;
   reasoningEffort: ReasoningEffort | null;
   // Proxy request labelling (#230). Not in PROVIDER_FIELD_RULES: these three are
@@ -133,13 +91,37 @@ interface ProviderValues {
   proxyHeaderName: string | null;
 }
 
-export interface TestConnectionResult {
-  ok: boolean;
-  error?: string;
+export type { ListModelsResult, TestConnectionResult };
+
+// What the probes need to reach a connection: the values as entered in the
+// form, or a stored connection's secret when the form leaves the key blank.
+interface ProbeInput {
+  provider: string;
+  id?: string;
+  apiKey?: string;
+  baseUrl?: string;
+  organizationId?: string;
+  modelName?: string;
 }
 
-// Anthropic's `anthropic-version` header value — a sensible current default.
-const DEFAULT_ANTHROPIC_VERSION = '2023-06-01';
+interface ProbeTarget {
+  provider: ProviderType;
+  apiKey: string | null;
+  baseUrl: string;
+  organizationId: string | null;
+}
+
+type ProbeFailure = {
+  ok: false;
+  reason: ProviderFailureKind;
+  detail?: string;
+};
+
+// The model list is cheap and answers fast; a stuck host must not hang the
+// form. The chat probe is a real generation, and a thinking model can take a
+// while before its first token, so it gets more room.
+const LISTING_TIMEOUT_MS = 8000;
+const CHAT_PROBE_TIMEOUT_MS = 45000;
 
 // AI provider configuration is the Chat plugin's own settings: the chat/agent
 // runtime talks to whichever provider is marked default (see ChatService).
@@ -164,6 +146,7 @@ export class ProviderService implements OnModuleInit {
     private readonly keyring: KeyringService,
     private readonly secretAccess: SecretAccessService,
     private readonly transliteration: TransliterationService,
+    private readonly llm: LlmClient,
   ) {}
 
   // One-time migration of legacy plaintext INSTANCE keys to ciphertext at rest.
@@ -406,14 +389,17 @@ export class ProviderService implements OnModuleInit {
     if (resolved.status === 'locked') return { name: null, ok: false };
     const active = resolved.config;
     // Probe the connection as actually configured — passing the stored baseUrl/
-    // org/version, not just the id (which would only recover the apiKey and
-    // leave a custom endpoint tested against the provider default → false red).
-    const result = await this.testConnection({
+    // org, not just the id (which would only recover the apiKey and leave a
+    // custom endpoint tested against the provider default → false red).
+    //
+    // The header dot polls this, so it stays on the free model-listing call:
+    // a paid completion per poll is not a status indicator anyone wants to be
+    // billed for. The settings test is the one that runs a real turn (#374).
+    const result = await this.listModels({
       provider: active.provider,
       apiKey: active.apiKey ?? undefined,
       baseUrl: active.baseUrl ?? undefined,
       organizationId: active.organizationId ?? undefined,
-      apiVersion: active.apiVersion ?? undefined,
     });
     return { name: active.name, ok: result.ok };
   }
@@ -426,7 +412,6 @@ export class ProviderService implements OnModuleInit {
       baseUrl?: string;
       modelName: string;
       organizationId?: string;
-      apiVersion?: string;
       imageDetail?: ImageDetail;
       reasoningEffort?: ReasoningEffort;
       sharedWith?: string;
@@ -444,7 +429,7 @@ export class ProviderService implements OnModuleInit {
       baseUrl: data.baseUrl ?? null,
       modelName: data.modelName,
       organizationId: data.organizationId ?? null,
-      apiVersion: data.apiVersion ?? null,
+      apiVersion: null,
       imageDetail: data.imageDetail ?? null,
       reasoningEffort: data.reasoningEffort ?? null,
       proxyLabel: data.proxyLabel ?? null,
@@ -488,7 +473,6 @@ export class ProviderService implements OnModuleInit {
       baseUrl?: string;
       modelName?: string;
       organizationId?: string;
-      apiVersion?: string;
       imageDetail?: ImageDetail;
       reasoningEffort?: ReasoningEffort;
       sharedWith?: string;
@@ -517,7 +501,7 @@ export class ProviderService implements OnModuleInit {
       baseUrl: data.baseUrl ?? existing.baseUrl,
       modelName: data.modelName ?? existing.modelName,
       organizationId: data.organizationId ?? existing.organizationId,
-      apiVersion: data.apiVersion ?? existing.apiVersion,
+      apiVersion: null,
       imageDetail: data.imageDetail ?? this.asImageDetail(existing.imageDetail),
       reasoningEffort:
         data.reasoningEffort ??
@@ -625,19 +609,20 @@ export class ProviderService implements OnModuleInit {
     return value;
   }
 
-  // Minimal connectivity + credential check: hits the provider's model-listing
-  // endpoint (cheap, no token cost) and reports whether it authenticates. When
-  // apiKey is blank and `id` is given, the stored key is used so an existing
-  // provider can be tested without re-entering its secret.
+  // The connection test (#374), in the order a user would fix things:
+  //   1. credentials — the model-listing call: a wrong key, a wrong endpoint or
+  //      an unreachable host fails here, for free;
+  //   2. chat — one real, minimal turn WITH a tool, through the runtime's own
+  //      request builder. A key that lists models proves nothing about the
+  //      model, the tool support or the chat endpoint, and the old test passed
+  //      on exactly that while every Anthropic turn failed.
+  // Without a model there is nothing to try a turn with, so the result says
+  // the chat was not checked rather than claiming a pass.
+  //
+  // When apiKey is blank and `id` is given, the stored key is used so an
+  // existing connection can be tested without re-entering its secret.
   async testConnection(
-    data: {
-      provider: string;
-      id?: string;
-      apiKey?: string;
-      baseUrl?: string;
-      organizationId?: string;
-      apiVersion?: string;
-    },
+    data: ProbeInput,
     // When set, a stored connection referenced by id must belong to this
     // namespace (personal test endpoint); undefined = trusted internal call.
     expectedOwner?: string | null,
@@ -646,12 +631,99 @@ export class ProviderService implements OnModuleInit {
     // Trusted paths (admin test, status probe) leave this false so a legitimate
     // localhost/LAN provider still works.
     options?: { blockPrivateHosts?: boolean },
+    locale?: string,
   ): Promise<TestConnectionResult> {
+    const target = await this.resolveProbeTarget(data, expectedOwner, options);
+    // `in` narrowing rather than `!target.ok`: the backend bundle type-checks
+    // without strictNullChecks, where a boolean discriminant does not narrow.
+    if ('reason' in target) {
+      return {
+        ok: false,
+        stage: 'credentials',
+        reason: target.reason,
+        detail: target.detail,
+      };
+    }
+
+    const modelName = data.modelName?.trim() ?? '';
+    const listing = await this.fetchModelList(target.target);
+    // A custom gateway is not obliged to implement /models; its chat endpoint
+    // is the one that matters, so a missing listing is not a verdict there.
+    const listingOptional =
+      target.target.provider === 'custom' &&
+      modelName !== '' &&
+      (!('reason' in listing) ||
+        ['endpoint', 'badRequest', 'unknown'].includes(listing.reason));
+    if ('reason' in listing && !listingOptional) {
+      return {
+        ok: false,
+        stage: 'credentials',
+        reason: listing.reason,
+        detail: listing.detail,
+      };
+    }
+    if (!modelName) return { ok: true, chat: false };
+
+    const config: ProviderConfig = {
+      provider: target.target.provider,
+      apiKey: target.target.apiKey,
+      baseUrl: target.target.baseUrl,
+      modelName,
+      organizationId: target.target.organizationId,
+      apiVersion: null,
+      imageDetail: null,
+      reasoningEffort: null,
+    };
+    try {
+      await this.llm.probe(
+        config,
+        locale,
+        AbortSignal.timeout(CHAT_PROBE_TIMEOUT_MS),
+      );
+      return { ok: true, chat: true };
+    } catch (err) {
+      if (err instanceof LlmProviderError) {
+        return {
+          ok: false,
+          stage: 'chat',
+          reason: err.reason,
+          detail: err.message,
+        };
+      }
+      this.logger.warn(`Connection chat probe failed: ${getErrorMessage(err)}`);
+      return {
+        ok: false,
+        stage: 'chat',
+        reason: 'unknown',
+        detail: getErrorMessage(err),
+      };
+    }
+  }
+
+  // The connection's own model list for the picker (#374). Same credential
+  // resolution and SSRF guard as the test; a failure is returned, not thrown,
+  // because the form degrades to free text rather than showing an error page.
+  async listModels(
+    data: ProbeInput,
+    expectedOwner?: string | null,
+    options?: { blockPrivateHosts?: boolean },
+  ): Promise<ListModelsResult> {
+    const target = await this.resolveProbeTarget(data, expectedOwner, options);
+    if ('reason' in target) return target;
+    return this.fetchModelList(target.target);
+  }
+
+  private async resolveProbeTarget(
+    data: ProbeInput,
+    expectedOwner: string | null | undefined,
+    options: { blockPrivateHosts?: boolean } | undefined,
+  ): Promise<{ ok: true; target: ProbeTarget } | ProbeFailure> {
     const provider = this.assertProviderType(data.provider);
     const rules = PROVIDER_FIELD_RULES[provider];
 
     let apiKey = data.apiKey?.trim() || null;
-    if (!apiKey && data.id) {
+    let locked = false;
+    if (!apiKey && data.id && rules.apiKey !== 'hidden') {
       const existing =
         expectedOwner !== undefined
           ? await this.requireOwned(data.id, expectedOwner)
@@ -659,98 +731,70 @@ export class ProviderService implements OnModuleInit {
               where: { id: data.id },
             });
       // The stored key is encrypted at rest (#63); decrypt it for the probe. A
-      // locked personal connection (owner's DEK not armed) yields no usable key
-      // and falls through to the required-key check below.
+      // locked personal connection (owner's DEK not armed) yields no usable key.
       if (existing) {
         const decrypted = await this.decryptStoredApiKey(existing);
-        apiKey = decrypted.status === 'ok' ? decrypted.apiKey : null;
+        if (decrypted.status === 'ok') apiKey = decrypted.apiKey;
+        else locked = true;
       }
     }
-    const baseUrl = data.baseUrl?.trim() || DEFAULT_BASE_URLS[provider] || null;
+    if (rules.apiKey === 'hidden') apiKey = null;
+    const baseUrl = resolveBaseUrl(provider, data.baseUrl);
 
     if (rules.apiKey === 'required' && !apiKey) {
-      return {
-        ok: false,
-        error: this.i18n.t('providerSettings.validation.apiKeyRequired'),
-      };
+      return { ok: false, reason: locked ? 'locked' : 'missingKey' };
     }
-    if (rules.baseUrl === 'required' && !baseUrl) {
-      return {
-        ok: false,
-        error: this.i18n.t('providerSettings.validation.baseUrlRequired'),
-      };
+    if (!baseUrl) return { ok: false, reason: 'missingBaseUrl' };
+    if (options?.blockPrivateHosts && !(await isPubliclyRoutableUrl(baseUrl))) {
+      return { ok: false, reason: 'blockedHost' };
     }
 
-    if (
-      options?.blockPrivateHosts &&
-      baseUrl &&
-      !(await isPubliclyRoutableUrl(baseUrl))
-    ) {
-      return {
-        ok: false,
-        error: this.i18n.t('providerSettings.validation.blockedHost'),
-      };
-    }
-
-    const request = this.buildTestRequest(
-      provider,
-      apiKey,
-      baseUrl,
-      data.organizationId?.trim() || null,
-      data.apiVersion?.trim() || null,
-    );
-
-    // Bound the probe so a wrong/unreachable host can't hang the request.
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    try {
-      const response = await fetch(request.url, {
-        method: 'GET',
-        headers: request.headers,
-        signal: controller.signal,
-      });
-      if (response.ok) return { ok: true };
-      const body = (await response.text()).slice(0, 200);
-      return {
-        ok: false,
-        error: `HTTP ${response.status}${body ? `: ${body}` : ''}`,
-      };
-    } catch (err) {
-      return { ok: false, error: getErrorMessage(err) };
-    } finally {
-      clearTimeout(timeout);
-    }
+    return {
+      ok: true,
+      target: {
+        provider,
+        apiKey,
+        baseUrl,
+        organizationId:
+          rules.organizationId === 'hidden'
+            ? null
+            : data.organizationId?.trim() || null,
+      },
+    };
   }
 
-  // Builds the model-listing probe (URL + headers) for each provider.
-  private buildTestRequest(
-    provider: ProviderType,
-    apiKey: string | null,
-    baseUrl: string | null,
-    organizationId: string | null,
-    apiVersion: string | null,
-  ): { url: string; headers: Record<string, string> } {
-    const base = (baseUrl ?? DEFAULT_BASE_URLS[provider]).replace(/\/+$/, '');
-    const headers: Record<string, string> = {};
-
-    switch (provider) {
-      case 'gemini':
+  private async fetchModelList(target: ProbeTarget): Promise<ListModelsResult> {
+    try {
+      const response = await fetch(
+        modelListUrl(target.provider, target.baseUrl),
+        {
+          method: 'GET',
+          headers: authHeaders(
+            target.provider,
+            target.apiKey,
+            target.organizationId,
+          ),
+          signal: AbortSignal.timeout(LISTING_TIMEOUT_MS),
+        },
+      );
+      if (!response.ok) {
+        const parsed = parseProviderError(await response.text());
         return {
-          url: `${base}/v1beta/models?key=${encodeURIComponent(apiKey ?? '')}`,
-          headers,
+          ok: false,
+          reason: classifyProviderFailure(response.status, parsed, 'listing'),
+          // The vendor's own words, as the chat stage reports them; how the
+          // failure reads is the component's business, not the server's.
+          detail: parsed.message || undefined,
         };
-      case 'anthropic':
-        headers['x-api-key'] = apiKey ?? '';
-        headers['anthropic-version'] = apiVersion || DEFAULT_ANTHROPIC_VERSION;
-        return { url: `${base}/models`, headers };
-      case 'ollama':
-        return { url: `${base}/api/tags`, headers };
-      case 'openai':
-      case 'custom':
-      default:
-        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
-        if (organizationId) headers['OpenAI-Organization'] = organizationId;
-        return { url: `${base}/models`, headers };
+      }
+      const body: unknown = await response.json().catch(() => null);
+      return { ok: true, models: parseModelList(target.provider, body) };
+    } catch (err) {
+      return {
+        ok: false,
+        reason: classifyNetworkFailure(err),
+        detail: networkFailureDetail(err),
+      };
     }
   }
 
@@ -803,8 +847,7 @@ export class ProviderService implements OnModuleInit {
         rules.organizationId === 'hidden'
           ? null
           : blankToNull(values.organizationId),
-      apiVersion:
-        rules.apiVersion === 'hidden' ? null : blankToNull(values.apiVersion),
+      apiVersion: null,
       imageDetail,
       reasoningEffort,
       proxyLabel: blankToNull(values.proxyLabel),

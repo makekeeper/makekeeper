@@ -47,6 +47,11 @@ const parseForwardedProto = (value: string | undefined): string | undefined => {
 const hasExplicitPort = (host: string): boolean =>
   host.startsWith('[') ? host.includes(']:') : host.includes(':');
 
+// The two default ports. Both are dropped whatever the scheme: see
+// `withForwardedPort` for why the OTHER scheme's default is never a port worth
+// advertising either (#372).
+const DEFAULT_PORTS: ReadonlySet<string> = new Set(['80', '443']);
+
 // Product release tags only. The repo also carries per-plugin release tags
 // ("mk-plugin-<id>/vX.Y.Z", see /mk-release), and an unfiltered `git describe`
 // happily reports the newest of *those* as the core's version.
@@ -370,7 +375,7 @@ export class AppConfigService {
       };
     }
     return {
-      url: `${proto}://${this.withForwardedPort(host, proto, req.headers)}`,
+      url: `${proto}://${this.withForwardedPort(host, req.headers)}`,
       source: 'request',
     };
   }
@@ -381,18 +386,30 @@ export class AppConfigService {
   // arrives as `box.lan` and every address built from it points at port 80.
   // `X-Forwarded-Port` is the header that still carries it. Applied only when
   // the host names no port of its own (an explicit one wins) and only when the
-  // port is not the scheme's default, so an ordinary https deployment does not
-  // start advertising `:443`.
+  // port is not a default, so an ordinary https deployment does not start
+  // advertising `:443`.
+  //
+  // Both defaults are dropped, explicit or forwarded, whatever the scheme (#372).
+  // The scheme is https when ANY hop said so (`resolveForwardedProto`), but the
+  // port comes from whichever hop spoke last: behind chained proxies the outer
+  // TLS proxy sets `X-Forwarded-Scheme: https` while an inner http hop sets
+  // `X-Forwarded-Port: 80` (or hands on a Host still carrying `:80`) — and
+  // every label printed from that read `https://host:80`. Nobody serves TLS on
+  // 80 or plain http on 443, so such a port only ever describes an inner hop,
+  // never the address a person reaches.
   private withForwardedPort(
     host: string,
-    proto: 'http' | 'https',
     headers: RequestHeadersLike['headers'],
   ): string {
-    if (hasExplicitPort(host)) return host;
+    if (hasExplicitPort(host)) {
+      const colon = host.lastIndexOf(':');
+      return DEFAULT_PORTS.has(host.slice(colon + 1))
+        ? host.slice(0, colon)
+        : host;
+    }
     const forwarded = firstHeader(headers['x-forwarded-port'])?.trim();
     if (!forwarded || !/^\d{1,5}$/.test(forwarded)) return host;
-    const defaultPort = proto === 'https' ? '443' : '80';
-    return forwarded === defaultPort ? host : `${host}:${forwarded}`;
+    return DEFAULT_PORTS.has(forwarded) ? host : `${host}:${forwarded}`;
   }
 
   // Whether THIS request reached us over TLS — the question a `Secure` cookie

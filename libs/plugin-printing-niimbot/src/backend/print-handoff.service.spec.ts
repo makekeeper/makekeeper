@@ -65,10 +65,9 @@ describe('PrintHandoffService', () => {
             },
           },
         },
-        {
-          provide: AppConfigService,
-          useValue: { resolvePublicBaseUrl: () => 'https://shop.example' },
-        },
+        // The real resolver, not a stub: which address the link carries is
+        // exactly what #372 got wrong, so the spec has to exercise it.
+        AppConfigService,
         {
           provide: RequestContextService,
           useValue: {
@@ -82,8 +81,18 @@ describe('PrintHandoffService', () => {
     service = moduleRef.get(PrintHandoffService);
   });
 
+  const savedBaseUrl = process.env.PUBLIC_BASE_URL;
+  beforeAll(() => {
+    delete process.env.PUBLIC_BASE_URL;
+  });
+  afterAll(() => {
+    if (savedBaseUrl !== undefined) process.env.PUBLIC_BASE_URL = savedBaseUrl;
+  });
+
+  const httpsHost = { host: 'shop.example', 'x-forwarded-proto': 'https' };
+
   it('parks a page and returns a link carrying the locale', async () => {
-    const link = await service.create(page, { headers: {} }, 'ru');
+    const link = await service.create(page, { headers: httpsHost }, 'ru');
     expect(link.url).toMatch(
       /^https:\/\/shop\.example\/print\/niimbot\/[\w-]+\?lang=ru$/,
     );
@@ -98,6 +107,39 @@ describe('PrintHandoffService', () => {
       'token',
       'widthDots',
     ]);
+  });
+
+  // #372: the link is opened on another device, so it carries the address the
+  // posting browser actually reached, not the proxy headers' guess.
+  it("builds the link from the posting browser's origin", async () => {
+    const link = await service.create(
+      { ...page, origin: 'https://mk.example.com' },
+      {
+        headers: {
+          'x-forwarded-scheme': 'https',
+          'x-forwarded-host': 'mk.example.com',
+          'x-forwarded-port': '80',
+          host: 'web:80',
+        },
+      },
+    );
+    expect(link.url).toMatch(
+      /^https:\/\/mk\.example\.com\/print\/niimbot\/[\w-]+$/,
+    );
+  });
+
+  it('drops a forwarded :80 on https when no origin was sent', async () => {
+    const link = await service.create(page, {
+      headers: {
+        'x-forwarded-proto': 'http',
+        'x-forwarded-scheme': 'https',
+        'x-forwarded-host': 'mk.example.com',
+        'x-forwarded-port': '80',
+      },
+    });
+    expect(link.url).toMatch(
+      /^https:\/\/mk\.example\.com\/print\/niimbot\/[\w-]+$/,
+    );
   });
 
   it('refuses a page that does not match its own size', async () => {

@@ -358,7 +358,7 @@ model ReturnRequest {
 model AIProviderConfig {
   id                 String   @id
   name               String
-  provider           String // "gemini" | "openai" | "anthropic" | "ollama" | "custom"
+  provider           String // "gemini" | "openai" | "anthropic" | "openrouter" | "ollama" | "custom"
   // NULL = instance connection (admin-managed); else the owning user's id
   // (personal connection, multiuser mode). No FK — mirrors scopeId columns.
   ownerUserId        String?

@@ -10,7 +10,10 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { PrintRasterPayload } from '@makekeeper/plugin-contract';
+import {
+  MAX_ORIGIN_LENGTH,
+  type PrintHandoffRequest,
+} from '@makekeeper/plugin-contract';
 import {
   DENSITY_MAX,
   DENSITY_MIN,
@@ -26,9 +29,9 @@ import {
 // endpoint stores what will be printed, never what it depicts.
 //
 // `implements` rather than a lookalike: the contract owns the wire shape of a
-// page (`PrintRasterPayload`), and the validators below only say what this
+// page (`PrintHandoffRequest`), and the validators below only say what this
 // endpoint will accept of it. A field renamed in the contract has to fail here.
-export class CreateHandoffDto implements PrintRasterPayload {
+export class CreateHandoffDto implements PrintHandoffRequest {
   @ApiProperty({ description: 'i18n:printingNiimbot.api.handoff.widthDots' })
   @IsInt()
   @Min(1)
@@ -60,6 +63,15 @@ export class CreateHandoffDto implements PrintRasterPayload {
   @Min(1)
   @Max(50)
   copies = 1;
+
+  // The posting browser's `window.location.origin` (#372) — the address the
+  // link must open. Validated as an origin by AppConfigService, so it is only
+  // length-bounded here.
+  @ApiPropertyOptional({ maxLength: MAX_ORIGIN_LENGTH })
+  @IsOptional()
+  @IsString()
+  @MaxLength(MAX_ORIGIN_LENGTH)
+  origin?: string;
 }
 
 // How the printer prints (#366) — the same two values for every route.

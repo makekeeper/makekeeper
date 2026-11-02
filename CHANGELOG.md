@@ -9,6 +9,37 @@ each entry is the text of its annotated tag, which is also what the matching
 [GitHub Release](https://github.com/makekeeper/makekeeper/releases) shows. Do
 not edit it by hand: the next release regenerates it.
 
+## [0.20.0] - 2026-11-02
+
+### The AI assistant works with Claude, and with OpenRouter
+
+- **Anthropic (Claude API) connections now run the assistant.** Before this release an
+  Anthropic connection passed its test and then failed on every chat turn. Gateways set up as
+  "custom" had the same problem. Both now work, with tools and images.
+- **The connection test sends a real message.** Testing a connection checks the key and then
+  sends one short message, tools included, to the chosen model. A green test now means the chat
+  will work. If you haven't picked a model yet, the test says the chat is not checked instead of
+  passing.
+- **Pick the model from a list.** The model field offers the models your connection actually has
+  access to. You can still type a model id by hand, and the field falls back to free text when the
+  provider can't list its models.
+- **OpenRouter** is a new connection type: one key gives access to many vendors' models.
+- **Errors say what to fix:** a wrong key, an unknown model, an unreachable address, or a model
+  your account can't use. The provider's own message is still there underneath.
+- The "API version" field on Anthropic connections is gone; the right value is set for you.
+
+**Can I use my Claude, ChatGPT or Gemini subscription instead of an API key?** Not yet, and
+for Claude and Gemini not at all: their terms don't allow a third-party app to use a
+subscription. The connection form says so for each of them. OpenAI only allows it through a
+partner program, which we are looking into.
+
+### Fixed
+
+- **Label QR codes behind an https proxy.** A printed label's QR code could point at
+  `https://<your-host>:80/…` when MakeKeeper runs behind more than one proxy. Labels and the
+  one-time print link now use the address you opened the app at. Labels printed before this fix
+  keep working only if your instance also answers on port 80; if it doesn't, reprint them.
+
 ## [0.19.0] - 2026-10-18
 
 ### Print labels straight to a Niimbot B1
@@ -276,6 +307,7 @@ _No release notes were written for this version._
 
 _No release notes were written for this version._
 
+[0.20.0]: https://github.com/makekeeper/makekeeper/releases/tag/v0.20.0
 [0.19.0]: https://github.com/makekeeper/makekeeper/releases/tag/v0.19.0
 [0.18.2]: https://github.com/makekeeper/makekeeper/releases/tag/v0.18.2
 [0.18.1]: https://github.com/makekeeper/makekeeper/releases/tag/v0.18.1

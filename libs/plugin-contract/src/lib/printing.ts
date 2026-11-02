@@ -230,6 +230,15 @@ export interface PrintHandoffLink {
   expiresAt: string;
 }
 
+// What a browser posts to park a page for a handoff link: the page, plus its
+// own `window.location.origin` (#372). The link is opened on ANOTHER device, so
+// it has to name the address this browser actually reached — a proxy-header
+// guess loses pieces of it (`https://host:80`). Optional: a caller with no
+// browser in the loop still gets the header-derived address.
+export interface PrintHandoffRequest extends PrintRasterPayload {
+  origin?: string;
+}
+
 // The shared prefix of the family. A consumer cannot know the plugin ids in
 // advance — a driver may arrive with a container someone installed this morning
 // — so it asks the registry for everything under this prefix.

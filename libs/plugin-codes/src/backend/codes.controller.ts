@@ -38,14 +38,15 @@ export class CodesController {
   }
 
   // Create (or return the existing) label for an object — used by the print
-  // dialog. The absolute deep-link is built from the request host.
+  // dialog. The absolute deep-link is built from the browser's own origin when
+  // the dialog sends one, else from the request headers (#372).
   @Post('labels')
   ensureLabel(
     @Body() body: EnsureLabelDto,
     @Req() req: RequestHeadersLike,
     @Headers('x-locale') locale?: string,
   ): Promise<ResolvedLabel> {
-    return this.codes.ensureLabel(body.ref, req, locale);
+    return this.codes.ensureLabel(body.ref, req, locale, body.origin);
   }
 
   // The existing label for an object, or null (print dialog preflight).

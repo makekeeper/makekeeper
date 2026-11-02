@@ -10,6 +10,7 @@ import {
   TransliterationService,
 } from '@makekeeper/backend-core';
 import { ProviderService } from './providers.service';
+import { LlmClient } from './llm-client';
 
 // One stand for every describe here: the only thing that varies between them is
 // which `aIProviderConfig` methods the case under test reaches for.
@@ -35,6 +36,7 @@ const buildService = async (
         },
       },
       { provide: KeyringService, useValue: { getDek: () => null } },
+      { provide: LlmClient, useValue: { probe: jest.fn() } },
       {
         provide: SecretAccessService,
         useValue: { recordOutOfSessionUse: jest.fn() },
@@ -125,7 +127,7 @@ describe('ProviderService — clearing optional fields on update', () => {
     baseUrl: 'https://proxy.example/v1',
     modelName: 'gpt-5',
     organizationId: 'org-123',
-    apiVersion: null,
+    apiVersion: '2023-06-01',
     imageDetail: null,
     reasoningEffort: null,
     isDefault: true,
@@ -150,8 +152,10 @@ describe('ProviderService — clearing optional fields on update', () => {
     expect(written().organizationId).toBeNull();
   });
 
-  it('clears an emptied apiVersion for anthropic', async () => {
-    await service.update('prov_1', { provider: 'anthropic', apiVersion: '' });
+  // The API-version field is gone (#374); a value stored by the old form is
+  // cleared on the next save instead of lingering unused.
+  it('clears a stale stored apiVersion on save', async () => {
+    await service.update('prov_1', { provider: 'anthropic' });
     expect(written().apiVersion).toBeNull();
   });
 

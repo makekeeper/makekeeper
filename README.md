@@ -60,7 +60,7 @@ see **[INSTALL.md](INSTALL.md)** for the full guide, the variable reference, bac
   desktop.
 - **Ask instead of clicking.** An optional AI assistant that can read and change your workshop
   through the app's own tools — every destructive step gated by your confirmation. Bring your own
-  key: Gemini, OpenAI, Anthropic, Ollama or any OpenAI-compatible endpoint. Keys are encrypted at
+  key: Gemini, OpenAI, Anthropic, OpenRouter, Ollama or any OpenAI-compatible endpoint. Keys are encrypted at
   rest.
 - **Be told, not reminded.** One inbox for everything the app notices — a delivery due, a part
   below its minimum, a reminder you set. You decide which of those also leave the app.

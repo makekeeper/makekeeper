@@ -83,6 +83,7 @@ export class CodesService {
     ref: string,
     req: RequestHeadersLike,
     locale?: string,
+    clientOrigin?: string,
   ): Promise<ResolvedLabel> {
     const parsed = parseObjectRef(ref);
     if (!parsed) {
@@ -100,7 +101,7 @@ export class CodesService {
           ref,
         },
       }));
-    return this.toResolved(label, req);
+    return this.toResolved(label, req, clientOrigin);
   }
 
   async getByRef(
@@ -247,12 +248,13 @@ export class CodesService {
   private toResolved(
     label: { id: string; code: string; ref: string },
     req: RequestHeadersLike,
+    clientOrigin?: string,
   ): ResolvedLabel {
     return {
       id: label.id,
       code: label.code,
       ref: label.ref,
-      url: `${this.config.resolvePublicBaseUrl(req)}/c/${label.code}`,
+      url: `${this.config.resolvePublicBaseUrl(req, clientOrigin)}/c/${label.code}`,
     };
   }
 }

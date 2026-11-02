@@ -33,6 +33,10 @@ export const RESERVED_PROXY_HEADER_NAMES: readonly string[] = [
   'anthropic-version',
   'content-type',
   'openai-organization',
+  // Gemini's key header and OpenRouter's attribution pair (#374).
+  'x-goog-api-key',
+  'http-referer',
+  'x-openrouter-title',
   // The client writes the label into User-Agent itself; a same-named custom
   // header would case-merge with it into one comma-joined value.
   'user-agent',

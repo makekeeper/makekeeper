@@ -7,27 +7,30 @@ import {
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  DEFAULT_BASE_URLS,
+  IMAGE_DETAILS,
+  PROVIDER_TYPES,
+  REASONING_EFFORTS,
+  isProviderType,
+  type ImageDetail,
+  type ProviderType,
+  type ReasoningEffort,
+} from '../providers-shared';
 
-// Keep this union in sync with the frontend ProviderType and the per-provider
-// field rules in ProviderService.validateProviderConfig.
-export const PROVIDER_TYPES = [
-  'gemini',
-  'openai',
-  'anthropic',
-  'ollama',
-  'custom',
-] as const;
-
-export type ProviderType = (typeof PROVIDER_TYPES)[number];
-
-// The vendor's own endpoint per provider — used when the user leaves the field
-// blank, and as the reference the proxy-label gate compares against: a `baseUrl`
-// that DIFFERS from this is the only signal MakeKeeper has that something of the
-// operator's own sits in front of the vendor (#228). `custom` has no vendor, so
-// any endpoint at all counts.
-export function isProviderType(value: string): value is ProviderType {
-  return (PROVIDER_TYPES as readonly string[]).includes(value);
-}
+// The type list, endpoints and option lists live in `providers-shared.ts`,
+// which the connection form imports too (#374). Re-exported so the backend
+// keeps one import site.
+export {
+  DEFAULT_BASE_URLS,
+  IMAGE_DETAILS,
+  PROVIDER_TYPES,
+  REASONING_EFFORTS,
+  isProviderType,
+  type ImageDetail,
+  type ProviderType,
+  type ReasoningEffort,
+};
 
 // The vendor endpoint for a provider string that may not be a known type at all
 // (ProviderConfig carries a plain `string`). Undefined means "no vendor of its
@@ -35,25 +38,6 @@ export function isProviderType(value: string): value is ProviderType {
 export function vendorBaseUrl(provider: string): string | undefined {
   return isProviderType(provider) ? DEFAULT_BASE_URLS[provider] : undefined;
 }
-
-export const DEFAULT_BASE_URLS: Record<ProviderType, string> = {
-  gemini: 'https://generativelanguage.googleapis.com',
-  openai: 'https://api.openai.com/v1',
-  anthropic: 'https://api.anthropic.com/v1',
-  ollama: 'http://localhost:11434',
-  custom: '',
-};
-
-// OpenAI vision fidelity: how much the API is allowed to downscale an image.
-// "high" is needed to read small component markings; keep in sync with the
-// frontend option list.
-export const IMAGE_DETAILS = ['auto', 'high'] as const;
-export type ImageDetail = (typeof IMAGE_DETAILS)[number];
-
-// OpenAI reasoning budget for reasoning-capable models. "default" is the
-// sentinel for "send nothing" (use the model's own default effort).
-export const REASONING_EFFORTS = ['default', 'low', 'medium', 'high'] as const;
-export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
 
 // Owner-controlled credential sharing (see AIProviderConfig.sharedWith).
 export const PROVIDER_SHARING = [
@@ -103,13 +87,6 @@ export class CreateProviderDto {
   @MaxLength(120)
   organizationId?: string;
 
-  // Anthropic only — sent as the anthropic-version header.
-  @ApiPropertyOptional({ maxLength: 60 })
-  @IsOptional()
-  @IsString()
-  @MaxLength(60)
-  apiVersion?: string;
-
   // OpenAI only — image_url.detail for vision requests.
   @ApiPropertyOptional({ enum: IMAGE_DETAILS })
   @IsOptional()
@@ -152,9 +129,10 @@ export class CreateProviderDto {
   proxyHeaderName?: string;
 }
 
-// Payload for a minimal "test connection" check. All value fields are optional
-// so the frontend can test whatever the user has entered so far. When `apiKey`
-// is blank and `id` refers to an existing provider, the stored key is used.
+// Payload for the connection test and for the model list (#374). All value
+// fields are optional so the form can probe whatever has been entered so far.
+// When `apiKey` is blank and `id` refers to an existing connection, the stored
+// key is used, so a saved connection never needs its secret typed again.
 export class TestProviderDto {
   @ApiProperty({ enum: PROVIDER_TYPES })
   @IsIn(PROVIDER_TYPES)
@@ -184,11 +162,17 @@ export class TestProviderDto {
   @MaxLength(120)
   organizationId?: string;
 
-  @ApiPropertyOptional({ maxLength: 60 })
+  // The model to try a real turn with (#374). Without it the test can only
+  // say whether the credentials list models, which is not the same as "the
+  // chat works".
+  @ApiPropertyOptional({
+    maxLength: 120,
+    description: 'i18n:providerSettings.modelName',
+  })
   @IsOptional()
   @IsString()
-  @MaxLength(60)
-  apiVersion?: string;
+  @MaxLength(120)
+  modelName?: string;
 }
 
 // Update carries the same fields as create. The API key is special-cased in the
@@ -238,12 +222,6 @@ export class UpdateProviderDto {
   @IsString()
   @MaxLength(120)
   organizationId?: string;
-
-  @ApiPropertyOptional({ maxLength: 60 })
-  @IsOptional()
-  @IsString()
-  @MaxLength(60)
-  apiVersion?: string;
 
   @ApiPropertyOptional({ enum: IMAGE_DETAILS })
   @IsOptional()

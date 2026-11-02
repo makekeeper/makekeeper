@@ -44,7 +44,7 @@ and `IMAGE_WEB=docker.io/makekeeper/web` in the `.env` the installer wrote.
   confirm the batch at the desk — the phone is a real screen of the app, not a shrunken desktop.
 - **Ask instead of clicking.** An optional AI assistant that reads and changes your workshop
   through the app's own tools, every destructive step gated by your confirmation. Bring your own
-  key — Gemini, OpenAI, Anthropic, Ollama or any OpenAI-compatible endpoint — encrypted at rest.
+  key — Gemini, OpenAI, Anthropic, OpenRouter, Ollama or any OpenAI-compatible endpoint — encrypted at rest.
 - **Keep it yours.** Your server, your database, your files; export a project, a storage or the
   whole instance as a `.mkx` archive.
 
