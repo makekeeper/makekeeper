@@ -196,22 +196,12 @@ const projectGroup = computed(() =>
 );
 // Sub-tab is route-driven (§5.3) — it lives in route.query.tab, not a local ref,
 // so deep links and back/forward navigation restore the active tab.
-const activeTab = computed<string>({
-  get: () => {
-    const tab =
-      typeof route.query.tab === 'string' ? route.query.tab : 'dashboard';
-    // The old AI-copilot chat tab is now the AI-history tab (#59); keep bookmarks
-    // to ?tab=chat landing on it.
-    return tab === 'chat' ? 'ai' : tab;
-  },
-  set: (value) => {
-    router.replace({
-      query: {
-        ...route.query,
-        tab: value === 'dashboard' ? undefined : value,
-      },
-    });
-  },
+// `dashboard` is the default and leaves
+// no `?tab` behind; the old AI-copilot chat tab is now the AI-history tab
+// (#59), so bookmarks to ?tab=chat keep landing on it.
+const activeTab = useRouteQuery('tab', {
+  default: 'dashboard',
+  alias: { chat: 'ai' },
 });
 
 // Add Task Inline
@@ -341,6 +331,12 @@ const highlightedFileId = computed<string | null>(() =>
 // asymmetry is what makes Back mean "close": one history entry stands for the
 // whole viewing session, so a user who arrowed through twenty photos presses
 // Back once to get out, not twenty times.
+//
+// So this one key stays hand-built and is not on `useRouteQuery` (#375): the
+// primitive only replaces, and splitting the key — push here, the primitive's
+// microtask replace for stepping — would let a step issued before the opening
+// push lands supersede it and take the Back entry with it. The same holds
+// against `tab`: never write it in the tick that opens a photo.
 const openPhotoId = computed<string | null>({
   get: () => (typeof route.query.photo === 'string' ? route.query.photo : null),
   set: (value) => {

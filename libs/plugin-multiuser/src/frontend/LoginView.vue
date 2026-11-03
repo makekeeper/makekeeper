@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { BrandMark, Button, useSessionStore } from '@makekeeper/frontend-core';
+import { useRouter } from 'vue-router';
+import {
+  BrandMark,
+  Button,
+  useRouteQuery,
+  useSessionStore,
+} from '@makekeeper/frontend-core';
 import { LogIn, UserPlus } from '@lucide/vue';
 import { useCredentialsForm } from './credentials-form';
 
 // Bare full-screen page (meta.fullscreen) — the shell renders no sidebar here.
 // Register-first UX: on a fresh enable (no users yet) the register tab opens
 // with a hint that the first account becomes the administrator.
-const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 
@@ -29,10 +33,13 @@ const canRegister = computed(
 
 // Active tab is route-driven (§5.3) — lives in route.query.tab, not a local
 // ref — so a deep link / back-forward restores it. Defaults to register-first
-// on a fresh install; clamped to login when registration is closed.
+// on a fresh install; clamped to login when registration is closed. No
+// `default`: the fallback depends on `session.hasUsers`, so a chosen tab is
+// always written out explicitly.
+const tabQuery = useRouteQuery('tab');
 const tab = computed<Tab>(() => {
   if (!canRegister.value) return 'login';
-  const q = route.query.tab;
+  const q = tabQuery.value;
   if (q === 'login' || q === 'register') return q;
   return session.hasUsers ? 'login' : 'register';
 });
@@ -43,7 +50,7 @@ const showFirstAdminHint = computed(
 
 const switchTab = (next: Tab): void => {
   error.value = '';
-  router.replace({ query: { ...route.query, tab: next } });
+  tabQuery.value = next;
 };
 
 const submit = async (): Promise<void> => {

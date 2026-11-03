@@ -580,7 +580,7 @@ model UpdateCheckSettings {
   deployHookToken  String? // ciphertext
   deployHookMethod String    @default("POST") // POST | GET
   hookTriggeredAt  DateTime? // last "update now" attempt
-  hookOutcome      String    @default("never") // never | ok | failed
+  hookOutcome      String    @default("never") // never | ok | failed | unconfirmed
   hookStatusCode   Int? // HTTP status of that attempt; the body is never stored
   updatedAt        DateTime  @updatedAt
 }

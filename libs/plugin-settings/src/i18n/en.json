@@ -125,9 +125,10 @@
           "urlTemplate": "URL shape:",
           "steps": {
             "coolify": {
-              "1": "Open the resource you want redeployed in Coolify and copy its UUID — the last segment of the browser URL on the resource page.",
-              "2": "Go to Keys & Tokens → API tokens and create a token with the “deploy” permission. Coolify shows it only once.",
-              "3": "Paste that URL into “Deploy hook URL” with your Coolify host and that UUID, put the token in “Bearer token” and pick GET."
+              "1": "Open the MakeKeeper resource in Coolify — the stack itself, not its app, web or db service — and copy its UUID: the segment right after /service/ in the browser URL.",
+              "2": "Go to Keys & Tokens → API tokens and create a token with the “deploy” permission. Coolify shows it only once. API access must be enabled under Settings → Advanced.",
+              "3": "If you set TAG in the resource's Environment Variables, the hook restarts exactly that version — change it to the new version (or remove it, so “latest” applies) before updating.",
+              "4": "Paste that URL into “Deploy hook URL” with your Coolify host and that UUID, put the token in “Bearer token” and pick POST."
             },
             "dokploy": {
               "1": "Open the application (or Docker Compose service) in Dokploy and enable “Auto Deploy” on the General tab.",
@@ -151,7 +152,7 @@
         "token": "Bearer token (optional)",
         "tokenPlaceholder": "Leave blank if the URL already authenticates",
         "method": "HTTP method",
-        "methodHint": "Coolify uses GET with a bearer token; Dokploy uses POST.",
+        "methodHint": "Coolify and Dokploy both use POST — Coolify with a bearer token.",
         "save": "Save",
         "notConfigured": "No deploy hook configured yet.",
         "notPermitted": "Deploy hook settings are only available to an administrator.",
@@ -162,7 +163,8 @@
         "outcomes": {
           "never": "never triggered",
           "ok": "accepted by the manager",
-          "failed": "the manager rejected it"
+          "failed": "the manager rejected it",
+          "unconfirmed": "accepted, but no deployment was reported"
         },
         "statusCode": "HTTP {code}",
         "noResponse": "no response",
@@ -176,7 +178,12 @@
           "saved": "Deploy hook saved.",
           "saveFailed": "Couldn't save the deploy hook.",
           "triggered": "Redeploy requested. The manager is pulling the new version.",
-          "triggerFailed": "The deploy hook call failed. Check the URL and token."
+          "triggerFailed": "The deploy hook call failed. Check the URL and token.",
+          "triggerUnconfirmed": "The manager answered, but did not confirm a redeploy. Check the deployment in your manager."
+        },
+        "outcomeHints": {
+          "unconfirmed": "Coolify's generic deploy endpoint answered without reporting a queued deployment — it may have refused the resource or started it without pulling a new image. Switch to the service restart hook from “{guide}”.",
+          "methodNotAllowed": "The manager does not accept this HTTP method. Compare the hook's URL and method with “{guide}” — a hook saved from the older Coolify recipe needs to be saved again."
         }
       },
       "sections": {

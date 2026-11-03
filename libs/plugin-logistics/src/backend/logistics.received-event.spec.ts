@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, type Mock } from 'vitest';
 import { LogisticsService } from './logistics.service';
 
 // The `logistics.order.received` emitter policy (#192): an intake act — a
@@ -27,16 +28,16 @@ const order = (
 
 const makeService = (opts: {
   order: ReturnType<typeof order>;
-  publish?: jest.Mock;
+  publish?: Mock;
 }) => {
   const prisma = {
     order: {
-      findUnique: jest.fn(async () => opts.order),
-      update: jest.fn(async () => ({ ...opts.order, status: 'DELIVERED' })),
+      findUnique: vi.fn(async () => opts.order),
+      update: vi.fn(async () => ({ ...opts.order, status: 'DELIVERED' })),
     },
     orderComponent: {
-      findMany: jest.fn(async () => opts.order.items),
-      update: jest.fn(async () => undefined),
+      findMany: vi.fn(async () => opts.order.items),
+      update: vi.fn(async () => undefined),
     },
   };
   const capabilities = {
@@ -46,7 +47,7 @@ const makeService = (opts: {
   const service = new LogisticsService(
     prisma as never,
     { t: (k: string) => k } as never,
-    { emit: jest.fn(async () => undefined) } as never,
+    { emit: vi.fn(async () => undefined) } as never,
     capabilities as never,
   );
   return { service, prisma };
@@ -54,7 +55,7 @@ const makeService = (opts: {
 
 describe('logistics.order.received emitter', () => {
   it('announces once when a line actually receives stock', async () => {
-    const publish = jest.fn(async () => undefined);
+    const publish = vi.fn(async () => undefined);
     const { service } = makeService({ order: order(), publish });
     await service.receiveOrder('ord_1', [
       { orderComponentId: 'line_1', receivedQty: 3 },
@@ -68,7 +69,7 @@ describe('logistics.order.received emitter', () => {
   });
 
   it('stays silent on a downward correction', async () => {
-    const publish = jest.fn(async () => undefined);
+    const publish = vi.fn(async () => undefined);
     const { service } = makeService({
       order: order({
         items: [
@@ -84,14 +85,14 @@ describe('logistics.order.received emitter', () => {
   });
 
   it('announces the transition into DELIVERED via updateStatus', async () => {
-    const publish = jest.fn(async () => undefined);
+    const publish = vi.fn(async () => undefined);
     const { service } = makeService({ order: order(), publish });
     await service.updateStatus('ord_1', 'DELIVERED');
     expect(publish).toHaveBeenCalledTimes(1);
   });
 
   it('does not re-announce an already delivered order', async () => {
-    const publish = jest.fn(async () => undefined);
+    const publish = vi.fn(async () => undefined);
     const { service } = makeService({
       order: order({
         status: 'DELIVERED',

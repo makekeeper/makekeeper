@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
 import {
   AlarmClock,
   CalendarClock,
@@ -45,8 +44,6 @@ import ReminderModal from './ReminderModal.vue';
 // disabled plugin simply stops contributing a layer.
 const { t, locale } = useI18n();
 const toast = useToastStore();
-const route = useRoute();
-const router = useRouter();
 
 // Route-driven throughout: the view mode and the visible window are the URL, so
 // a calendar someone links to opens where they were looking (§5.3).
@@ -225,18 +222,12 @@ const open = (item: CalendarItem): void => {
 const MONTH_CELL_ITEMS = 3;
 
 // The day the cell could not fit, in the one view that has room for all of it.
-// Route-driven like every other move here, so it is linkable and the back
-// button returns to the month (§5.3).
-//
-// Both keys in ONE navigation, not two assignments: `useRouteQuery` builds its
-// next query from `route.query`, and `router.replace` does not settle it
-// synchronously — so a second assignment in the same tick reads the pre-move
-// query and drops what the first one wrote. Set this way the view changed and
-// the day silently did not.
+// Route-driven like every other move here, so it is linkable (§5.3). A
+// `replace`, like every view switch on this page: Back leaves the calendar
+// rather than stepping through the views it passed.
 const openDay = (day: Date): void => {
-  void router
-    .replace({ query: { ...route.query, view: 'agenda', date: dayKey(day) } })
-    .catch(() => undefined);
+  view.value = 'agenda';
+  anchorKey.value = dayKey(day);
 };
 
 const inCurrentMonth = (day: Date): boolean =>

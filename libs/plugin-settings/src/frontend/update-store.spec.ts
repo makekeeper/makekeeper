@@ -179,9 +179,49 @@ describe('useUpdateStore (#106)', () => {
     const store = useUpdateStore();
     await flushPromises();
 
-    const ok = await store.triggerDeployHook();
+    const outcome = await store.triggerDeployHook();
     await flushPromises();
-    expect(ok).toBe(false);
+    expect(outcome).toBe('failed');
     expect(store.deployHook).toEqual(fired);
+  });
+
+  it('reports an unconfirmed trigger as unconfirmed', async () => {
+    const fired: DeployHookState = {
+      ...HOOK,
+      lastTriggeredAt: '2026-07-28T00:00:00.000Z',
+      lastOutcome: 'unconfirmed',
+      lastStatusCode: 200,
+    };
+    stubFetch((url, method) => {
+      if (url.includes('deploy-hook/trigger') && method === 'POST')
+        return { ok: true, body: { ok: false, state: fired } };
+      return respondOk(url);
+    });
+    const store = useUpdateStore();
+    await flushPromises();
+
+    expect(await store.triggerDeployHook()).toBe('unconfirmed');
+  });
+
+  // #373 review: a thrown request leaves the previous attempt's state in the
+  // store; an earlier `unconfirmed` must not be reported as this press's result.
+  it('reports a failed request as failed despite a stale unconfirmed state', async () => {
+    const previous: DeployHookState = {
+      ...HOOK,
+      lastTriggeredAt: '2026-07-27T00:00:00.000Z',
+      lastOutcome: 'unconfirmed',
+      lastStatusCode: 200,
+    };
+    stubFetch((url, method) => {
+      if (url.includes('deploy-hook/trigger') && method === 'POST')
+        return { ok: false, body: null };
+      if (url.includes('deploy-hook')) return { ok: true, body: previous };
+      return respondOk(url);
+    });
+    const store = useUpdateStore();
+    await flushPromises();
+    expect(store.deployHook?.lastOutcome).toBe('unconfirmed');
+
+    expect(await store.triggerDeployHook()).toBe('failed');
   });
 });

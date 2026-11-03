@@ -14,9 +14,10 @@ import {
   useConfirm,
   useUxMode,
   usePluginsStore,
+  useRouteQuery,
   type SegmentedOption,
 } from '@makekeeper/frontend-core';
-import { useRouter, useRoute, type LocationQueryValue } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import OrderImportModal from './OrderImportModal.vue';
 import { orderStatusColor } from './order-status';
@@ -103,7 +104,6 @@ interface ShoppingItem {
 }
 
 const router = useRouter();
-const route = useRoute();
 const { t, locale } = useI18n();
 const toast = useToastStore();
 const confirm = useConfirm();
@@ -132,31 +132,11 @@ const importAvailable = computed(
     isFeatureVisible('logistics.importFromImage'),
 );
 
-const queryStr = (
-  value: LocationQueryValue | LocationQueryValue[] | undefined,
-): string => (typeof value === 'string' ? value : '');
-
 // Filters are route-driven (§5.3): they live in route.query, not local refs.
-const searchQuery = computed<string>({
-  get: () => queryStr(route.query.q),
-  set: (value) => {
-    router.replace({ query: { ...route.query, q: value || undefined } });
-  },
-});
-
-const statusFilter = computed<string>({
-  get: () => queryStr(route.query.status),
-  set: (value) => {
-    router.replace({ query: { ...route.query, status: value || undefined } });
-  },
-});
-
-const projectFilter = computed<string>({
-  get: () => queryStr(route.query.project),
-  set: (value) => {
-    router.replace({ query: { ...route.query, project: value || undefined } });
-  },
-});
+// An empty value drops the key.
+const searchQuery = useRouteQuery('q');
+const statusFilter = useRouteQuery('status');
+const projectFilter = useRouteQuery('project');
 
 const filteredOrders = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();

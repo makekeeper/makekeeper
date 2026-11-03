@@ -8,15 +8,24 @@
 //
 // The call goes to the admin's own manager, so this is not a phone-home.
 
-// Managers differ in how the hook is called: Coolify's deploy endpoint is a GET
-// with a bearer token, Dokploy's is a POST whose path carries a refresh token.
-// Both shapes are expressible with a method + optional token.
+// Managers differ in how the hook is called: Coolify's API is a POST with a
+// bearer token (its GET `/deploy` has answered 405 since v4.2.0, #373),
+// Dokploy's is a POST whose path carries a refresh token. GET stays for custom
+// endpoints that only accept it.
 export const DEPLOY_HOOK_METHODS = ['POST', 'GET'] as const;
 export type DeployHookMethod = (typeof DEPLOY_HOOK_METHODS)[number];
 
 // Outcome of the last trigger attempt. `failed` covers both a transport error
 // and a non-2xx response — the distinction lives in `lastStatusCode`.
-export type DeployHookOutcome = 'never' | 'ok' | 'failed';
+// `unconfirmed` is a 2xx from Coolify's generic `/api/v1/deploy` that reported
+// no queued deployment (#373): accepted, but nothing proves a redeploy started.
+export const DEPLOY_HOOK_OUTCOMES = [
+  'never',
+  'ok',
+  'failed',
+  'unconfirmed',
+] as const;
+export type DeployHookOutcome = (typeof DEPLOY_HOOK_OUTCOMES)[number];
 
 // What the admin UI may see. Neither the full URL nor the token is ever
 // returned: the URL PATH can itself be the secret (Dokploy embeds a refresh
@@ -55,5 +64,14 @@ export function isDeployHookMethod(value: unknown): value is DeployHookMethod {
   return (
     typeof value === 'string' &&
     (DEPLOY_HOOK_METHODS as readonly string[]).includes(value)
+  );
+}
+
+export function isDeployHookOutcome(
+  value: unknown,
+): value is DeployHookOutcome {
+  return (
+    typeof value === 'string' &&
+    (DEPLOY_HOOK_OUTCOMES as readonly string[]).includes(value)
   );
 }

@@ -40,10 +40,22 @@ const key = (source: DeployHookSource, step: number): string =>
   `settings.updates.hook.source.steps.${source}.${step}`;
 
 export const DEPLOY_HOOK_RECIPES: Record<DeployHookSource, DeployHookRecipe> = {
+  // MakeKeeper's Coolify install is a compose *Service* (#373). Coolify's
+  // generic `/api/v1/deploy` answers GET with 405 since v4.2.0, starts a
+  // service without an explicit pull, ignores `force` for services, and replies
+  // 200 even when it refused the resource. The service restart endpoint is
+  // strict instead — 404 for a wrong uuid, 403 without the permission — and
+  // `latest=true` runs `docker compose pull` before recreating the containers.
   coolify: {
-    steps: [key('coolify', 1), key('coolify', 2), key('coolify', 3)],
-    urlTemplate: 'https://<coolify-host>/api/v1/deploy?uuid=<uuid>&force=false',
-    method: 'GET',
+    steps: [
+      key('coolify', 1),
+      key('coolify', 2),
+      key('coolify', 3),
+      key('coolify', 4),
+    ],
+    urlTemplate:
+      'https://<coolify-host>/api/v1/services/<uuid>/restart?latest=true',
+    method: 'POST',
     needsToken: true,
   },
   dokploy: {

@@ -9,6 +9,7 @@ import {
   type ResourceState,
 } from '@makekeeper/frontend-core';
 import type {
+  DeployHookOutcome,
   DeployHookSettingsPatch,
   DeployHookState,
   DeployHookTriggerResult,
@@ -141,10 +142,13 @@ export const useUpdateStore = defineStore('settings-updates', () => {
 
   // Fires the configured hook. The caller MUST have confirmed with the admin
   // first (§ the danger-tone useConfirm in UpdatesView) — this never self-fires.
-  // A rejected hook still returns a state to render (lastOutcome/
-  // lastStatusCode), so `ok` is the only success signal.
-  async function triggerDeployHook(): Promise<boolean> {
-    if (!canAdminister.value) return false;
+  // Resolves to THIS attempt's outcome: when the request itself throws, the
+  // stored state is the previous attempt's, so the caller must not read it
+  // back to decide what happened now.
+  async function triggerDeployHook(): Promise<
+    Exclude<DeployHookOutcome, 'never'>
+  > {
+    if (!canAdminister.value) return 'failed';
     triggering.value = true;
     try {
       const result = await apiJson<DeployHookTriggerResult>(
@@ -152,9 +156,12 @@ export const useUpdateStore = defineStore('settings-updates', () => {
         { method: 'POST' },
       );
       deployHookPanel.resource.setData(result.state);
-      return result.ok;
+      if (result.ok) return 'ok';
+      return result.state.lastOutcome === 'unconfirmed'
+        ? 'unconfirmed'
+        : 'failed';
     } catch {
-      return false;
+      return 'failed';
     } finally {
       triggering.value = false;
     }

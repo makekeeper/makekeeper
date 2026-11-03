@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { DEPLOY_HOOK_OUTCOMES } from '@makekeeper/plugin-contract';
 import en from '../i18n/en.json';
 import ru from '../i18n/ru.json';
 import {
@@ -67,6 +68,12 @@ describe('DEPLOY_HOOK_RECIPES', () => {
       'settings.updates.hook.source.withToken',
       'settings.updates.hook.source.withoutToken',
       'settings.updates.hook.source.urlTemplate',
+      'settings.updates.hook.outcomeHints.unconfirmed',
+      'settings.updates.hook.outcomeHints.methodNotAllowed',
+      'settings.updates.hook.toast.triggerUnconfirmed',
+      ...DEPLOY_HOOK_OUTCOMES.map(
+        (outcome) => `settings.updates.hook.outcomes.${outcome}`,
+      ),
     ]) {
       expect(typeof lookup(bundle, key)).toBe('string');
     }
@@ -78,8 +85,31 @@ describe('DEPLOY_HOOK_RECIPES', () => {
     const template = DEPLOY_HOOK_RECIPES.coolify.urlTemplate;
     expect(template).toContain('<coolify-host>');
     expect(template).toContain('<uuid>');
-    expect(DEPLOY_HOOK_RECIPES.coolify.method).toBe('GET');
     expect(DEPLOY_HOOK_RECIPES.coolify.needsToken).toBe(true);
+  });
+
+  // #373: Coolify's GET /api/v1/deploy answers 405 since v4.2.0, and its POST
+  // starts a compose service without pulling. The recipe targets the service
+  // restart endpoint with an explicit pull instead.
+  it('sends Coolify a POST to the service restart endpoint with a pull', () => {
+    const recipe = DEPLOY_HOOK_RECIPES.coolify;
+    expect(recipe.method).toBe('POST');
+    expect(recipe.urlTemplate).toBe(
+      'https://<coolify-host>/api/v1/services/<uuid>/restart?latest=true',
+    );
+    expect(recipe.urlTemplate).not.toContain('/api/v1/deploy');
+  });
+
+  // A pinned TAG turns a successful restart into a no-op, so the recipe has
+  // to say so somewhere in its steps.
+  it.each(['en', 'ru'])('mentions TAG in the Coolify steps in %s', (locale) => {
+    const bundle = locale === 'en' ? en : ru;
+    const prose = DEPLOY_HOOK_RECIPES.coolify.steps
+      .map((step) => lookup(bundle, step))
+      .join(' ');
+    expect(prose).toContain('TAG');
+    expect(prose).toContain('POST');
+    expect(prose).not.toMatch(/\bGET\b/);
   });
 
   it('marks the managers whose URL carries its own token', () => {

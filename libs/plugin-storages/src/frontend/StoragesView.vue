@@ -16,13 +16,14 @@ import {
   apiFetch,
   PageHeader,
   PluginSlot,
+  useRouteQuery,
 } from '@makekeeper/frontend-core';
 import {
   formatCellAddress,
   formatObjectRef,
   type StorageCellActionsSlotCtx,
 } from '@makekeeper/plugin-contract';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import {
   Box,
@@ -102,7 +103,6 @@ const selectedStorageComponents = ref<ComponentItem[]>([]);
 const loadingStorages = ref(true);
 const loadingComponents = ref(false);
 const router = useRouter();
-const route = useRoute();
 const { t } = useI18n();
 const confirm = useConfirm();
 const toast = useToastStore();
@@ -154,14 +154,10 @@ const tagMatchIds = ref<Set<string> | null>(null);
 const onTagMatches = (ids: string[] | null): void => {
   tagMatchIds.value = ids ? new Set(ids) : null;
 };
-const tagFilter = computed<string>({
-  get: () => (typeof route.query.tag === 'string' ? route.query.tag : ''),
-  set: (value) => {
-    void router.replace({
-      query: { ...route.query, tag: value || undefined },
-    });
-  },
-});
+const tagFilter = useRouteQuery('tag');
+const storageIdQuery = useRouteQuery('storageId');
+const rowQuery = useRouteQuery('row');
+const colQuery = useRouteQuery('col');
 
 // Storages visible under the active tag filter: every match plus its ancestor
 // chain, so matches stay reachable inside an intact tree. Null = no filter.
@@ -236,24 +232,18 @@ const fetchAllComponents = async () => {
 // open storage and cell — so a reload/deep-link restores the view and the AI chat
 // receives the exact selection via collectPageContext. These helpers only write the
 // route; `syncFromRoute` reflects it back into local state and loads the data.
+// Selecting a storage closes any open cell and keeps the active tag filter
+// (`?tag`), which the primitive preserves by not touching it.
 const goToStorage = (id: string): void => {
-  // Selecting a storage keeps the active tag filter (`?tag`) in the route.
-  router
-    .replace({ query: { storageId: id, tag: route.query.tag } })
-    .catch(() => undefined);
+  storageIdQuery.value = id;
+  rowQuery.value = '';
+  colQuery.value = '';
 };
 
 const goToStorageCell = (id: string, r: number, c: number): void => {
-  router
-    .replace({
-      query: {
-        storageId: id,
-        row: String(r),
-        col: String(c),
-        tag: route.query.tag,
-      },
-    })
-    .catch(() => undefined);
+  storageIdQuery.value = id;
+  rowQuery.value = String(r);
+  colQuery.value = String(c);
 };
 
 const loadSelectedStorageComponents = async (id: string): Promise<void> => {
@@ -293,10 +283,10 @@ const selectStorage = (id: string): void => {
 // actually changes, so a post-edit refresh keeps the current cell open and the tree
 // expanded (route unchanged → no reset).
 const syncFromRoute = async (): Promise<void> => {
-  const { storageId, row, col } = route.query;
-  const id = typeof storageId === 'string' ? storageId : '';
-  const r = typeof row === 'string' ? Number(row) : Number.NaN;
-  const c = typeof col === 'string' ? Number(col) : Number.NaN;
+  const id = storageIdQuery.value;
+  // An absent key reads as '' — which `Number` would turn into a valid 0.
+  const r = rowQuery.value === '' ? Number.NaN : Number(rowQuery.value);
+  const c = colQuery.value === '' ? Number.NaN : Number(colQuery.value);
   const cell = Number.isInteger(r) && Number.isInteger(c) ? { r, c } : null;
 
   if (!id) {
@@ -710,7 +700,11 @@ const handleDeleteStorage = async (s: StorageItem) => {
         selectedStorageId.value = '';
         selectedStorageComponents.value = [];
         selectedCellFilter.value = null;
-        router.replace({ query: {} }).catch(() => undefined);
+        // Only the selection goes: the tag filter is about the tree, not the
+        // storage that was just deleted from it.
+        storageIdQuery.value = '';
+        rowQuery.value = '';
+        colQuery.value = '';
       }
       await fetchStorages();
       await fetchAllComponents();
@@ -1126,9 +1120,11 @@ onUnmounted(() => {
   setPageContextRefs(null);
 });
 
-// Route drives the open storage/cell — restore it on load and on any URL change.
+// Route drives the open storage/cell — restore it on load and whenever one of
+// its keys changes. The primitive's refs, not `route.query`: they already hold
+// a write whose navigation has not landed yet.
 watch(
-  () => route.fullPath,
+  [storageIdQuery, rowQuery, colQuery],
   () => {
     void syncFromRoute();
   },

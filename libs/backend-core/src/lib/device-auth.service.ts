@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { createHash, randomBytes } from 'node:crypto';
 import {
   CORE_DEVICE_REVOKED_EVENT,
@@ -6,6 +7,8 @@ import {
 } from '@makekeeper/plugin-contract';
 import { PrismaService } from './prisma.service';
 import { PluginEventBusService } from './plugin-event-bus.service';
+import { RequestContextService } from './request-context.service';
+import { getErrorMessage } from './error';
 import { generateUuid } from './uuid';
 
 // Long-lived credentials for paired phones (#199).
@@ -38,6 +41,17 @@ const LAST_SEEN_THROTTLE_MS = 5 * 60 * 1000;
 // throttled `lastSeenAt` write above keeps the clock honest within minutes.
 const DEVICE_IDLE_EXPIRY_MS = 90 * 24 * 60 * 60 * 1000;
 
+// The one definition of "idle past the window" (#330). `resolveToken` refuses
+// such a device and the sweep retires it; both ask this, so the two can never
+// disagree about where the line is.
+function isIdleExpired(
+  device: { createdAt: Date; lastSeenAt: Date | null },
+  now: Date,
+): boolean {
+  const idleSince = device.lastSeenAt ?? device.createdAt;
+  return now.getTime() - idleSince.getTime() > DEVICE_IDLE_EXPIRY_MS;
+}
+
 const hash = (value: string): string =>
   createHash('sha256').update(value).digest('hex');
 
@@ -59,14 +73,22 @@ export interface ResolvedDevice {
 }
 
 @Injectable()
-export class DeviceAuthService {
+export class DeviceAuthService implements OnApplicationBootstrap {
   private readonly logger = new Logger(DeviceAuthService.name);
   private readonly activityListeners: ((deviceId: string) => void)[] = [];
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly events: PluginEventBusService,
+    private readonly requestContext: RequestContextService,
   ) {}
+
+  // Sweep once on startup too: an instance that was down when the hour struck
+  // (or is restarted more often than that) should not leave a dead phone on the
+  // push list until the next tick. Fire-and-forget — readiness must not wait.
+  onApplicationBootstrap(): void {
+    void this.expireIdleDevices();
+  }
 
   // Fired whenever a paired device is seen. The core deliberately holds no
   // opinion about what that means — the mobile plugin uses it to keep a tunnel
@@ -165,11 +187,9 @@ export class DeviceAuthService {
     if (!device || device.revokedAt !== null) return null;
 
     // Idle expiry: a token idle past the window is dead, not merely stale. The
-    // device stays listed (and revocable) — it just has to be paired again.
-    const idleSince = device.lastSeenAt ?? device.createdAt;
-    if (now.getTime() - idleSince.getTime() > DEVICE_IDLE_EXPIRY_MS) {
-      return null;
-    }
+    // sweep below turns that into a stamped revoke within the hour; refusing it
+    // here as well closes the gap between the window passing and the sweep.
+    if (isIdleExpired(device, now)) return null;
 
     if (
       device.lastSeenAt === null ||
@@ -219,17 +239,87 @@ export class DeviceAuthService {
       revokedAt: null,
       ...(userId === null ? {} : { userId }),
     };
-    // Read the owner before the stamp: the announcement below carries it, and
-    // after the update the row no longer matches `revokedAt: null`.
+    // Read the owner before the stamp: the announcement carries it, and after
+    // the update the row no longer matches `revokedAt: null`.
     const target = await this.prisma.pairedDevice.findFirst({ where });
     if (!target) return false;
+    return this.retire(target, userId, now);
+  }
 
+  // Idle expiry as an event (#330). Expiry used to be only a comparison inside
+  // `resolveToken`: no row changed, so nothing was ever announced and the dead
+  // phone's push subscriptions lived on, showing notifications on a lock screen
+  // whose token no longer opened anything. Stamping `revokedAt` makes expiry an
+  // ordinary revoke — same stamp, same event, same listeners.
+  //
+  // Runs outside any request. `PairedDevice` is unscoped, but the listeners it
+  // fans out to are not, so the work is entered under a named bypass rather
+  // than an empty context that happens to mean the same thing today.
+  //
+  // The scheduler calls its handler with arguments of its own (the cron job's
+  // completion callback today), so the tick goes through a parameterless entry
+  // point — `now` must never be whatever the scheduler happens to pass.
+  @Cron(CronExpression.EVERY_HOUR)
+  async onIdleSweepTick(): Promise<void> {
+    await this.expireIdleDevices();
+  }
+
+  async expireIdleDevices(now: Date = new Date()): Promise<number> {
+    return this.requestContext.run(
+      { systemBypassReason: 'device-idle-expiry' },
+      async () => {
+        try {
+          // Every live device, filtered by the shared predicate in memory: a
+          // workshop pairs a handful of phones, and a second, SQL-shaped copy
+          // of the idle rule is exactly the drift this ticket is about.
+          const live = await this.prisma.pairedDevice.findMany({
+            where: { revokedAt: null },
+            select: {
+              id: true,
+              userId: true,
+              createdAt: true,
+              lastSeenAt: true,
+            },
+          });
+          let expired = 0;
+          for (const device of live) {
+            if (!isIdleExpired(device, now)) continue;
+            if (await this.retire(device, null, now)) expired += 1;
+          }
+          if (expired > 0) {
+            this.logger.log(`Expired ${expired} idle paired device(s)`);
+          }
+          return expired;
+        } catch (err) {
+          this.logger.error(
+            `Idle device sweep failed: ${getErrorMessage(err)}`,
+          );
+          return 0;
+        }
+      },
+    );
+  }
+
+  // Stamp a device dead and announce it — the single path both an unpair and
+  // an idle expiry take. `callerId` narrows the stamp to the caller's own
+  // device while the overlay is on; null means "any owner" (single-user mode,
+  // or the system sweep). Returns whether this call was the one that won.
+  private async retire(
+    target: { id: string; userId: string | null },
+    callerId: string | null,
+    now: Date,
+  ): Promise<boolean> {
     const result = await this.prisma.pairedDevice.updateMany({
-      where,
+      where: {
+        id: target.id,
+        revokedAt: null,
+        ...(callerId === null ? {} : { userId: callerId }),
+      },
       data: { revokedAt: now },
     });
-    // `revokedAt: null` in the filter makes this a compare-and-set: two revokes
-    // racing each other produce one winner, so the announcement fires once.
+    // `revokedAt: null` in the filter makes this a compare-and-set: a manual
+    // revoke racing the sweep (or another replica's sweep) produces one
+    // winner, so the announcement fires once.
     if (result.count === 0) return false;
 
     // The credential is dead as of the line above. What follows is cleanup of
@@ -237,7 +327,7 @@ export class DeviceAuthService {
     // (#311) — and the bus swallows a listener's failure, so a plugin that is
     // disabled or broken cannot make a revoke report failure.
     await this.events.emit<CoreDeviceRevokedEvent>(CORE_DEVICE_REVOKED_EVENT, {
-      deviceId,
+      deviceId: target.id,
       userId: target.userId,
     });
     return true;

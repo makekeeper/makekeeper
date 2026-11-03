@@ -101,6 +101,10 @@ let phasePosition: number | null = null;
 const currentPosition = (): number | null =>
   readHistoryPosition(router.options.history.state);
 
+// Hand-built rather than `useRouteQuery` (#375), on purpose: entering a face
+// must PUSH a history entry the back gesture pops, and the primitive only
+// replaces. The await matters too — `phasePosition` has to be read from the
+// entry this push created, not the one before it.
 const goToPhase = async (next: Exclude<Phase, 'camera'>): Promise<void> => {
   await router.push({ query: { ...route.query, [PHASE_PARAM]: next } });
   pushedPhase = true;
@@ -145,6 +149,8 @@ const leavePhase = async (): Promise<void> => {
     router.back();
     return;
   }
+  // The other half of the push above, kept beside it: `phase` is the only key
+  // this screen writes, so nothing shares a tick with it.
   const query = { ...route.query };
   delete query[PHASE_PARAM];
   await router.replace({ query });

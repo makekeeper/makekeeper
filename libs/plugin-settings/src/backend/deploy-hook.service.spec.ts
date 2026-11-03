@@ -17,7 +17,8 @@ import { DeployHookService } from './deploy-hook.service';
 
 // The behaviours worth pinning are the security ones: the URL is a secret (it
 // can carry a deploy token in its path), so it must be encrypted at rest and
-// redacted on read, and the hook response body must never be touched.
+// redacted on read, and the hook response body must never be stored — and is
+// only ever read for Coolify's generic deploy endpoint (#373).
 
 type Row = {
   deployHookUrl: string | null;
@@ -115,6 +116,17 @@ describe('DeployHookService', () => {
       findUnique.mockRejectedValue(new Error('relation does not exist'));
       await expect(service.getState()).resolves.toMatchObject({
         hasUrl: false,
+      });
+    });
+
+    it('round-trips the unconfirmed outcome and drops an unknown one', async () => {
+      service = makeService(row({ hookOutcome: 'unconfirmed' }));
+      await expect(service.getState()).resolves.toMatchObject({
+        lastOutcome: 'unconfirmed',
+      });
+      service = makeService(row({ hookOutcome: 'exploded' }));
+      await expect(service.getState()).resolves.toMatchObject({
+        lastOutcome: 'never',
       });
     });
 
@@ -237,23 +249,29 @@ describe('DeployHookService', () => {
     it('calls the configured URL with the stored method and bearer token', async () => {
       service = makeService(
         row({
-          deployHookUrl: `${CIPHER_PREFIX}https://coolify.example.com/api/v1/deploy?uuid=abc`,
+          deployHookUrl: `${CIPHER_PREFIX}https://coolify.example.com/api/v1/services/abc/restart?latest=true`,
           deployHookToken: `${CIPHER_PREFIX}tok`,
-          deployHookMethod: 'GET',
+          deployHookMethod: 'POST',
         }),
       );
-      const fetchFn = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+      const text = vi.fn();
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValue({ ok: true, status: 200, text });
       fetchMock(fetchFn);
 
       const result = await service.trigger();
 
       expect(fetchFn).toHaveBeenCalledWith(
-        'https://coolify.example.com/api/v1/deploy?uuid=abc',
+        'https://coolify.example.com/api/v1/services/abc/restart?latest=true',
         expect.objectContaining({
-          method: 'GET',
+          method: 'POST',
           headers: { Authorization: 'Bearer tok' },
         }),
       );
+      // The service restart endpoint is strict (404/403 on a bad uuid or
+      // permission), so its status is the whole answer — no body is read.
+      expect(text).not.toHaveBeenCalled();
       expect(result.ok).toBe(true);
       expect(upsert).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -263,6 +281,173 @@ describe('DeployHookService', () => {
           }),
         }),
       );
+    });
+
+    it('judges a non-Coolify hook by its status alone', async () => {
+      const text = vi.fn();
+      service = makeService(
+        row({
+          deployHookUrl: `${CIPHER_PREFIX}https://dokploy.example.com/api/deploy/s3cr3t`,
+        }),
+      );
+      fetchMock(vi.fn().mockResolvedValue({ ok: true, status: 200, text }));
+
+      const result = await service.trigger();
+
+      expect(result.ok).toBe(true);
+      expect(text).not.toHaveBeenCalled();
+    });
+
+    // #373: Coolify's generic /api/v1/deploy replies 200 for a request that
+    // queued nothing, so for that endpoint a 2xx must report a deployment id.
+    describe("Coolify's generic /api/v1/deploy", () => {
+      const COOLIFY_DEPLOY =
+        'https://coolify.example.com/api/v1/deploy?uuid=abc';
+
+      const fire = async (
+        reply: Partial<{ ok: boolean; status: number; body: string }>,
+        url = COOLIFY_DEPLOY,
+      ): Promise<{ ok: boolean; text: Mock }> => {
+        service = makeService(
+          row({
+            deployHookUrl: `${CIPHER_PREFIX}${url}`,
+            deployHookToken: `${CIPHER_PREFIX}tok`,
+          }),
+        );
+        const text = vi.fn().mockResolvedValue(reply.body ?? '');
+        fetchMock(
+          vi.fn().mockResolvedValue({
+            ok: reply.ok ?? true,
+            status: reply.status ?? 200,
+            text,
+          }),
+        );
+        const result = await service.trigger();
+        return { ok: result.ok, text };
+      };
+
+      const recorded = (outcome: string, status: number | null): void => {
+        expect(upsert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            update: expect.objectContaining({
+              hookOutcome: outcome,
+              hookStatusCode: status,
+            }),
+          }),
+        );
+      };
+
+      it('reports ok when an application deployment was queued', async () => {
+        const { ok } = await fire({
+          body: JSON.stringify({
+            deployments: [
+              {
+                message: 'Application x deployment queued.',
+                resource_uuid: 'abc',
+                deployment_uuid: 'dep-1',
+              },
+            ],
+          }),
+        });
+        expect(ok).toBe(true);
+        recorded('ok', 200);
+      });
+
+      it('reports ok when a tag deploy lists a queued deployment', async () => {
+        const { ok } = await fire(
+          {
+            body: JSON.stringify({
+              message: ['Application x deployment queued.'],
+              details: [{ resource_uuid: 'abc', deployment_uuid: 'dep-1' }],
+            }),
+          },
+          'https://coolify.example.com/api/v1/deploy?tag=makekeeper',
+        );
+        expect(ok).toBe(true);
+        recorded('ok', 200);
+      });
+
+      // A compose service — how MakeKeeper is installed on Coolify — is started
+      // without a deployment id; so is a refused resource. The body cannot tell
+      // the two apart reliably, so neither is reported as a success.
+      it.each([
+        [
+          'a service start',
+          { message: 'Service x started. It could take a while, be patient.' },
+        ],
+        ['a refusal', { message: 'Unauthorized to deploy this service.' }],
+        [
+          'a skipped deployment',
+          { message: 'Deployment skipped', deployment_uuid: '' },
+        ],
+      ])(
+        'reports unconfirmed for %s answered with 200',
+        async (_label, entry) => {
+          const { ok } = await fire({
+            body: JSON.stringify({
+              deployments: [{ resource_uuid: 'abc', ...entry }],
+            }),
+          });
+          expect(ok).toBe(false);
+          recorded('unconfirmed', 200);
+        },
+      );
+
+      it.each([
+        ['a non-JSON body', 'OK'],
+        ['an empty body', ''],
+        ['an unexpected shape', JSON.stringify(['dep-1'])],
+        [
+          'an oversized body',
+          JSON.stringify({
+            deployments: [{ deployment_uuid: 'dep-1' }],
+            pad: 'x'.repeat(70_000),
+          }),
+        ],
+      ])('reports unconfirmed for %s', async (_label, body) => {
+        const { ok } = await fire({ body });
+        expect(ok).toBe(false);
+        recorded('unconfirmed', 200);
+      });
+
+      it('reports unconfirmed when the body cannot be read', async () => {
+        service = makeService(
+          row({ deployHookUrl: `${CIPHER_PREFIX}${COOLIFY_DEPLOY}` }),
+        );
+        fetchMock(
+          vi.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            text: vi.fn().mockRejectedValue(new Error('aborted')),
+          }),
+        );
+        const result = await service.trigger();
+        expect(result.ok).toBe(false);
+        recorded('unconfirmed', 200);
+      });
+
+      // GET has answered 405 since Coolify v4.2.0 — what a hook saved from the
+      // old recipe gets; 404 is an unknown uuid; 403 a missing permission.
+      it.each([405, 404, 403, 401])(
+        'records HTTP %i as failed without reading the body',
+        async (status) => {
+          const { ok, text } = await fire({ ok: false, status });
+          expect(ok).toBe(false);
+          expect(text).not.toHaveBeenCalled();
+          recorded('failed', status);
+        },
+      );
+
+      it('never stores or returns the body it inspected', async () => {
+        const secret = 'echoed-s3cr3t';
+        await fire({
+          body: JSON.stringify({
+            deployments: [{ message: secret, deployment_uuid: 'dep-1' }],
+          }),
+        });
+        expect(JSON.stringify(upsert.mock.calls)).not.toContain(secret);
+        expect(JSON.stringify(await service.getState())).not.toContain(secret);
+      });
     });
 
     it('records a rejection instead of throwing, and never reads the body', async () => {

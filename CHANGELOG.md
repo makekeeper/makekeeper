@@ -9,6 +9,24 @@ each entry is the text of its annotated tag, which is also what the matching
 [GitHub Release](https://github.com/makekeeper/makekeeper/releases) shows. Do
 not edit it by hand: the next release regenerates it.
 
+## [0.20.1] - 2026-11-02
+
+### Fixed
+
+- **One-click update on Coolify works again.** Coolify v4.2.0 and later refuse the deploy link
+  MakeKeeper used to recommend, and the older endpoint could report success for a redeploy that
+  never happened. The setup steps now point at Coolify's service restart endpoint, which pulls the
+  new image first, and say which UUID to copy and that API access must be on. If you set up the
+  hook before this release, follow the steps again. When Coolify answers without confirming a
+  deployment, the updates screen now says so instead of reporting success.
+- **A lost phone stops getting notifications.** A paired device that stays unused past the idle
+  limit used to stop signing in but kept receiving push notifications on its lock screen. Such
+  devices are now revoked automatically, and their notifications stop.
+- **Filters no longer drop each other.** Changing two filters at once (for example a search and a
+  status in Logistics, or a selection in Storages) could keep only the last one in the address.
+  Every filter now survives, in Projects, Inventory, Storages, Logistics, Schedule and on the sign-in
+  screen.
+
 ## [0.20.0] - 2026-11-02
 
 ### The AI assistant works with Claude, and with OpenRouter
@@ -307,6 +325,7 @@ _No release notes were written for this version._
 
 _No release notes were written for this version._
 
+[0.20.1]: https://github.com/makekeeper/makekeeper/releases/tag/v0.20.1
 [0.20.0]: https://github.com/makekeeper/makekeeper/releases/tag/v0.20.0
 [0.19.0]: https://github.com/makekeeper/makekeeper/releases/tag/v0.19.0
 [0.18.2]: https://github.com/makekeeper/makekeeper/releases/tag/v0.18.2

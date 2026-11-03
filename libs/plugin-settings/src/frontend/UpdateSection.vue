@@ -173,6 +173,25 @@ const lastTriggeredLabel = computed<string | null>(() => {
   });
 });
 
+// What to do about the last outcome, when the status alone does not say it.
+// A 405 is what a hook saved from the old GET Coolify recipe gets now (#373).
+const METHOD_NOT_ALLOWED = 405;
+const lastOutcomeHint = computed<string | null>(() => {
+  const hook = store.deployHook;
+  if (!hook?.lastTriggeredAt) return null;
+  const guide = t('settings.updates.hook.source.title');
+  if (hook.lastOutcome === 'unconfirmed') {
+    return t('settings.updates.hook.outcomeHints.unconfirmed', { guide });
+  }
+  if (
+    hook.lastOutcome === 'failed' &&
+    hook.lastStatusCode === METHOD_NOT_ALLOWED
+  ) {
+    return t('settings.updates.hook.outcomeHints.methodNotAllowed', { guide });
+  }
+  return null;
+});
+
 // This API spells "clear this" as an empty string and "keep what is stored" as
 // an omitted field, so `secretPatch`'s null becomes '' on the way out. Both
 // hook fields can be cleared, so an emptied box saves as a clear (#270).
@@ -227,14 +246,14 @@ async function onUpdateNow(): Promise<void> {
     tone: 'danger',
   });
   if (!confirmed) return;
-  const ok = await store.triggerDeployHook();
-  toast[ok ? 'success' : 'error'](
-    t(
-      ok
-        ? 'settings.updates.hook.toast.triggered'
-        : 'settings.updates.hook.toast.triggerFailed',
-    ),
-  );
+  const outcome = await store.triggerDeployHook();
+  if (outcome === 'ok') {
+    toast.success(t('settings.updates.hook.toast.triggered'));
+  } else if (outcome === 'unconfirmed') {
+    toast.info(t('settings.updates.hook.toast.triggerUnconfirmed'));
+  } else {
+    toast.error(t('settings.updates.hook.toast.triggerFailed'));
+  }
 }
 
 async function onCopyCommands(): Promise<void> {
@@ -340,6 +359,12 @@ async function onCopyCommands(): Promise<void> {
           class="text-sm text-slate-500 dark:text-slate-400"
         >
           {{ lastTriggeredLabel }}
+        </p>
+        <p
+          v-if="lastOutcomeHint"
+          class="text-sm text-amber-700 dark:text-amber-400"
+        >
+          {{ lastOutcomeHint }}
         </p>
 
         <div

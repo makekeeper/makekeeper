@@ -351,7 +351,7 @@ automatically, no manual step.
 it — and its token, if it uses a bearer header — under **Settings → Version &
 Updates → One-click update**. Fill in the URL first: a token or an HTTP method on
 its own is rejected, since there would be nothing to call. Coolify's hook is a
-`GET` with a bearer token, Dokploy's a `POST` whose URL already carries the token.
+`POST` with a bearer token, Dokploy's a `POST` whose URL already carries the token.
 Both the URL and the token are stored encrypted and are never shown again — a hook
 URL is itself a deploy credential, which is also why removing the hook clears the
 stored token with it.
@@ -360,11 +360,22 @@ stored token with it.
 it from inside the container, so you copy it once. The same steps are shown in the
 app under **Where do I get this hook?**, pre-opened on the detected manager.
 
-- **Coolify** — open the resource you want redeployed and copy its **UUID** (the
-  last segment of the page URL), then create a token under **Keys & Tokens → API
-  tokens** with the `deploy` permission (shown once). The hook is
-  `https://<coolify-host>/api/v1/deploy?uuid=<uuid>&force=false`, method `GET`,
-  token in the bearer field.
+- **Coolify** — open the MakeKeeper resource (the stack itself, not its `app`,
+  `web` or `db` service) and copy its **UUID**, the segment right after
+  `/service/` in the page URL. Create a token under **Keys & Tokens → API
+  tokens** with the `deploy` permission (shown once); API access must be on
+  under **Settings → Advanced**. The hook is
+  `https://<coolify-host>/api/v1/services/<uuid>/restart?latest=true`, method
+  `POST`, token in the bearer field — `latest=true` makes Coolify pull the
+  images before it recreates the containers. If you set `TAG` in the
+  resource's environment variables, the hook restarts exactly that version:
+  bump it (or remove it, so `latest` applies) before updating.
+
+  Not Coolify's generic `/api/v1/deploy?uuid=…` webhook (the one its UI prints,
+  #373): it has refused `GET` with HTTP 405 since Coolify v4.2.0, and for a
+  compose stack it answers 200 without reporting a queued deployment even when
+  it refused the resource. A hook still pointing there is shown as
+  "accepted, but no deployment was reported" rather than as a success.
 - **Dokploy** — enable **Auto Deploy** on the application's _General_ tab, then copy
   the **Webhook URL** from its _Deployments_ tab. Method `POST`; the URL already
   carries its token, so leave the bearer field empty.

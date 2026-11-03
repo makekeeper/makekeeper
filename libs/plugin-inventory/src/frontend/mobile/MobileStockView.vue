@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import {
   Button,
   EmptyState,
@@ -8,6 +8,7 @@ import {
   apiJson,
   apiErrorMessage,
   useCameraScanner,
+  useRouteQuery,
   useToastStore,
 } from '@makekeeper/frontend-core';
 import { useI18n } from 'vue-i18n';
@@ -32,7 +33,6 @@ interface ComponentItem {
 }
 
 const { t } = useI18n();
-const route = useRoute();
 const router = useRouter();
 const toast = useToastStore();
 
@@ -64,28 +64,32 @@ const search = async (term: string): Promise<void> => {
 };
 
 // Route-driven (§5.3): the query string is the state, and the watcher is the
-// single place that reacts to it — typing only rewrites the URL.
+// single place that reacts to it — typing only edits the draft in `query`,
+// submitting rewrites the URL. Its immediate run is also the initial
+// whole-shelf search when no `?q` is present.
+const submitted = useRouteQuery('q');
 watch(
-  () => route.query.q,
+  submitted,
   (value) => {
-    query.value = typeof value === 'string' ? value : '';
-    void search(query.value);
+    query.value = value;
+    void search(value);
   },
   { immediate: true },
 );
 
+// An empty submit drops the key, like clearing does: a shared or reloaded link
+// then says "no search", not "a search for nothing".
 const submit = (): void => {
-  void router.replace({ query: { ...route.query, q: query.value } });
+  submitted.value = query.value;
 };
 
-// Drop the filter: the key leaves the URL entirely rather than staying on as an
-// empty `?q=`, so a shared or reloaded link says "no search", not "a search for
-// nothing". The watcher above does the rest — the field and the results both
-// follow the route.
+// The watcher above does the rest — the field and the results both follow the
+// route.
+// The draft too: the button shows whenever the field has text, including text
+// that was never submitted, and then only clearing the draft does anything.
 const clearSearch = (): void => {
-  const next = { ...route.query };
-  delete next.q;
-  void router.replace({ query: next });
+  query.value = '';
+  submitted.value = '';
 };
 
 const openScanner = async (): Promise<void> => {
@@ -113,15 +117,11 @@ const resolveScanned = async (value: string): Promise<void> => {
     }
     // Zero or several: fall back to showing it as a search, rather than
     // guessing which part the person meant.
-    await router.replace({ query: { ...route.query, q: value } });
+    submitted.value = value;
   } catch (err) {
     toast.error(apiErrorMessage(err, t('inventory.mobile.searchError')));
   }
 };
-
-onMounted(() => {
-  if (typeof route.query.q !== 'string') void search('');
-});
 
 const unitLabel = (item: ComponentItem): string => item.unit?.trim() || '';
 

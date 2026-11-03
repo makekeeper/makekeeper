@@ -5,7 +5,7 @@
 // aggregate ribbon, then the cross-project task queue. All figures come from
 // GET /api/projects/bench; this component only lays them out.
 import { computed, type Component } from 'vue';
-import { RouterLink, useRoute, useRouter } from 'vue-router';
+import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import {
   ArrowRight,
@@ -23,6 +23,7 @@ import {
   EmptyState,
   PluginSlot,
   Spinner,
+  useRouteQuery,
   useUxMode,
 } from '@makekeeper/frontend-core';
 import ProjectStatusDonutWidget from './ProjectStatusDonutWidget.vue';
@@ -36,8 +37,6 @@ import {
 } from './bench-data';
 
 const { t } = useI18n();
-const route = useRoute();
-const router = useRouter();
 const { loading, failed, projects, summary } = useBenchData();
 
 // The bench's own charts are the only analytics simple mode would otherwise
@@ -49,15 +48,16 @@ const benchChartsVisible = computed<boolean>(() =>
 );
 
 // ── Focus project (route-driven, defaults to closest-to-buildable) ───────────
+const focusQuery = useRouteQuery('focus');
 const focus = computed<BenchProject | null>(() => {
-  const pinned = String(route.query.focus ?? '');
+  const pinned = focusQuery.value;
   return (
     projects.value.find((p) => p.id === pinned) ?? projects.value[0] ?? null
   );
 });
 
 function pickFocus(id: string): void {
-  void router.replace({ query: { ...route.query, focus: id } });
+  focusQuery.value = id;
 }
 
 const SEGMENTS = [
@@ -139,13 +139,18 @@ const TABS: QueueFilter[] = ['ready', 'waitingOrder', 'noParts', 'all'];
 
 const allTasks = computed<BenchQueueTask[]>(() => flattenTasks(projects.value));
 
-const filter = computed<QueueFilter>(() => {
-  const value = String(route.query.tasks ?? 'ready');
-  return TABS.includes(value as QueueFilter) ? (value as QueueFilter) : 'ready';
-});
+const isQueueFilter = (value: string): value is QueueFilter =>
+  TABS.some((tab) => tab === value);
+
+// No `default` on purpose: picking `ready` keeps writing `?tasks=ready`, as the
+// hand-built replace did; an absent key still reads as `ready` below.
+const tasksQuery = useRouteQuery('tasks');
+const filter = computed<QueueFilter>(() =>
+  isQueueFilter(tasksQuery.value) ? tasksQuery.value : 'ready',
+);
 
 function setFilter(value: QueueFilter): void {
-  void router.replace({ query: { ...route.query, tasks: value } });
+  tasksQuery.value = value;
 }
 
 const queue = computed<BenchQueueTask[]>(() =>

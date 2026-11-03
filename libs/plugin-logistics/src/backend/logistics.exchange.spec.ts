@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest';
 import { ExchangeIdMap } from '@makekeeper/backend-core';
 import type {
   ExchangeImportContext,
@@ -38,31 +39,31 @@ function makeTx(existingSuppliers: FakeSupplier[]): {
             (s) => s.name.toLowerCase() === where.name.equals.toLowerCase(),
           ) ?? null,
         ),
-      create: jest.fn((call: MockCall) => {
+      create: vi.fn((call: MockCall) => {
         supplierCreates.push(call);
         return Promise.resolve(call.data);
       }),
     },
     order: {
-      create: jest.fn((call: MockCall) => {
+      create: vi.fn((call: MockCall) => {
         orderCreates.push(call);
         return Promise.resolve(call.data);
       }),
     },
     orderComponent: {
-      create: jest.fn((call: MockCall) => {
+      create: vi.fn((call: MockCall) => {
         itemCreates.push(call);
         return Promise.resolve(call.data);
       }),
     },
     trackingEvent: {
-      create: jest.fn((call: MockCall) => {
+      create: vi.fn((call: MockCall) => {
         eventCreates.push(call);
         return Promise.resolve(call.data);
       }),
     },
     returnRequest: {
-      create: jest.fn((call: MockCall) => {
+      create: vi.fn((call: MockCall) => {
         returnCreates.push(call);
         return Promise.resolve(call.data);
       }),

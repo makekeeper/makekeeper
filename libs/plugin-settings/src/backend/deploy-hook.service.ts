@@ -4,6 +4,7 @@ import {
   PrismaService,
   SecretBoxService,
   getErrorMessage,
+  isRecordObject,
 } from '@makekeeper/backend-core';
 import {
   DeployHookMethod,
@@ -12,6 +13,7 @@ import {
   DeployHookState,
   DeployHookTriggerResult,
   isDeployHookMethod,
+  isDeployHookOutcome,
 } from '@makekeeper/plugin-contract';
 
 // The admin-pasted deploy hook (#101): "update now" POSTs (or GETs) the webhook
@@ -24,12 +26,54 @@ import {
 // at rest under the app secret, and neither is ever returned to the client — the
 // UI sees `hasUrl` + a scheme/host preview.
 //
-// The hook RESPONSE BODY is deliberately never read, stored or returned: a
-// manager may echo tokens or internal detail into it. Only the status code is
-// recorded.
+// The hook RESPONSE BODY is never stored, logged or returned: a manager may
+// echo tokens or internal detail into it. Only the status code and a closed
+// outcome are recorded. The one place the body is even looked at is Coolify's
+// generic `/api/v1/deploy` (#373), which answers 200 for a request that queued
+// nothing — an unauthorized resource, a skipped deployment — so for that
+// endpoint alone a 2xx is checked for a `deployment_uuid` in memory and the
+// body is dropped right after. Every other hook is judged by its status.
 
 const SETTINGS_ID = 'default';
 const TRIGGER_TIMEOUT_MS = 15_000;
+// Coolify's deploy reply is a few hundred bytes; anything far larger is not
+// the shape we know, so it is not parsed at all.
+const MAX_INSPECTED_BODY_CHARS = 64_000;
+
+type CallResult = {
+  outcome: Exclude<DeployHookOutcome, 'never'>;
+  statusCode: number | null;
+};
+
+// `/api/v1/deploy` is the path of Coolify's own "Deploy webhook" (the URL its
+// UI prints for every resource). Matched on the path only: the host is the
+// admin's, and the query carries the uuid/tag.
+function isCoolifyDeployEndpoint(url: string): boolean {
+  try {
+    return /\/api\/v1\/deploy\/?$/.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
+
+// Coolify's DeployController returns `{ deployments: [{ message, resource_uuid,
+// deployment_uuid? }] }` for a uuid deploy and `{ message, details?: [...] }`
+// for a tag deploy; `deployment_uuid` is present only when an application
+// deployment was actually queued. A service start, a refusal and a skip all
+// come back as 200 without one, and only the free-text message tells them
+// apart — too unstable to parse, so none of them counts as confirmed.
+function reportsQueuedDeployment(body: unknown): boolean {
+  if (!isRecordObject(body)) return false;
+  const entries = [body['deployments'], body['details']].flatMap((list) =>
+    Array.isArray(list) ? list : [],
+  );
+  return entries.some(
+    (entry) =>
+      isRecordObject(entry) &&
+      typeof entry['deployment_uuid'] === 'string' &&
+      entry['deployment_uuid'].length > 0,
+  );
+}
 
 @Injectable()
 export class DeployHookService {
@@ -129,16 +173,13 @@ export class DeployHookService {
       ? this.secretBox.decrypt(row.deployHookToken)
       : null;
 
-    const { ok, statusCode } = await this.call(
+    const { outcome, statusCode } = await this.call(
       url,
       this.normalizeMethod(row?.deployHookMethod),
       token,
     );
+    const ok = outcome === 'ok';
 
-    // Annotated, not `satisfies` on one branch: the column is a plain string, so
-    // only an explicit type here makes BOTH literals fail the build if the union
-    // is ever renamed.
-    const outcome: DeployHookOutcome = ok ? 'ok' : 'failed';
     const data = {
       hookTriggeredAt: new Date(),
       hookOutcome: outcome,
@@ -156,7 +197,7 @@ export class DeployHookService {
     url: string,
     method: DeployHookMethod,
     token: string | null,
-  ): Promise<{ ok: boolean; statusCode: number | null }> {
+  ): Promise<CallResult> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TRIGGER_TIMEOUT_MS);
     try {
@@ -168,14 +209,42 @@ export class DeployHookService {
       if (!res.ok) {
         // Log the status only — the body may carry secrets (§ the class comment).
         this.logger.warn(`Deploy hook returned HTTP ${res.status}.`);
+        return { outcome: 'failed', statusCode: res.status };
       }
-      return { ok: res.ok, statusCode: res.status };
+      if (!isCoolifyDeployEndpoint(url)) {
+        return { outcome: 'ok', statusCode: res.status };
+      }
+      // Read inside the try: the abort timer still bounds a body that stalls.
+      const queued = await this.coolifyQueuedDeployment(res);
+      return {
+        outcome: queued ? 'ok' : 'unconfirmed',
+        statusCode: res.status,
+      };
     } catch (err) {
       this.logger.warn(`Deploy hook request failed: ${getErrorMessage(err)}`);
-      return { ok: false, statusCode: null };
+      return { outcome: 'failed', statusCode: null };
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  // The body lives only in this frame: parsed, reduced to one boolean, dropped.
+  // A body we cannot read or parse is "not confirmed", never "ok".
+  private async coolifyQueuedDeployment(res: Response): Promise<boolean> {
+    let text: string;
+    try {
+      text = await res.text();
+    } catch {
+      return false;
+    }
+    if (text.length > MAX_INSPECTED_BODY_CHARS) return false;
+    let body: unknown;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      return false;
+    }
+    return reportsQueuedDeployment(body);
   }
 
   // undefined → leave untouched; '' → clear; otherwise validate + encrypt.
@@ -245,6 +314,6 @@ export class DeployHookService {
   }
 
   private normalizeOutcome(value: string | undefined): DeployHookOutcome {
-    return value === 'ok' || value === 'failed' ? value : 'never';
+    return isDeployHookOutcome(value) ? value : 'never';
   }
 }

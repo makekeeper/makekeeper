@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { GitFork } from '@lucide/vue';
 import {
@@ -8,6 +7,7 @@ import {
   EmptyState,
   Select,
   Spinner,
+  useRouteQuery,
 } from '@makekeeper/frontend-core';
 
 // Dashboard panel (full-width): a classic 4-column Sankey of stock flows over
@@ -46,8 +46,6 @@ const PERIODS = [7, 30, 90, 365];
 const DEFAULT_DAYS = 30;
 
 const { t, locale } = useI18n();
-const route = useRoute();
-const router = useRouter();
 
 const loading = ref(true);
 const failed = ref(false);
@@ -61,20 +59,18 @@ const fmt = computed(
     }),
 );
 
-// Period is a filter → it lives in route.query (§5.3), not a local ref.
+// Period is a filter → it lives in route.query (§5.3), not a local ref. The
+// default period leaves no `?flowDays` behind.
+const flowDaysQuery = useRouteQuery('flowDays', {
+  default: String(DEFAULT_DAYS),
+});
 const days = computed<number>({
   get: () => {
-    const raw = route.query.flowDays;
-    const parsed = Number.parseInt(typeof raw === 'string' ? raw : '', 10);
+    const parsed = Number.parseInt(flowDaysQuery.value, 10);
     return PERIODS.includes(parsed) ? parsed : DEFAULT_DAYS;
   },
   set: (value) => {
-    router.replace({
-      query: {
-        ...route.query,
-        flowDays: value === DEFAULT_DAYS ? undefined : String(value),
-      },
-    });
+    flowDaysQuery.value = String(value);
   },
 });
 

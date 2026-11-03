@@ -11,11 +11,12 @@ import {
   apiFetch,
   sanitizeHtml,
   useAgentDataChanged,
+  useRouteQuery,
   useToastStore,
   useUxMode,
 } from '@makekeeper/frontend-core';
 import { formatObjectRef } from '@makekeeper/plugin-contract';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import {
   useLocaleDate,
@@ -55,7 +56,6 @@ type Project = ProjectSummary;
 const { t } = useI18n();
 const toast = useToastStore();
 const formatDate = useLocaleDate();
-const route = useRoute();
 const { isFeatureVisible } = useUxMode();
 
 // Simple-mode lenses: buckets instead of the 5 statuses, and a trimmed filter
@@ -90,49 +90,29 @@ const ganttVisible = computed<boolean>(() =>
 // falls back to the grid rather than rendering a surface the mode denies.
 type ProjectsViewMode = 'grid' | 'board' | 'gantt';
 
+const viewQuery = useRouteQuery('view', { default: 'grid' });
 const view = computed<ProjectsViewMode>(() => {
-  if (route.query.view === 'board') return 'board';
-  if (route.query.view === 'gantt' && ganttVisible.value) return 'gantt';
+  if (viewQuery.value === 'board') return 'board';
+  if (viewQuery.value === 'gantt' && ganttVisible.value) return 'gantt';
   return 'grid';
 });
 
+// `grid` is the default, so choosing it drops `?view` from the URL.
 const setView = (next: ProjectsViewMode): void => {
-  router.replace({
-    query: { ...route.query, view: next === 'grid' ? undefined : next },
-  });
+  viewQuery.value = next;
 };
 
 // Grid filters/search/sort are route-driven (§5.3): they live in route.query so
-// deep links and back/forward restore them. The board view ignores them.
-const queryStr = (value: unknown): string =>
-  typeof value === 'string' ? value : '';
-const setQuery = (key: string, value: string): void => {
-  router.replace({ query: { ...route.query, [key]: value || undefined } });
-};
-
-const searchQuery = computed<string>({
-  get: () => queryStr(route.query.q),
-  set: (v) => setQuery('q', v),
-});
-const statusFilter = computed<string>({
-  get: () => queryStr(route.query.status),
-  set: (v) => setQuery('status', v),
-});
-const tagFilter = computed<string>({
-  get: () => queryStr(route.query.tag),
-  set: (v) => setQuery('tag', v),
-});
+// deep links and back/forward restore them. The board view ignores them. An
+// empty value drops its key.
+const searchQuery = useRouteQuery('q');
+const statusFilter = useRouteQuery('status');
+const tagFilter = useRouteQuery('tag');
 // The group filter is route state like every other filter, and it is resolved
 // SERVER-side: `?group=` narrows to that group and everything below it, which
 // only the backend's tree knows about.
-const groupFilter = computed<string>({
-  get: () => queryStr(route.query.group),
-  set: (v) => setQuery('group', v),
-});
-const sortBy = computed<string>({
-  get: () => queryStr(route.query.sort) || 'created',
-  set: (v) => setQuery('sort', v === 'created' ? '' : v),
-});
+const groupFilter = useRouteQuery('group');
+const sortBy = useRouteQuery('sort', { default: 'created' });
 
 const hasActiveFilters = computed(
   () =>
@@ -144,16 +124,12 @@ const hasActiveFilters = computed(
     ),
 );
 
+// Four writes, one navigation: the primitive merges them in this tick.
 const clearFilters = (): void => {
-  router.replace({
-    query: {
-      ...route.query,
-      q: undefined,
-      status: undefined,
-      tag: undefined,
-      group: undefined,
-    },
-  });
+  searchQuery.value = '';
+  statusFilter.value = '';
+  tagFilter.value = '';
+  groupFilter.value = '';
 };
 
 // Entity ids matching the active tag filter, reported by the tags-plugin slot
